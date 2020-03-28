@@ -368,7 +368,9 @@ static parserStatus_e processTxInternal(txContext_t *context) {
         // Old style transaction
         if ((context->currentField == TX_RLP_V) && (context->commandLength == 0)) {
             context->content->vLength = 0;
-            return USTREAM_FINISHED;
+            // We don't want to support old style transactions. We treat an empty V as a false positive
+            // - data ended exactly on the APDU boundary, and so we tell the processing to continue.
+            return USTREAM_PROCESSING;
         }
         if (context->commandLength == 0) {
             return USTREAM_PROCESSING;
