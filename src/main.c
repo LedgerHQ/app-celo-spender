@@ -2457,12 +2457,14 @@ void finalizeParsing(bool direct) {
   // Add address
   if (tmpContent.txContent.destinationLength != 0) {
     getEthAddressStringFromBinary(tmpContent.txContent.destination, address, &sha3);
+    /*
     addressSummary[0] = '0';
     addressSummary[1] = 'x';
     os_memmove((unsigned char *)(addressSummary + 2), address, 4);
     os_memmove((unsigned char *)(addressSummary + 6), "...", 3);
     os_memmove((unsigned char *)(addressSummary + 9), address + 40 - 4, 4);
     addressSummary[13] = '\0';
+    */
 
     strings.common.fullAddress[0] = '0';
     strings.common.fullAddress[1] = 'x';
