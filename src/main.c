@@ -56,12 +56,15 @@ void finalizeParsing(bool);
 #define APP_FLAG_DATA_ALLOWED 0x01
 #define APP_FLAG_EXTERNAL_TOKEN_NEEDED 0x02
 
+#define APP_TYPE 0x02
+
 #define CLA 0xE0
 #define INS_GET_PUBLIC_KEY 0x02
 #define INS_SIGN 0x04
 #define INS_GET_APP_CONFIGURATION 0x06
 #define INS_SIGN_PERSONAL_MESSAGE 0x08
 #define INS_PROVIDE_ERC20_TOKEN_INFORMATION 0x0A
+#define INS_GET_APP_TYPE 0x0C
 #define P1_CONFIRM 0x01
 #define P1_NON_CONFIRM 0x00
 #define P2_NO_CHAINCODE 0x00
@@ -2718,6 +2721,18 @@ void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
   THROW(0x9000);
 }
 
+void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
+  UNUSED(p1);
+  UNUSED(p2);
+  UNUSED(workBuffer);
+  UNUSED(dataLength);
+  UNUSED(flags);
+  G_io_apdu_buffer[0] = APP_TYPE;
+  *tx = 1;
+  THROW(0x9000);
+}
+			
+
 void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(tx);
   uint8_t hashMessage[32];
@@ -2862,6 +2877,10 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
           os_memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
           handleSignPersonalMessage(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
           break;
+
+	case INS_GET_APP_TYPE:
+	  handleGetAppType(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
+	  break;
 
 #if 0
         case 0xFF: // return to dashboard
