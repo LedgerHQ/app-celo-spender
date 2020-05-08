@@ -26,8 +26,6 @@ APP_LOAD_PARAMS= --curve secp256k1 $(COMMON_LOAD_PARAMS)
 APP_LOAD_PARAMS += --path "45'"
 # Samsung temporary implementation for wallet ID on 0xda7aba5e/0xc1a551c5
 APP_LOAD_PARAMS += --path "1517992542'/1101353413'"
-# Add pending review tag
-APP_LOAD_PARAMS += --tlvraw 9F:01
 
 APPVERSION_M=1
 APPVERSION_N=0
@@ -319,4 +317,3 @@ dep/%.d: %.c Makefile
 
 listvariants:
 	@echo VARIANTS CHAIN celo
-
