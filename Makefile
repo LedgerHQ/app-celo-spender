@@ -31,7 +31,7 @@ APP_LOAD_PARAMS += --tlvraw 9F:01
 
 APPVERSION_M=1
 APPVERSION_N=0
-APPVERSION_P=1
+APPVERSION_P=3
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 APP_LOAD_FLAGS= --appFlags 0x240 --dep Ethereum:$(APPVERSION)
 
@@ -252,7 +252,7 @@ ifneq ($(NOCONSENT),)
 DEFINES   += NO_CONSENT
 endif
 
-DEFINES   += HAVE_TOKENS_LIST # Do not activate external ERC-20 support yet
+#DEFINES   += HAVE_TOKENS_LIST # Do not activate external ERC-20 support yet
 
 ##############
 #  Compiler  #
