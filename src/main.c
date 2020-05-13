@@ -3151,12 +3151,13 @@ __attribute__((section(".boot"))) int main(int arg0) {
                 USB_power(0);
                 USB_power(1);
 
-                ui_idle();
-
 #ifdef HAVE_BLE
+                // BLE has to be powered on before ui_idle() call for Blue devices only
                 BLE_power(0, NULL);
                 BLE_power(1, "Nano X");
 #endif // HAVE_BLE
+                
+                ui_idle();
 
     #if defined(TARGET_BLUE)
                 // setup the status bar colors (remembered after wards, even more if another app does not resetup after app switch)
