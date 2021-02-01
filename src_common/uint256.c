@@ -70,9 +70,7 @@ void clear256(uint256_t *target) {
 }
 
 void shiftl128(const uint128_t *number, uint32_t value, uint128_t *target) {
-    if (value >= 128) {
-        clear128(target);
-    } else if (value == 64) {
+    if (value == 64) {
         UPPER_P(target) = LOWER_P(number);
         LOWER_P(target) = 0;
     } else if (value == 0) {
@@ -90,9 +88,7 @@ void shiftl128(const uint128_t *number, uint32_t value, uint128_t *target) {
 }
 
 void shiftl256(const uint256_t *number, uint32_t value, uint256_t *target) {
-    if (value >= 256) {
-        clear256(target);
-    } else if (value == 128) {
+    if (value == 128) {
         copy128(&UPPER_P(target), &LOWER_P(number));
         clear128(&LOWER_P(target));
     } else if (value == 0) {
@@ -115,9 +111,7 @@ void shiftl256(const uint256_t *number, uint32_t value, uint256_t *target) {
 }
 
 void shiftr128(const uint128_t *number, uint32_t value, uint128_t *target) {
-    if (value >= 128) {
-        clear128(target);
-    } else if (value == 64) {
+    if (value == 64) {
         UPPER_P(target) = 0;
         LOWER_P(target) = UPPER_P(number);
     } else if (value == 0) {
@@ -137,9 +131,7 @@ void shiftr128(const uint128_t *number, uint32_t value, uint128_t *target) {
 }
 
 void shiftr256(const uint256_t *number, uint32_t value, uint256_t *target) {
-    if (value >= 256) {
-        clear256(target);
-    } else if (value == 128) {
+    if (value == 128) {
         copy128(&LOWER_P(target), &UPPER_P(number));
         clear128(&UPPER_P(target));
     } else if (value == 0) {
