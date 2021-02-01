@@ -22,10 +22,6 @@ include $(BOLOS_SDK)/Makefile.defines
 
 DEFINES_LIB = USE_LIB_ETHEREUM
 APP_LOAD_PARAMS= --curve secp256k1 $(COMMON_LOAD_PARAMS)
-# Allow the app to use path 45 for multi-sig (see BIP45).
-APP_LOAD_PARAMS += --path "45'"
-# Samsung temporary implementation for wallet ID on 0xda7aba5e/0xc1a551c5
-APP_LOAD_PARAMS += --path "1517992542'/1101353413'"
 
 APPVERSION_M=1
 APPVERSION_N=0
@@ -177,7 +173,6 @@ $(error Unsupported CHAIN - use ethereum, ethereum_classic, expanse, poa, artis_
 endif
 endif
 
-APP_LOAD_PARAMS += $(APP_LOAD_FLAGS) --path "44'/1'"
 DEFINES += $(DEFINES_LIB)
 
 #prepare hsm generation
