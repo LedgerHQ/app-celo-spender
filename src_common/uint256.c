@@ -325,7 +325,7 @@ void mul128(uint128_t *number1, uint128_t *number2, uint128_t *target) {
     add128(&tmp, &tmp2, target);
 }
 
-void mul256(uint256_t *number1, uint256_t *number2, uint256_t *target) {
+void mul256(const uint256_t *number1, const uint256_t *number2, uint256_t *target) {
     uint128_t top[4];
     uint128_t bottom[4];
     uint128_t products[4][4];
@@ -408,7 +408,7 @@ void mul256(uint256_t *number1, uint256_t *number2, uint256_t *target) {
     clear256(&target1);
     shiftl128(&first64, 64, &UPPER(target1));
     clear256(&target2);
-    UPPER(UPPER(target2)) = UPPER(third64);
+    LOWER(UPPER(target2)) = UPPER(third64);
     shiftl128(&third64, 64, &LOWER(target2));
     add256(&target1, &target2, target);
     clear256(&target1);
