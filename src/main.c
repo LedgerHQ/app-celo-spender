@@ -32,7 +32,7 @@
 #include "ux.h"
 #include "utils.h"
 
-unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
+uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
 unsigned int io_seproxyhal_touch_settings(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_exit(const bagl_element_t *e);
@@ -46,7 +46,7 @@ unsigned int io_seproxyhal_touch_data_ok(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_data_cancel(const bagl_element_t *e);
 void ui_idle(void);
 
-uint32_t set_result_get_publicKey(void);
+static uint32_t set_result_get_publicKey(void);
 void finalizeParsing(bool);
 
 #define MAX_BIP32_PATH 10
@@ -113,7 +113,7 @@ typedef struct rawDataContext_t {
 
 typedef struct publicKeyContext_t {
     cx_ecfp_public_key_t publicKey;
-    uint8_t address[41];
+    char address[41];
     uint8_t chainCode[32];
     bool getChaincode;
 } publicKeyContext_t;
@@ -1918,7 +1918,7 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
-uint32_t set_result_get_publicKey() {
+static uint32_t set_result_get_publicKey() {
     uint32_t tx = 0;
     G_io_apdu_buffer[tx++] = 65;
     memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.publicKey.W, 65);
@@ -1933,7 +1933,7 @@ uint32_t set_result_get_publicKey() {
     return tx;
 }
 
-uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
+static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
     uint32_t i;
     for (i=0; i<8; i++) {
         if (parameter[i] != 0x00) {
@@ -2465,7 +2465,7 @@ void finalizeParsing(bool direct) {
     }
   // Add address
   if (tmpContent.txContent.destinationLength != 0) {
-    uint8_t address[41];
+    char address[41];
     getEthAddressStringFromBinary(tmpContent.txContent.destination, address, &sha3);
     /*
     addressSummary[0] = '0';
@@ -2488,7 +2488,7 @@ void finalizeParsing(bool direct) {
   }
   // Add gateway fee recipient address
   if (tmpContent.txContent.gatewayDestinationLength != 0) {
-    uint8_t gatewayAddress[41];
+    char gatewayAddress[41];
     getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination, gatewayAddress, &sha3);
     strings.common.fullGatewayAddress[0] = '0';
     strings.common.fullGatewayAddress[1] = 'x';

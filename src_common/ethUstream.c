@@ -54,7 +54,7 @@ uint8_t readTxByte(txContext_t *context) {
     return data;
 }
 
-void copyTxData(txContext_t *context, uint8_t *out, uint32_t length) {
+void copyTxData(txContext_t *context, uint8_t *out, size_t length) {
     if (context->commandLength < length) {
         PRINTF("copyTxData Underflow\n");
         THROW(EXCEPTION);
@@ -490,8 +490,8 @@ static parserStatus_e processTxInternal(txContext_t *context) {
     }
 }
 
-parserStatus_e processTx(txContext_t *context, uint8_t *buffer,
-                         uint32_t length, uint32_t processingFlags) {
+parserStatus_e processTx(txContext_t *context, const uint8_t *buffer,
+                         size_t length, uint32_t processingFlags) {
     parserStatus_e result;
     BEGIN_TRY {
         TRY {
