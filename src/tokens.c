@@ -15,9 +15,9 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifdef HAVE_TOKENS_LIST
-
 #include "tokens.h"
+
+#ifdef HAVE_TOKENS_LIST
 
 const tokenDefinition_t const TOKENS_AKROMA[NUM_TOKENS_AKROMA] = {};
 

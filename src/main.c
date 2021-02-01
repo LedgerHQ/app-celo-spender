@@ -84,9 +84,9 @@ void finalizeParsing(bool);
 
 #define WEI_TO_ETHER 18
 
-static const uint8_t const TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
+static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
 
-static const uint8_t const TOKEN_SIGNATURE_PUBLIC_KEY[] = {
+static const uint8_t TOKEN_SIGNATURE_PUBLIC_KEY[] = {
 // cLabs production key (2020-04-14)
   0x04,
 
@@ -164,7 +164,7 @@ typedef enum {
 volatile uint8_t dataAllowed;
 volatile uint8_t contractDetails;
 volatile uint8_t appState;
-volatile char addressSummary[32];
+char addressSummary[32];
 volatile bool dataPresent;
 volatile bool tokenProvisioned;
 
@@ -208,12 +208,12 @@ union {
 } strings;
 
 const internalStorage_t N_storage_real;
-#define N_storage (*(volatile internalStorage_t*) PIC(&N_storage_real))
+#define N_storage (*(internalStorage_t*) PIC(&N_storage_real))
 
-static const char const CONTRACT_ADDRESS[] = "New contract";
+static const char CONTRACT_ADDRESS[] = "New contract";
 
-static const char const SIGN_MAGIC[] = "\x19"
-                                       "Ethereum Signed Message:\n";
+static const char SIGN_MAGIC[] = "\x19"
+                                 "Ethereum Signed Message:\n";
 
 chain_config_t *chainConfig;
 
@@ -1573,12 +1573,14 @@ unsigned int io_seproxyhal_touch_settings(const bagl_element_t *e) {
 #endif // #if defined(TARGET_BLUE)
 
 unsigned int io_seproxyhal_touch_exit(const bagl_element_t *e) {
+    UNUSED(e);
     // Go back to the dashboard
     os_sched_exit(0);
     return 0; // do not redraw the widget
 }
 
 unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e) {
+    UNUSED(e);
     uint32_t tx = set_result_get_publicKey();
     G_io_apdu_buffer[tx++] = 0x90;
     G_io_apdu_buffer[tx++] = 0x00;
@@ -1591,6 +1593,7 @@ unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e) {
 }
 
 unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e) {
+    UNUSED(e);
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
     reset_app_context();
@@ -1603,6 +1606,7 @@ unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e) {
 
 #if defined(TARGET_NANOS)
 unsigned int ui_address_nanos_button(unsigned int button_mask, unsigned int button_mask_counter) {
+    UNUSED(button_mask_counter);
     switch(button_mask) {
         case BUTTON_EVT_RELEASED|BUTTON_LEFT: // CANCEL
 			      io_seproxyhal_touch_address_cancel(NULL);
@@ -1646,6 +1650,7 @@ void format_signature_out(const uint8_t* signature) {
 }
 
 unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
+    UNUSED(e);
     uint8_t privateKeyData[32];
     uint8_t signature[100];
     uint8_t signatureLength;
@@ -1695,6 +1700,7 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
 }
 
 unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e) {
+    UNUSED(e);
     reset_app_context();
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
@@ -1707,6 +1713,7 @@ unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e) {
 
 
 unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
+    UNUSED(e);
     uint8_t privateKeyData[32];
     uint8_t signature[100];
     uint8_t signatureLength;
@@ -1746,6 +1753,7 @@ unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
 }
 
 unsigned int io_seproxyhal_touch_signMessage_cancel(const bagl_element_t *e) {
+    UNUSED(e);
     reset_app_context();
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
@@ -1757,6 +1765,7 @@ unsigned int io_seproxyhal_touch_signMessage_cancel(const bagl_element_t *e) {
 }
 
 unsigned int io_seproxyhal_touch_data_ok(const bagl_element_t *e) {
+    UNUSED(e);
     parserStatus_e txResult = USTREAM_FINISHED;
     txResult = continueTx(&txContext);
     switch (txResult) {
@@ -1789,6 +1798,7 @@ unsigned int io_seproxyhal_touch_data_ok(const bagl_element_t *e) {
 
 
 unsigned int io_seproxyhal_touch_data_cancel(const bagl_element_t *e) {
+    UNUSED(e);
     reset_app_context();
     io_seproxyhal_send_status(0x6985);
     // Display back the original UX
@@ -1823,6 +1833,7 @@ void ui_approval_message_sign_blue_init(void) {
 
 #elif defined(TARGET_NANOS)
 unsigned int ui_approval_nanos_button(unsigned int button_mask, unsigned int button_mask_counter) {
+    UNUSED(button_mask_counter);
     switch(button_mask) {
         case BUTTON_EVT_RELEASED|BUTTON_LEFT:
             io_seproxyhal_touch_tx_cancel(NULL);
@@ -1838,6 +1849,7 @@ unsigned int ui_approval_nanos_button(unsigned int button_mask, unsigned int but
 
 
 unsigned int ui_approval_signMessage_nanos_button(unsigned int button_mask, unsigned int button_mask_counter) {
+    UNUSED(button_mask_counter);
     switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT:
         io_seproxyhal_touch_signMessage_cancel(NULL);
@@ -1853,6 +1865,7 @@ unsigned int ui_approval_signMessage_nanos_button(unsigned int button_mask, unsi
 
 unsigned int ui_data_selector_nanos_button(unsigned int button_mask,
                                      unsigned int button_mask_counter) {
+   UNUSED(button_mask_counter);
    switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT:
         io_seproxyhal_touch_data_cancel(NULL);
@@ -1868,6 +1881,7 @@ unsigned int ui_data_selector_nanos_button(unsigned int button_mask,
 
 unsigned int ui_data_parameter_nanos_button(unsigned int button_mask,
                                      unsigned int button_mask_counter) {
+   UNUSED(button_mask_counter);
    switch (button_mask) {
     case BUTTON_EVT_RELEASED | BUTTON_LEFT:
         io_seproxyhal_touch_data_cancel(NULL);
@@ -2581,6 +2595,7 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   UNUSED(p1);
   UNUSED(p2);
   UNUSED(flags);
+  UNUSED(tx);
   uint32_t offset = 0;
   uint8_t tickerLength;
   uint32_t chainId;
@@ -2816,7 +2831,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 
 #ifdef NO_CONSENT
     io_seproxyhal_touch_signMessage_ok(NULL);
-#else NO_CONSENT
+#else
 #if defined(TARGET_BLUE)
     ui_approval_message_sign_blue_init();
 #elif defined(HAVE_UX_FLOW)
@@ -3002,6 +3017,8 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 }
 
 unsigned char io_event(unsigned char channel) {
+    UNUSED(channel);
+
     // nothing done with the event, throw an error on the transport layer if
     // needed
 
@@ -3029,9 +3046,11 @@ unsigned char io_event(unsigned char channel) {
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
+    #ifdef HAVE_UX_FLOW
+        UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
+    #else
         UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer,
         {
-          #ifndef HAVE_UX_FLOW
           if (UX_ALLOWED) {
             if (ux_step_count) {
               // prepare next screen
@@ -3040,8 +3059,8 @@ unsigned char io_event(unsigned char channel) {
               UX_REDISPLAY();
             }
           }
-          #endif // HAVE_UX_FLOW
         });
+    #endif // HAVE_UX_FLOW
         break;
     }
 
