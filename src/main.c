@@ -226,9 +226,9 @@ const bagl_element_t* ui_menu_item_out_over(const bagl_element_t* e) {
 void reset_app_context() {
   appState = APP_STATE_IDLE;
   PRINTF("Resetting context\n");
-  os_memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
-  os_memset((uint8_t*)&txContext, 0, sizeof(txContext));
-  os_memset((uint8_t*)&tmpContent, 0, sizeof(tmpContent));
+  memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+  memset(&txContext, 0, sizeof(txContext));
+  memset(&tmpContent, 0, sizeof(tmpContent));
 }
 
 
@@ -253,7 +253,7 @@ unsigned int map_color(unsigned int color) {
     return color;
 }
 void copy_element_and_map_coin_colors(const bagl_element_t* element) {
-    os_memmove(&tmp_element, element, sizeof(bagl_element_t));
+    memcpy(&tmp_element, element, sizeof(bagl_element_t));
     tmp_element.component.fgcolor = map_color(tmp_element.component.fgcolor);
     tmp_element.component.bgcolor = map_color(tmp_element.component.bgcolor);
     tmp_element.overfgcolor = map_color(tmp_element.overfgcolor);
@@ -523,8 +523,8 @@ const bagl_element_t* ui_details_blue_prepro(const bagl_element_t* element) {
   else if(element->component.userid > 0) {
     unsigned int length = strlen(ui_details_content);
     if (length >= (element->component.userid & 0xF) * MAX_CHAR_PER_LINE) {
-      os_memset(addressSummary, 0, MAX_CHAR_PER_LINE+1);
-      os_memmove(addressSummary, ui_details_content+(element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MIN(length - (element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MAX_CHAR_PER_LINE));
+      memset(addressSummary, 0, MAX_CHAR_PER_LINE+1);
+      memcpy(addressSummary, ui_details_content+(element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MIN(length - (element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MAX_CHAR_PER_LINE));
       return &tmp_element;
     }
     // nothing to draw for this line
@@ -753,8 +753,8 @@ unsigned int ui_address_blue_prepro(const bagl_element_t* element) {
   if(element->component.userid > 0) {
     unsigned int length = strlen(strings.common.fullAddress);
     if (length >= (element->component.userid & 0xF) * MAX_CHAR_PER_LINE) {
-      os_memset(addressSummary, 0, MAX_CHAR_PER_LINE+1);
-      os_memmove(addressSummary, strings.common.fullAddress+(element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MIN(length - (element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MAX_CHAR_PER_LINE));
+      memset(addressSummary, 0, MAX_CHAR_PER_LINE+1);
+      memcpy(addressSummary, strings.common.fullAddress+(element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MIN(length - (element->component.userid & 0xF) * MAX_CHAR_PER_LINE, MAX_CHAR_PER_LINE));
       return &tmp_element;
     }
     // nothing to draw for this line
@@ -954,8 +954,8 @@ unsigned int ui_data_selector_blue_prepro(const bagl_element_t* element) {
     unsigned int offset = (element->component.userid & 0xF) * 24;
     if (length >= offset) {
       unsigned int copyLength = ((offset + 24) > length ? length - offset : 24);
-      os_memset(addressSummary, 0, 25);
-      os_memmove(addressSummary, strings.tmp.tmp + offset, copyLength);
+      memset(addressSummary, 0, 25);
+      memcpy(addressSummary, strings.tmp.tmp + offset, copyLength);
       return &tmp_element;
     }
     // nothing to draw for this line
@@ -1054,7 +1054,7 @@ unsigned int ui_data_parameter_blue_prepro(const bagl_element_t* element) {
         endOffset = offset + local_strchr(strings.tmp.tmp + offset, ':');
         copyLength = endOffset - offset;
     }
-    os_memmove(addressSummary, strings.tmp.tmp + offset, copyLength);
+    memcpy(addressSummary, strings.tmp.tmp + offset, copyLength);
     addressSummary[copyLength] = '\0';
   }
   return &tmp_element;
@@ -1624,7 +1624,7 @@ void io_seproxyhal_send_status(uint32_t sw) {
 }
 
 void format_signature_out(const uint8_t* signature) {
-  os_memset(G_io_apdu_buffer + 1, 0x00, 64);
+  memset(G_io_apdu_buffer + 1, 0x00, 64);
   uint8_t offset = 1;
   uint8_t xoffset = 4; //point to r value
   //copy r
@@ -1658,14 +1658,14 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
                                privateKeyData, NULL);
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32,
                                  &privateKey);
-    os_memset(privateKeyData, 0, sizeof(privateKeyData));
+    explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     io_seproxyhal_io_heartbeat();
     signatureLength =
         cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
                       tmpCtx.transactionContext.hash,
                       sizeof(tmpCtx.transactionContext.hash), signature, sizeof(signature), &info);
-    os_memset(&privateKey, 0, sizeof(privateKey));
+    explicit_bzero(&privateKey, sizeof(privateKey));
     // Parity is present in the sequence tag in the legacy API
     if (tmpContent.txContent.vLength == 0) {
       // Legacy API
@@ -1718,14 +1718,14 @@ unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
         tmpCtx.messageSigningContext.pathLength, privateKeyData, NULL);
     io_seproxyhal_io_heartbeat();
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
-    os_memset(privateKeyData, 0, sizeof(privateKeyData));
+    explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     io_seproxyhal_io_heartbeat();
     signatureLength =
         cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
                       tmpCtx.messageSigningContext.hash,
                       sizeof(tmpCtx.messageSigningContext.hash), signature, sizeof(signature), &info);
-    os_memset(&privateKey, 0, sizeof(privateKey));
+    explicit_bzero(&privateKey, sizeof(privateKey));
     G_io_apdu_buffer[0] = 27;
     if (info & CX_ECCINFO_PARITY_ODD) {
       G_io_apdu_buffer[0]++;
@@ -1912,13 +1912,13 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
 uint32_t set_result_get_publicKey() {
     uint32_t tx = 0;
     G_io_apdu_buffer[tx++] = 65;
-    os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.publicKey.W, 65);
+    memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.publicKey.W, 65);
     tx += 65;
     G_io_apdu_buffer[tx++] = 40;
-    os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.address, 40);
+    memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.address, 40);
     tx += 40;
     if (tmpCtx.publicKeyContext.getChaincode) {
-      os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.chainCode, 32);
+      memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.chainCode, 32);
       tx += 32;
     }
     return tx;
@@ -2139,7 +2139,7 @@ tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
                 currentToken = (tokenDefinition_t *)PIC(&TOKENS_THUNDERCORE[i]);
                 break;
         }
-        if (os_memcmp(currentToken->address, tokenAddr, 20) == 0) {
+        if (memcmp(currentToken->address, tokenAddr, 20) == 0) {
             return currentToken;
         }
     }
@@ -2147,7 +2147,7 @@ tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
 
     for(size_t i=0; i<MAX_TOKEN; i++){
       currentToken = &tmpCtx.transactionContext.tokens[i];
-      if (tmpCtx.transactionContext.tokenSet[i] && (os_memcmp(currentToken->address, tokenAddr, 20) == 0)) {
+      if (tmpCtx.transactionContext.tokenSet[i] && (memcmp(currentToken->address, tokenAddr, 20) == 0)) {
         PRINTF("Token found at index %d\n", i);
         return currentToken;
       }
@@ -2173,7 +2173,7 @@ customStatus_e customProcessor(txContext_t *context) {
             // Initial check to see if the token content can be processed
             tokenProvisioned =
                 (context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
-                (os_memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0) &&
+                (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0) &&
                 (getKnownToken(tmpContent.txContent.destination) != NULL);
         }
         if (tokenProvisioned) {
@@ -2303,7 +2303,7 @@ void handleGetWalletId(volatile unsigned int *tx) {
   // pubkey -> sha512
   cx_hash_sha512(pub.W, sizeof(pub.W), t, sizeof(t));
   // ! cookie !
-  os_memmove(G_io_apdu_buffer, t, 64);  
+  memcpy(G_io_apdu_buffer, t, 64);  
   *tx = 64;
   THROW(0x9000);
 }
@@ -2339,8 +2339,8 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
   cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
   io_seproxyhal_io_heartbeat();
   cx_ecfp_generate_pair(CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1);
-  os_memset(&privateKey, 0, sizeof(privateKey));
-  os_memset(privateKeyData, 0, sizeof(privateKeyData));
+  explicit_bzero(&privateKey, sizeof(privateKey));
+  explicit_bzero(privateKeyData, sizeof(privateKeyData));
   io_seproxyhal_io_heartbeat();
   getEthAddressStringFromKey(&tmpCtx.publicKeyContext.publicKey, tmpCtx.publicKeyContext.address, &sha3);
 #ifndef NO_CONSENT
@@ -2356,9 +2356,9 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
     /*
     addressSummary[0] = '0';
     addressSummary[1] = 'x';
-    os_memmove((unsigned char *)(addressSummary + 2), tmpCtx.publicKeyContext.address, 4);
-    os_memmove((unsigned char *)(addressSummary + 6), "...", 3);
-    os_memmove((unsigned char *)(addressSummary + 9), tmpCtx.publicKeyContext.address + 40 - 4, 4);
+    memcpy(addressSummary + 2, tmpCtx.publicKeyContext.address, 4);
+    memcpy(addressSummary + 6, "...", 3);
+    memcpy(addressSummary + 9, tmpCtx.publicKeyContext.address + 40 - 4, 4);
     addressSummary[13] = '\0';
     */
 
@@ -2438,8 +2438,8 @@ void finalizeParsing(bool direct) {
             decimals = currentToken->decimals;
             ticker = currentToken->ticker;
             tmpContent.txContent.destinationLength = 20;
-            os_memmove(tmpContent.txContent.destination, dataContext.tokenContext.data + 4 + 12, 20);
-            os_memmove(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
+            memcpy(tmpContent.txContent.destination, dataContext.tokenContext.data + 4 + 12, 20);
+            memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
             tmpContent.txContent.value.length = 32;
         }
     }
@@ -2463,20 +2463,20 @@ void finalizeParsing(bool direct) {
     /*
     addressSummary[0] = '0';
     addressSummary[1] = 'x';
-    os_memmove((unsigned char *)(addressSummary + 2), address, 4);
-    os_memmove((unsigned char *)(addressSummary + 6), "...", 3);
-    os_memmove((unsigned char *)(addressSummary + 9), address + 40 - 4, 4);
+    memcpy(addressSummary + 2, address, 4);
+    memcpy(addressSummary + 6, "...", 3);
+    memcpy(addressSummary + 9, address + 40 - 4, 4);
     addressSummary[13] = '\0';
     */
 
     strings.common.fullAddress[0] = '0';
     strings.common.fullAddress[1] = 'x';
-    os_memmove((unsigned char *)strings.common.fullAddress+2, address, 40);
+    memcpy(strings.common.fullAddress+2, address, 40);
     strings.common.fullAddress[42] = '\0';
   }
   else
   {
-    os_memmove((void*)addressSummary, CONTRACT_ADDRESS, sizeof(CONTRACT_ADDRESS));
+    memcpy(addressSummary, CONTRACT_ADDRESS, sizeof(CONTRACT_ADDRESS));
     strcpy(strings.common.fullAddress, "Contract");
   }
   // Add gateway fee recipient address
@@ -2484,7 +2484,7 @@ void finalizeParsing(bool direct) {
     getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination, gatewayAddress, &sha3);
     strings.common.fullGatewayAddress[0] = '0';
     strings.common.fullGatewayAddress[1] = 'x';
-    os_memmove((unsigned char *)strings.common.fullGatewayAddress+2, gatewayAddress, 40);
+    memcpy(strings.common.fullGatewayAddress+2, gatewayAddress, 40);
     strings.common.fullGatewayAddress[42] = '\0';
   }
   // Add amount in ethers or tokens
@@ -2606,12 +2606,12 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
     THROW(0x6A80);
   }
   cx_hash_sha256(workBuffer + offset, tickerLength + 20 + 4 + 4, hash, 32);
-  os_memmove(token->ticker, workBuffer + offset, tickerLength);
+  memcpy(token->ticker, workBuffer + offset, tickerLength);
   token->ticker[tickerLength] = ' ';
   token->ticker[tickerLength + 1] = '\0';
   offset += tickerLength;
   dataLength -= tickerLength;
-  os_memmove(token->address, workBuffer + offset, 20);
+  memcpy(token->address, workBuffer + offset, 20);
   offset += 20;
   dataLength -= 20;
   token->decimals = U4BE(workBuffer, offset);
@@ -2857,7 +2857,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 
       switch (G_io_apdu_buffer[OFFSET_INS]) {
         case INS_GET_PUBLIC_KEY:
-          os_memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+          memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
           handleGetPublicKey(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
           break;
 
@@ -2874,7 +2874,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
           break;
 
         case INS_SIGN_PERSONAL_MESSAGE:
-          os_memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+          memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
           handleSignPersonalMessage(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
           break;
 
@@ -3081,7 +3081,7 @@ chain_config_t const C_chain_config = {
 __attribute__((section(".boot"))) int main(int arg0) {
 #ifdef USE_LIB_ETHEREUM
     chain_config_t local_chainConfig;
-    os_memmove(&local_chainConfig, &C_chain_config, sizeof(chain_config_t));
+    memcpy(&local_chainConfig, &C_chain_config, sizeof(chain_config_t));
     unsigned int libcall_params[3];
     unsigned char coinName[sizeof(CHAINID_COINNAME)];
     strcpy(coinName, CHAINID_COINNAME);
