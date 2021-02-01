@@ -19,8 +19,7 @@
 #define _CHAIN_CONFIG_H_
 
 #include <stdint.h>
-
-#include "os.h"
+#include "bolos_target.h"
 
 typedef enum chain_kind_e {
 	CHAIN_KIND_ETHEREUM,

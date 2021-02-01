@@ -23,14 +23,14 @@
  * @date 8th of March 2016
  */
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-
-#include "os.h"
 #include "cx.h"
 #include "ethUtils.h"
 #include "chainConfig.h"
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 extern chain_config_t *chainConfig;
 

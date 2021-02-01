@@ -103,7 +103,6 @@ static const uint8_t TOKEN_SIGNATURE_PUBLIC_KEY[] = {
 
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
-    uint32_t dataFieldPos;
 } tokenContext_t;
 
 typedef struct rawDataContext_t {
@@ -1037,7 +1036,7 @@ unsigned int ui_data_parameter_blue_prepro(const bagl_element_t* element) {
   if(element->component.userid > 0) {
     unsigned int pos = (element->component.userid & 0xF);
     unsigned int i;
-    unsigned int offset = 0;
+    int offset = 0;
     unsigned int copyLength;
     for (i=0; i<pos; i++) {
         offset += local_strchr(strings.tmp.tmp + offset, ':');
@@ -1050,7 +1049,7 @@ unsigned int ui_data_parameter_blue_prepro(const bagl_element_t* element) {
         copyLength = strlen(strings.tmp.tmp) - offset;
     }
     else {
-        unsigned int endOffset;
+        int endOffset;
         endOffset = offset + local_strchr(strings.tmp.tmp + offset, ':');
         copyLength = endOffset - offset;
     }
@@ -1653,7 +1652,6 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
     UNUSED(e);
     uint8_t privateKeyData[32];
     uint8_t signature[100];
-    uint8_t signatureLength;
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
     uint32_t v = getV(&tmpContent.txContent);
@@ -1666,10 +1664,9 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     io_seproxyhal_io_heartbeat();
-    signatureLength =
-        cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
-                      tmpCtx.transactionContext.hash,
-                      sizeof(tmpCtx.transactionContext.hash), signature, sizeof(signature), &info);
+    cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+                  tmpCtx.transactionContext.hash,
+                  sizeof(tmpCtx.transactionContext.hash), signature, sizeof(signature), &info);
     explicit_bzero(&privateKey, sizeof(privateKey));
     // Parity is present in the sequence tag in the legacy API
     if (tmpContent.txContent.vLength == 0) {
@@ -1716,7 +1713,6 @@ unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
     UNUSED(e);
     uint8_t privateKeyData[32];
     uint8_t signature[100];
-    uint8_t signatureLength;
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
     io_seproxyhal_io_heartbeat();
@@ -1728,10 +1724,9 @@ unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     io_seproxyhal_io_heartbeat();
-    signatureLength =
-        cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
-                      tmpCtx.messageSigningContext.hash,
-                      sizeof(tmpCtx.messageSigningContext.hash), signature, sizeof(signature), &info);
+    cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+                  tmpCtx.messageSigningContext.hash,
+                  sizeof(tmpCtx.messageSigningContext.hash), signature, sizeof(signature), &info);
     explicit_bzero(&privateKey, sizeof(privateKey));
     G_io_apdu_buffer[0] = 27;
     if (info & CX_ECCINFO_PARITY_ODD) {
@@ -1961,7 +1956,6 @@ tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
     tokenDefinition_t *currentToken = NULL;
 #ifdef HAVE_TOKENS_LIST
     uint32_t numTokens = 0;
-    uint32_t i;
     switch(chainConfig->kind) {
         case CHAIN_KIND_AKROMA:
             numTokens = NUM_TOKENS_AKROMA;
@@ -2057,7 +2051,7 @@ tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
             numTokens = NUM_TOKENS_THUNDERCORE;
             break;
     }
-    for (i=0; i<numTokens; i++) {
+    for (uint32_t i=0; i<numTokens; i++) {
         switch(chainConfig->kind) {
             case CHAIN_KIND_AKROMA:
                 currentToken = (tokenDefinition_t *)PIC(&TOKENS_AKROMA[i]);
@@ -2398,8 +2392,6 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
 void finalizeParsing(bool direct) {
   uint256_t gasPrice, startGas, uint256;
   uint32_t i;
-  uint8_t address[41];
-  uint8_t gatewayAddress[41];
   uint8_t decimals = WEI_TO_ETHER;
   uint8_t feeDecimals = WEI_TO_ETHER;
   uint8_t *ticker = (uint8_t *)PIC(chainConfig->coinName);
@@ -2473,6 +2465,7 @@ void finalizeParsing(bool direct) {
     }
   // Add address
   if (tmpContent.txContent.destinationLength != 0) {
+    uint8_t address[41];
     getEthAddressStringFromBinary(tmpContent.txContent.destination, address, &sha3);
     /*
     addressSummary[0] = '0';
@@ -2495,6 +2488,7 @@ void finalizeParsing(bool direct) {
   }
   // Add gateway fee recipient address
   if (tmpContent.txContent.gatewayDestinationLength != 0) {
+    uint8_t gatewayAddress[41];
     getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination, gatewayAddress, &sha3);
     strings.common.fullGatewayAddress[0] = '0';
     strings.common.fullGatewayAddress[1] = 'x';
@@ -2651,7 +2645,6 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
 void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(tx);
   parserStatus_e txResult;
-  uint32_t i;
   if (p1 == P1_FIRST) {
     if (dataLength < 1) {
       PRINTF("Invalid data\n");
@@ -2669,7 +2662,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength
     }
     workBuffer++;
     dataLength--;
-    for (i = 0; i < tmpCtx.transactionContext.pathLength; i++) {
+    for (int i = 0; i < tmpCtx.transactionContext.pathLength; i++) {
       if (dataLength < 4) {
         PRINTF("Invalid data\n");
         THROW(0x6a80);
@@ -2750,7 +2743,7 @@ void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t data
 
 void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(tx);
-  uint8_t hashMessage[32];
+
   if (p1 == P1_FIRST) {
     char tmp[11];
     uint32_t index;
@@ -2819,6 +2812,8 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
   cx_hash((cx_hash_t *)&tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0);
   tmpCtx.messageSigningContext.remainingLength -= dataLength;
   if (tmpCtx.messageSigningContext.remainingLength == 0) {
+    uint8_t hashMessage[32];
+
     cx_hash((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32);
     cx_hash((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32);
 
@@ -2942,7 +2937,6 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 }
 
 void sample_main(void) {
-    volatile unsigned int rx = 0;
     volatile unsigned int tx = 0;
     volatile unsigned int flags = 0;
 
@@ -2953,6 +2947,7 @@ void sample_main(void) {
     // switch event, before the apdu is replied to the bootloader. This avoid
     // APDU injection faults.
     for (;;) {
+        volatile unsigned int rx = 0;
         volatile unsigned short sw = 0;
 
         BEGIN_TRY {
