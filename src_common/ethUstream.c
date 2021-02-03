@@ -25,17 +25,6 @@
 #define MAX_ADDRESS 20
 #define MAX_V 4
 
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra) {
-    memset(context, 0, sizeof(txContext_t));
-    context->sha3 = sha3;
-    context->content = content;
-    context->customProcessor = customProcessor;
-    context->extra = extra;
-    context->currentField = TX_RLP_CONTENT;
-    cx_keccak_init(context->sha3, 256);
-}
-
 uint8_t readTxByte(txContext_t *context) {
     uint8_t data;
     if (context->commandLength < 1) {
