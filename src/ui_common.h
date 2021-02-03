@@ -2,12 +2,7 @@
 
 #include "bolos_target.h"
 
-#ifdef TARGET_BLUE
-#include "os_io_seproxyhal.h"
-#include "glyphs.h"
-#else
 #include "ux.h"
-#endif
 
 void ui_idle(void);  // must be implemented by each ui handler
 

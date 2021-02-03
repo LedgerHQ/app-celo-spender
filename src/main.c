@@ -35,10 +35,8 @@
 
 #if defined(HAVE_UX_FLOW)
 #include "ui_flow.h"
-#elif defined(TARGET_NANOS) && !defined(HAVE_UX_FLOW)
+#else
 #include "ui_nanos.h"
-#elif defined(TARGET_BLUE)
-#include "ui_blue.h"
 #endif
 
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
@@ -217,18 +215,15 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
     */
 
     // prepare for a UI based reply
-#if defined(TARGET_BLUE)
-    snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
-    UX_DISPLAY(ui_address_blue, ui_address_blue_prepro);
-#elif defined(HAVE_UX_FLOW)
+#if defined(HAVE_UX_FLOW)
     snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
     ux_flow_init(0, ux_display_public_flow, NULL);
-#elif defined(TARGET_NANOS)
+#else
     snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
     ux_step = 0;
     ux_step_count = 2;
     UX_DISPLAY(ui_address_nanos, ui_address_prepro);
-#endif // #if TARGET_ID
+#endif // HAVE_UX_FLOW
 
     *flags |= IO_ASYNCH_REPLY;
   }
@@ -477,16 +472,14 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 #ifdef NO_CONSENT
     io_seproxyhal_touch_signMessage_ok(NULL);
 #else
-#if defined(TARGET_BLUE)
-    ui_approval_message_sign_blue_init();
-#elif defined(HAVE_UX_FLOW)
+#if defined(HAVE_UX_FLOW)
     ux_flow_init(0, ux_sign_flow, NULL);
-#elif defined(TARGET_NANOS)
+#else
     ux_step = 0;
     ux_step_count = 2;
     UX_DISPLAY(ui_approval_signMessage_nanos,
                    ui_approval_signMessage_prepro);
-#endif // #if TARGET_ID
+#endif // HAVE_UX_FLOW
 #endif // NO_CONSENT
 
     *flags |= IO_ASYNCH_REPLY;
@@ -735,11 +728,6 @@ chain_config_t const C_chain_config = {
   .coinName = CHAINID_COINNAME " ",
   .chainId = CHAIN_ID,
   .kind = CHAIN_KIND,
-#ifdef TARGET_BLUE
-  .color_header = COLOR_APP,
-  .color_dashboard = COLOR_APP_LIGHT,
-  .header_text = CHAINID_UPCASE,
-#endif // TARGET_BLUE
 };
 
 __attribute__((section(".boot"))) int main(int arg0) {
@@ -749,11 +737,6 @@ __attribute__((section(".boot"))) int main(int arg0) {
     unsigned int libcall_params[3];
     unsigned char coinName[sizeof(CHAINID_COINNAME)];
     strcpy(coinName, CHAINID_COINNAME);
-#ifdef TARGET_BLUE
-    unsigned char coinNameUP[sizeof(CHAINID_UPCASE)];
-    strcpy(coinNameUP, CHAINID_UPCASE);
-    local_chainConfig.header_text = coinNameUP;
-#endif // TARGET_BLUE
     local_chainConfig.coinName = coinName;
     BEGIN_TRY {
         TRY {
@@ -823,12 +806,6 @@ __attribute__((section(".boot"))) int main(int arg0) {
 #endif // HAVE_BLE
                 
                 ui_idle();
-
-    #if defined(TARGET_BLUE)
-                // setup the status bar colors (remembered after wards, even more if another app does not resetup after app switch)
-                UX_SET_STATUS_BAR_COLOR(0xFFFFFF, chainConfig->color_header);
-    #endif // #if defined(TARGET_BLUE)
-
                 sample_main();
             }
             CATCH(EXCEPTION_IO_RESET) {

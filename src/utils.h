@@ -26,8 +26,6 @@ void array_hexstr(char *strbuf, const void *bin, size_t len);
 
 void convertUint256BE(const uint8_t *data, uint32_t length, uint256_t *target);
 
-int local_strchr(char *string, char ch);
-
 uint32_t getV(txContent_t *txContent);
 
 #endif /* _UTILS_H_ */

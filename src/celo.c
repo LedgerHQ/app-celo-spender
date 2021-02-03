@@ -7,10 +7,8 @@
 // TODO: remove this. This module should be independant from ui
 #if defined(HAVE_UX_FLOW)
 #include "ui_flow.h"
-#elif defined(TARGET_NANOS) && !defined(HAVE_UX_FLOW)
+#else
 #include "ui_nanos.h"
-#elif defined(TARGET_BLUE)
-#include "ui_blue.h"
 #endif
 
 #include <string.h>
@@ -394,15 +392,13 @@ customStatus_e customProcessor(txContext_t *context) {
                 dataContext.rawDataContext.fieldOffset = 0;
                 if (fieldPos == 0) {
                     array_hexstr(strings.tmp.tmp, dataContext.rawDataContext.data, 4);
-#if defined(TARGET_BLUE)
-                    UX_DISPLAY(ui_data_selector_blue, ui_data_selector_blue_prepro);
-#elif defined(HAVE_UX_FLOW)
+#if defined(HAVE_UX_FLOW)
                     ux_flow_init(0, ux_confirm_selector_flow, NULL);
-#elif defined(TARGET_NANOS)
+#else
                     ux_step = 0;
                     ux_step_count = 2;
                     UX_DISPLAY(ui_data_selector_nanos, ui_data_selector_prepro);
-#endif // #if TARGET_ID
+#endif // HAVE_UX_FLOW
                 }
                 else {
                     uint32_t offset = 0;
@@ -414,15 +410,13 @@ customStatus_e customProcessor(txContext_t *context) {
                             strings.tmp.tmp[offset++] = ':';
                         }
                     }
-#if defined(TARGET_BLUE)
-                    UX_DISPLAY(ui_data_parameter_blue, ui_data_parameter_blue_prepro);
-#elif defined(HAVE_UX_FLOW)
+#if defined(HAVE_UX_FLOW)
                     ux_flow_init(0, ux_confirm_parameter_flow, NULL);
-#elif defined(TARGET_NANOS)
+#else
                     ux_step = 0;
                     ux_step_count = 2;
                     UX_DISPLAY(ui_data_parameter_nanos, ui_data_parameter_prepro);
-#endif // #if TARGET_ID
+#endif // HAVE_UX_FLOW
                 }
             }
             else {
@@ -617,9 +611,7 @@ void finalizeParsing(bool direct) {
 #ifdef NO_CONSENT
   io_seproxyhal_touch_tx_ok(NULL);
 #else // NO_CONSENT
-#if defined(TARGET_BLUE)
-  ui_approval_transaction_blue_init();
-#elif defined(HAVE_UX_FLOW)
+#if defined(HAVE_UX_FLOW)
   if (tmpContent.txContent.gatewayDestinationLength != 0) {
     ux_flow_init(0,
       ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_gateway_tx_flow : ux_approval_celo_gateway_tx_flow),
@@ -629,7 +621,7 @@ void finalizeParsing(bool direct) {
       ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_tx_flow : ux_approval_celo_tx_flow),
       NULL);
   }
-#elif defined(TARGET_NANOS)
+#else
   ux_step = 0;
   // only display gateway fields if present
   if (tmpContent.txContent.gatewayDestinationLength != 0) {
@@ -639,6 +631,6 @@ void finalizeParsing(bool direct) {
     ux_step_count = 6;
   }
   UX_DISPLAY(ui_approval_nanos, ui_approval_prepro);
-#endif // #if TARGET_ID
+#endif // HAVE_UX_FLOW
 #endif // NO_CONSENT
 }

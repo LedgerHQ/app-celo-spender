@@ -176,14 +176,10 @@ endif
 DEFINES += $(DEFINES_LIB)
 
 #prepare hsm generation
-ifeq ($(TARGET_NAME),TARGET_BLUE)
-ICONNAME=blue_app_$(CHAIN).gif
-else
 ifeq ($(TARGET_NAME), TARGET_NANOX)
 ICONNAME=nanox_app_$(CHAIN).gif
 else
 ICONNAME=nanos_app_$(CHAIN).gif
-endif
 endif
 
 ################
