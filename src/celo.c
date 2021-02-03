@@ -11,8 +11,6 @@
 
 static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
 
-static const char CONTRACT_ADDRESS[] = "New contract";
-
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
     G_io_apdu_buffer[1] = (sw & 0xff);
@@ -491,15 +489,6 @@ void finalizeParsing(bool direct) {
   if (tmpContent.txContent.destinationLength != 0) {
     char address[41];
     getEthAddressStringFromBinary(tmpContent.txContent.destination, address, &sha3);
-    /*
-    addressSummary[0] = '0';
-    addressSummary[1] = 'x';
-    memcpy(addressSummary + 2, address, 4);
-    memcpy(addressSummary + 6, "...", 3);
-    memcpy(addressSummary + 9, address + 40 - 4, 4);
-    addressSummary[13] = '\0';
-    */
-
     strings.common.fullAddress[0] = '0';
     strings.common.fullAddress[1] = 'x';
     memcpy(strings.common.fullAddress+2, address, 40);
@@ -507,8 +496,7 @@ void finalizeParsing(bool direct) {
   }
   else
   {
-    memcpy(addressSummary, CONTRACT_ADDRESS, sizeof(CONTRACT_ADDRESS));
-    strcpy(strings.common.fullAddress, "Contract");
+    strcpy(strings.common.fullAddress, "New Contract");
   }
   // Add gateway fee recipient address
   if (tmpContent.txContent.gatewayDestinationLength != 0) {

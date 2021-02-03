@@ -93,7 +93,6 @@ cx_sha3_t sha3;
 
 volatile uint8_t dataAllowed;
 volatile uint8_t contractDetails;
-char addressSummary[32];
 volatile bool dataPresent;
 volatile bool tokenProvisioned;
 
@@ -199,17 +198,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
     THROW(0x9000);
   }
 #ifndef NO_CONSENT
-  else
-  {
-    /*
-    addressSummary[0] = '0';
-    addressSummary[1] = 'x';
-    memcpy(addressSummary + 2, tmpCtx.publicKeyContext.address, 4);
-    memcpy(addressSummary + 6, "...", 3);
-    memcpy(addressSummary + 9, tmpCtx.publicKeyContext.address + 40 - 4, 4);
-    addressSummary[13] = '\0';
-    */
-
+  else {
     // prepare for a UI based reply
     snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
     ux_flow_init(0, ux_display_public_flow, NULL);
