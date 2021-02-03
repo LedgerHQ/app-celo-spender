@@ -1,6 +1,5 @@
 #include "bolos_target.h"
 
-#if defined(HAVE_UX_FLOW)
 #include "ui_flow.h"
 #include "globals.h"
 
@@ -433,5 +432,3 @@ UX_FLOW(ux_sign_flow,
   &ux_sign_flow_3_step,
   &ux_sign_flow_4_step
 );
-
-#endif

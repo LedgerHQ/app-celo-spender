@@ -33,11 +33,7 @@
 #include "globals.h"
 #include "utils.h"
 
-#if defined(HAVE_UX_FLOW)
 #include "ui_flow.h"
-#else
-#include "ui_nanos.h"
-#endif
 
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
@@ -215,16 +211,8 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
     */
 
     // prepare for a UI based reply
-#if defined(HAVE_UX_FLOW)
     snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
     ux_flow_init(0, ux_display_public_flow, NULL);
-#else
-    snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
-    ux_step = 0;
-    ux_step_count = 2;
-    UX_DISPLAY(ui_address_nanos, ui_address_prepro);
-#endif // HAVE_UX_FLOW
-
     *flags |= IO_ASYNCH_REPLY;
   }
 #endif // NO_CONSENT
@@ -472,14 +460,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 #ifdef NO_CONSENT
     io_seproxyhal_touch_signMessage_ok(NULL);
 #else
-#if defined(HAVE_UX_FLOW)
     ux_flow_init(0, ux_sign_flow, NULL);
-#else
-    ux_step = 0;
-    ux_step_count = 2;
-    UX_DISPLAY(ui_approval_signMessage_nanos,
-                   ui_approval_signMessage_prepro);
-#endif // HAVE_UX_FLOW
 #endif // NO_CONSENT
 
     *flags |= IO_ASYNCH_REPLY;
@@ -684,21 +665,7 @@ unsigned char io_event(unsigned char channel) {
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
-    #ifdef HAVE_UX_FLOW
         UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
-    #else
-        UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer,
-        {
-          if (UX_ALLOWED) {
-            if (ux_step_count) {
-              // prepare next screen
-              ux_step = (ux_step+1)%ux_step_count;
-              // redisplay screen
-              UX_REDISPLAY();
-            }
-          }
-        });
-    #endif // HAVE_UX_FLOW
         break;
     }
 
