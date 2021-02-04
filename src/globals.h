@@ -14,8 +14,15 @@ extern tmpContent_t tmpContent;
 
 extern txContext_t txContext;
 
-#define MAX_BIP32_PATH 10
+
 #define MAX_TOKEN 2
+
+#define MAX_BIP32_PATH 10
+
+typedef struct bip32Path_t {
+    uint8_t len;
+    uint32_t path[MAX_BIP32_PATH];
+} bip32Path_t;
 
 typedef struct publicKeyContext_t {
     cx_ecfp_public_key_t publicKey;
@@ -25,15 +32,13 @@ typedef struct publicKeyContext_t {
 } publicKeyContext_t;
 
 typedef struct messageSigningContext_t {
-    uint8_t pathLength;
-    uint32_t bip32Path[MAX_BIP32_PATH];
+    bip32Path_t derivationPath;
     uint8_t hash[32];
     uint32_t remainingLength;
 } messageSigningContext_t;
 
 typedef struct transactionContext_t {
-    uint8_t pathLength;
-    uint32_t bip32Path[MAX_BIP32_PATH];
+    bip32Path_t derivationPath;
     uint8_t hash[32];
     tokenDefinition_t tokens[MAX_TOKEN];
     uint8_t tokenSet[MAX_TOKEN];

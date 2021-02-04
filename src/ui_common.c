@@ -79,8 +79,8 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
     uint32_t tx = 0;
     uint32_t v = getV(&tmpContent.txContent);
     io_seproxyhal_io_heartbeat();
-    os_perso_derive_node_bip32(CX_CURVE_256K1, tmpCtx.transactionContext.bip32Path,
-                               tmpCtx.transactionContext.pathLength,
+    os_perso_derive_node_bip32(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
+                               tmpCtx.transactionContext.derivationPath.len,
                                privateKeyData, NULL);
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32,
                                  &privateKey);
@@ -139,8 +139,8 @@ unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
     uint32_t tx = 0;
     io_seproxyhal_io_heartbeat();
     os_perso_derive_node_bip32(
-        CX_CURVE_256K1, tmpCtx.messageSigningContext.bip32Path,
-        tmpCtx.messageSigningContext.pathLength, privateKeyData, NULL);
+        CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
+        tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL);
     io_seproxyhal_io_heartbeat();
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
     explicit_bzero(privateKeyData, sizeof(privateKeyData));

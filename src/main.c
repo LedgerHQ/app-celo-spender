@@ -131,6 +131,31 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     return 0;
 }
 
+#define MAX_BIP32_PATH 10
+
+static int parse_bip32_path(bip32Path_t *derivationPath, const uint8_t *input, size_t len) {
+  uint8_t path_length;
+
+  if (len == 0 || input == NULL) {
+    return -1;
+  }
+  path_length = input[0];
+  if (path_length < 1 || path_length > MAX_BIP32_PATH) {
+    return -1;
+  }
+  if (len < 1 + path_length * sizeof(uint32_t)) {
+    return -1;
+  }
+
+  input++;
+  for (size_t i = 0; i < path_length; i++) {
+    derivationPath->path[i] = (input[0] << 24u) | (input[1] << 16u) | (input[2] << 8u) | input[3];
+    input += 4;
+  }
+  derivationPath->len = path_length;
+  return 0;
+}
+
 unsigned int const U_os_perso_seed_cookie[] = {
   0xda7aba5e,
   0xc1a551c5,
@@ -160,29 +185,25 @@ void handleGetWalletId(volatile unsigned int *tx) {
 void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(dataLength);
   uint8_t privateKeyData[32];
-  uint32_t bip32Path[MAX_BIP32_PATH];
-  uint32_t i;
-  uint8_t bip32PathLength = *(dataBuffer++);
+  bip32Path_t derivationPath;
   cx_ecfp_private_key_t privateKey;
+
   reset_app_context();
-  if ((bip32PathLength < 0x01) ||
-      (bip32PathLength > MAX_BIP32_PATH)) {
-    PRINTF("Invalid path\n");
-    THROW(0x6a80);
-  }
   if ((p1 != P1_CONFIRM) && (p1 != P1_NON_CONFIRM)) {
     THROW(0x6B00);
   }
   if ((p2 != P2_CHAINCODE) && (p2 != P2_NO_CHAINCODE)) {
     THROW(0x6B00);
   }
-  for (i = 0; i < bip32PathLength; i++) {
-    bip32Path[i] = U4BE(dataBuffer, 0);
-    dataBuffer += 4;
+
+  if (parse_bip32_path(&derivationPath, dataBuffer, dataLength)) {
+      PRINTF("Invalid path\n");
+      THROW(0x6a80);
   }
+
   tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
   io_seproxyhal_io_heartbeat();
-  os_perso_derive_node_bip32(CX_CURVE_256K1, bip32Path, bip32PathLength, privateKeyData, (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL));
+  os_perso_derive_node_bip32(CX_CURVE_256K1, derivationPath.path, derivationPath.len, privateKeyData, (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL));
   cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
   io_seproxyhal_io_heartbeat();
   cx_ecfp_generate_pair(CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1);
@@ -264,35 +285,22 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   THROW(0x9000);
 }
 
-void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
+void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(tx);
   parserStatus_e txResult;
   if (p1 == P1_FIRST) {
-    if (dataLength < 1) {
-      PRINTF("Invalid data\n");
-      THROW(0x6a80);
-    }    
     if (appState != APP_STATE_IDLE) {
       reset_app_context();
     }
-    appState = APP_STATE_SIGNING_TX;    
-    tmpCtx.transactionContext.pathLength = workBuffer[0];
-    if ((tmpCtx.transactionContext.pathLength < 0x01) ||
-        (tmpCtx.transactionContext.pathLength > MAX_BIP32_PATH)) {
+
+    if (parse_bip32_path(&tmpCtx.transactionContext.derivationPath, workBuffer, dataLength)) {
       PRINTF("Invalid path\n");
       THROW(0x6a80);
     }
-    workBuffer++;
-    dataLength--;
-    for (int i = 0; i < tmpCtx.transactionContext.pathLength; i++) {
-      if (dataLength < 4) {
-        PRINTF("Invalid data\n");
-        THROW(0x6a80);
-      }      
-      tmpCtx.transactionContext.bip32Path[i] = U4BE(workBuffer, 0);
-      workBuffer += 4;
-      dataLength -= 4;
-    }
+    workBuffer += 1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
+    dataLength -= 1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
+
+    appState = APP_STATE_SIGNING_TX;
     dataPresent = false;
     tokenProvisioned = false;
     initTx(&txContext, &sha3, &tmpContent.txContent, customProcessor, NULL);
@@ -371,32 +379,20 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     uint32_t index;
     uint32_t base = 10;
     uint8_t pos = 0;
-    uint32_t i;
-    if (dataLength < 1) {
-      PRINTF("Invalid data\n");
-      THROW(0x6a80);
-    }
+
     if (appState != APP_STATE_IDLE) {
       reset_app_context();
     }
-    appState = APP_STATE_SIGNING_MESSAGE;    
-    tmpCtx.messageSigningContext.pathLength = workBuffer[0];
-    if ((tmpCtx.messageSigningContext.pathLength < 0x01) ||
-        (tmpCtx.messageSigningContext.pathLength > MAX_BIP32_PATH)) {
-        PRINTF("Invalid path\n");
-        THROW(0x6a80);
+
+    if (parse_bip32_path(&tmpCtx.messageSigningContext.derivationPath, workBuffer, dataLength)) {
+      PRINTF("Invalid path\n");
+      THROW(0x6a80);
     }
-    workBuffer++;
-    dataLength--;
-    for (i = 0; i < tmpCtx.messageSigningContext.pathLength; i++) {
-        if (dataLength < 4) {
-          PRINTF("Invalid data\n");
-          THROW(0x6a80);
-        }
-        tmpCtx.messageSigningContext.bip32Path[i] = U4BE(workBuffer, 0);
-        workBuffer += 4;
-        dataLength -= 4;
-    }
+    workBuffer += 1 + tmpCtx.messageSigningContext.derivationPath.len * sizeof(uint32_t);
+    dataLength -= 1 + tmpCtx.messageSigningContext.derivationPath.len * sizeof(uint32_t);
+
+    appState = APP_STATE_SIGNING_MESSAGE;
+
     if (dataLength < 4) {
       PRINTF("Invalid data\n");
       THROW(0x6a80);
