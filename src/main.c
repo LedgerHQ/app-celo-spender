@@ -682,29 +682,6 @@ chain_config_t const C_chain_config = {
 };
 
 __attribute__((section(".boot"))) int main(int arg0) {
-#ifdef USE_LIB_ETHEREUM
-    chain_config_t local_chainConfig;
-    memcpy(&local_chainConfig, &C_chain_config, sizeof(chain_config_t));
-    unsigned int libcall_params[3];
-    unsigned char coinName[sizeof(CHAINID_COINNAME)];
-    strcpy(coinName, CHAINID_COINNAME);
-    local_chainConfig.coinName = coinName;
-    BEGIN_TRY {
-        TRY {
-            // ensure syscall will accept us
-            check_api_level(CX_COMPAT_APILEVEL);
-            // delegate to Ethereum app/lib
-            libcall_params[0] = "Ethereum";
-            libcall_params[1] = 0x100; // use the Init call, as we won't exit
-            libcall_params[2] = &local_chainConfig;
-            os_lib_call(&libcall_params);
-        }
-        FINALLY {
-            app_exit();
-        }
-    }
-    END_TRY;
-#else
     // exit critical section
     __asm volatile("cpsie i");
 
@@ -772,6 +749,5 @@ __attribute__((section(".boot"))) int main(int arg0) {
         END_TRY;
     }
 	  app_exit();
-#endif
     return 0;
 }
