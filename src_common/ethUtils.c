@@ -35,15 +35,6 @@
 
 extern chain_config_t *chainConfig;
 
-void getEthAddressFromKey(const cx_ecfp_public_key_t *publicKey, uint8_t *out,
-                                cx_sha3_t *sha3Context) {
-    uint8_t hashAddress[32];
-    cx_keccak_init(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32);
-    memcpy(out, hashAddress + 12, 20);
-}
-
-
 #ifdef CHECKSUM_1
 
 static const uint8_t const HEXDIGITS[] = "0123456789ABCDEF";

@@ -376,7 +376,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 
   if (p1 == P1_FIRST) {
     char tmp[11];
-    uint32_t index;
+    uint32_t i;
     uint32_t base = 10;
     uint8_t pos = 0;
 
@@ -403,11 +403,11 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     // Initialize message header + length
     cx_keccak_init(&sha3, 256);
     cx_hash((cx_hash_t *)&sha3, 0, (uint8_t*)SIGN_MAGIC, sizeof(SIGN_MAGIC) - 1, NULL, 0);
-    for (index = 1; (((index * base) <= tmpCtx.messageSigningContext.remainingLength) &&
-                         (((index * base) / base) == index));
-             index *= base);
-    for (; index; index /= base) {
-      tmp[pos++] = '0' + ((tmpCtx.messageSigningContext.remainingLength / index) % base);
+    for (i = 1; (((i * base) <= tmpCtx.messageSigningContext.remainingLength) &&
+                         (((i * base) / base) == i));
+             i *= base);
+    for (; i; i /= base) {
+      tmp[pos++] = '0' + ((tmpCtx.messageSigningContext.remainingLength / i) % base);
     }
     tmp[pos] = '\0';
     cx_hash((cx_hash_t *)&sha3, 0, (uint8_t*)tmp, pos, NULL, 0);
@@ -508,7 +508,6 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 
         default:
           THROW(0x6D00);
-          break;
       }
     }
     CATCH(EXCEPTION_IO_RESET) {

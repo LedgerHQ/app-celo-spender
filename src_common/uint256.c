@@ -411,8 +411,8 @@ void mul256(const uint256_t *number1, const uint256_t *number2, uint256_t *targe
     add256(&target1, &target2, target);
 }
 
-void divmod128(uint128_t *l, uint128_t *r, uint128_t *retDiv,
-               uint128_t *retMod) {
+void divmod128(uint128_t *l, uint128_t *r, uint128_t *div,
+               uint128_t *mod) {
     uint128_t copyd, adder, resDiv, resMod;
     uint128_t one;
     UPPER(one) = 0;
@@ -421,8 +421,8 @@ void divmod128(uint128_t *l, uint128_t *r, uint128_t *retDiv,
     clear128(&resDiv);
     copy128(&resMod, l);
     if (gt128(r, l)) {
-        copy128(retMod, l);
-        clear128(retDiv);
+        copy128(mod, l);
+        clear128(div);
     } else {
         shiftl128(r, diffBits, &copyd);
         shiftl128(&one, diffBits, &adder);
@@ -438,13 +438,13 @@ void divmod128(uint128_t *l, uint128_t *r, uint128_t *retDiv,
             shiftr128(&copyd, 1, &copyd);
             shiftr128(&adder, 1, &adder);
         }
-        copy128(retDiv, &resDiv);
-        copy128(retMod, &resMod);
+        copy128(div, &resDiv);
+        copy128(mod, &resMod);
     }
 }
 
-void divmod256(uint256_t *l, uint256_t *r, uint256_t *retDiv,
-               uint256_t *retMod) {
+void divmod256(uint256_t *l, uint256_t *r, uint256_t *div,
+               uint256_t *mod) {
     uint256_t copyd, adder, resDiv, resMod;
     uint256_t one;
     clear256(&one);
@@ -454,8 +454,8 @@ void divmod256(uint256_t *l, uint256_t *r, uint256_t *retDiv,
     clear256(&resDiv);
     copy256(&resMod, l);
     if (gt256(r, l)) {
-        copy256(retMod, l);
-        clear256(retDiv);
+        copy256(mod, l);
+        clear256(div);
     } else {
         shiftl256(r, diffBits, &copyd);
         shiftl256(&one, diffBits, &adder);
@@ -471,8 +471,8 @@ void divmod256(uint256_t *l, uint256_t *r, uint256_t *retDiv,
             shiftr256(&copyd, 1, &copyd);
             shiftr256(&adder, 1, &adder);
         }
-        copy256(retDiv, &resDiv);
-        copy256(retMod, &resMod);
+        copy256(div, &resDiv);
+        copy256(mod, &resMod);
     }
 }
 
@@ -486,24 +486,24 @@ static void reverseString(char *str, uint32_t length) {
     }
 }
 
-bool tostring128(const uint128_t *number, uint32_t baseParam, char *out,
+bool tostring128(const uint128_t *number, uint32_t base, char *out,
                  uint32_t outLength) {
     uint128_t rDiv;
     uint128_t rMod;
-    uint128_t base;
+    uint128_t outputBase;
     copy128(&rDiv, number);
     clear128(&rMod);
-    clear128(&base);
-    LOWER(base) = baseParam;
+    clear128(&outputBase);
+    LOWER(outputBase) = base;
     uint32_t offset = 0;
-    if ((baseParam < 2) || (baseParam > 16)) {
+    if ((base < 2) || (base > 16)) {
         return false;
     }
     do {
         if (offset > (outLength - 1)) {
             return false;
         }
-        divmod128(&rDiv, &base, &rDiv, &rMod);
+        divmod128(&rDiv, &outputBase, &rDiv, &rMod);
         out[offset++] = HEXDIGITS[(uint8_t)LOWER(rMod)];
     } while (!zero128(&rDiv));
     out[offset] = '\0';
@@ -511,25 +511,25 @@ bool tostring128(const uint128_t *number, uint32_t baseParam, char *out,
     return true;
 }
 
-bool tostring256(const uint256_t *number, uint32_t baseParam, char *out,
+bool tostring256(const uint256_t *number, uint32_t base, char *out,
                  uint32_t outLength) {
     uint256_t rDiv;
     uint256_t rMod;
-    uint256_t base;
+    uint256_t outputBase;
     copy256(&rDiv, number);
     clear256(&rMod);
-    clear256(&base);
-    UPPER(LOWER(base)) = 0;
-    LOWER(LOWER(base)) = baseParam;
+    clear256(&outputBase);
+    UPPER(LOWER(outputBase)) = 0;
+    LOWER(LOWER(outputBase)) = base;
     uint32_t offset = 0;
-    if ((baseParam < 2) || (baseParam > 16)) {
+    if ((base < 2) || (base > 16)) {
         return false;
     }
     do {
         if (offset > (outLength - 1)) {
             return false;
         }
-        divmod256(&rDiv, &base, &rDiv, &rMod);
+        divmod256(&rDiv, &outputBase, &rDiv, &rMod);
         out[offset++] = HEXDIGITS[(uint8_t)LOWER(LOWER(rMod))];
     } while (!zero256(&rDiv));
     out[offset] = '\0';

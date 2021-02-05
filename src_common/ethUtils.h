@@ -23,9 +23,6 @@
 
 #include "cx.h"
 
-void getEthAddressFromKey(const cx_ecfp_public_key_t *publicKey, uint8_t *out,
-                                cx_sha3_t *sha3Context);
-
 void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out,
                                 cx_sha3_t *sha3Context);
 
