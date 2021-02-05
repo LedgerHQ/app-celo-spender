@@ -29,6 +29,10 @@ typedef void * cx_sha3_t;
 #include "cx.h"
 #endif
 
+#define MAX_INT256 32
+#define MAX_ADDRESS 20
+#define MAX_V 4
+
 struct txContext_t;
 
 typedef enum customStatus_e {
@@ -39,8 +43,6 @@ typedef enum customStatus_e {
 } customStatus_e;
 
 typedef customStatus_e (*ustreamProcess_t)(struct txContext_t *context);
-
-#define TX_FLAG_TYPE 0x01
 
 typedef enum rlpTxField_e {
     TX_RLP_NONE = 0,
@@ -69,7 +71,7 @@ typedef enum parserStatus_e {
 } parserStatus_e;
 
 typedef struct txInt256_t {
-    uint8_t value[32];
+    uint8_t value[MAX_INT256];
     uint8_t length;
 } txInt256_t;
 
@@ -78,14 +80,15 @@ typedef struct txContent_t {
     txInt256_t startgas;
     txInt256_t value;
     txInt256_t gatewayFee;
-    uint8_t destination[20];
+    uint8_t destination[MAX_ADDRESS];
     uint8_t destinationLength;
-    uint8_t gatewayDestination[20];
+    uint8_t gatewayDestination[MAX_ADDRESS];
     uint8_t gatewayDestinationLength;
     uint8_t feeCurrency[20];
     uint8_t feeCurrencyLength;
-    uint8_t v[4];
+    uint8_t v[MAX_V];
     uint8_t vLength;
+    bool dataPresent;
 } txContent_t;
 
 typedef struct txContext_t {
@@ -101,7 +104,6 @@ typedef struct txContext_t {
     uint32_t rlpBufferPos;
     const uint8_t *workBuffer;
     uint32_t commandLength;
-    uint32_t processingFlags;
     ustreamProcess_t customProcessor;
     txContent_t *content;
     void *extra;
@@ -109,8 +111,7 @@ typedef struct txContext_t {
 
 void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
             ustreamProcess_t customProcessor, void *extra);
-parserStatus_e processTx(txContext_t *context, const uint8_t *buffer,
-                         size_t length, uint32_t processingFlags);
+parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length);
 parserStatus_e continueTx(txContext_t *context);
 int copyTxData(txContext_t *context, uint8_t *out, size_t length);
 

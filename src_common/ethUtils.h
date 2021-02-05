@@ -23,10 +23,10 @@
 
 #include "cx.h"
 
-void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out,
+void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out, int chainId,
                                 cx_sha3_t *sha3Context);
 
-void getEthAddressStringFromBinary(const uint8_t *address, char *out,
+void getEthAddressStringFromBinary(const uint8_t *address, char *out, int chainId,
                                    cx_sha3_t *sha3Context);
 
 bool adjustDecimals(const char *src, size_t srcLength, char *target,

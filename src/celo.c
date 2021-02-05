@@ -70,206 +70,8 @@ void reset_app_context() {
 
 tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
     tokenDefinition_t *currentToken = NULL;
-#ifdef HAVE_TOKENS_LIST
-    uint32_t numTokens = 0;
-    switch(chainConfig->kind) {
-        case CHAIN_KIND_AKROMA:
-            numTokens = NUM_TOKENS_AKROMA;
-            break;
-        case CHAIN_KIND_ETHEREUM:
-            numTokens = NUM_TOKENS_ETHEREUM;
-            break;
-        case CHAIN_KIND_CELO:
-            numTokens = NUM_TOKENS_CELO;
-            break;
-        case CHAIN_KIND_ETHEREUM_CLASSIC:
-            numTokens = NUM_TOKENS_ETHEREUM_CLASSIC;
-            break;
-        case CHAIN_KIND_PIRL:
-            numTokens = NUM_TOKENS_PIRL;
-            break;
-        case CHAIN_KIND_POA:
-            numTokens = NUM_TOKENS_POA;
-            break;
-        case CHAIN_KIND_ARTIS_SIGMA1:
-            numTokens = NUM_TOKENS_ARTIS_SIGMA1;
-            break;
-        case CHAIN_KIND_ARTIS_TAU1:
-            numTokens = NUM_TOKENS_ARTIS_TAU1;
-            break;
-        case CHAIN_KIND_RSK:
-            numTokens = NUM_TOKENS_RSK;
-            break;
-        case CHAIN_KIND_EXPANSE:
-            numTokens = NUM_TOKENS_EXPANSE;
-            break;
-        case CHAIN_KIND_UBIQ:
-            numTokens = NUM_TOKENS_UBIQ;
-            break;
-        case CHAIN_KIND_WANCHAIN:
-            numTokens = NUM_TOKENS_WANCHAIN;
-            break;
-        case CHAIN_KIND_KUSD:
-            numTokens = NUM_TOKENS_KUSD;
-            break;
-        case CHAIN_KIND_MUSICOIN:
-            numTokens = NUM_TOKENS_MUSICOIN;
-            break;
-        case CHAIN_KIND_CALLISTO:
-            numTokens = NUM_TOKENS_CALLISTO;
-            break;
-        case CHAIN_KIND_ETHERSOCIAL:
-            numTokens = NUM_TOKENS_ETHERSOCIAL;
-            break;
-        case CHAIN_KIND_ELLAISM:
-            numTokens = NUM_TOKENS_ELLAISM;
-            break;
-        case CHAIN_KIND_ETHER1:
-            numTokens = NUM_TOKENS_ETHER1;
-            break;
-        case CHAIN_KIND_ETHERGEM:
-            numTokens = NUM_TOKENS_ETHERGEM;
-            break;
-        case CHAIN_KIND_ATHEIOS:
-            numTokens = NUM_TOKENS_ATHEIOS;
-            break;
-        case CHAIN_KIND_GOCHAIN:
-            numTokens = NUM_TOKENS_GOCHAIN;
-            break;
-        case CHAIN_KIND_MIX:
-            numTokens = NUM_TOKENS_MIX;
-            break;
-        case CHAIN_KIND_REOSC:
-            numTokens = NUM_TOKENS_REOSC;
-            break;
-        case CHAIN_KIND_HPB:
-            numTokens = NUM_TOKENS_HPB;
-            break;
-        case CHAIN_KIND_TOMOCHAIN:
-            numTokens = NUM_TOKENS_TOMOCHAIN;
-            break;
-        case CHAIN_KIND_TOBALABA:
-            numTokens = NUM_TOKENS_TOBALABA;
-            break;
-        case CHAIN_KIND_DEXON:
-            numTokens = NUM_TOKENS_DEXON;
-            break;
-        case CHAIN_KIND_VOLTA:
-            numTokens = NUM_TOKENS_VOLTA;
-            break;
-        case CHAIN_KIND_EWC:
-            numTokens = NUM_TOKENS_EWC;
-            break;
-        case CHAIN_KIND_WEBCHAIN:
-            numTokens = NUM_TOKENS_WEBCHAIN;
-            break;
-        case CHAIN_KIND_THUNDERCORE:
-            numTokens = NUM_TOKENS_THUNDERCORE;
-            break;
-    }
-    for (uint32_t i=0; i<numTokens; i++) {
-        switch(chainConfig->kind) {
-            case CHAIN_KIND_AKROMA:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_AKROMA[i]);
-                break;
-            case CHAIN_KIND_CELO:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_CELO[i]);		
-                break;
-            case CHAIN_KIND_ETHEREUM:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ETHEREUM[i]);
-                break;
-            case CHAIN_KIND_ETHEREUM_CLASSIC:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ETHEREUM_CLASSIC[i]);
-                break;
-            case CHAIN_KIND_PIRL:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_PIRL[i]);
-                break;
-            case CHAIN_KIND_POA:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_POA[i]);
-                break;
-            case CHAIN_KIND_ARTIS_SIGMA1:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ARTIS_SIGMA1[i]);
-                break;
-            case CHAIN_KIND_ARTIS_TAU1:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ARTIS_TAU1[i]);
-                break;
-            case CHAIN_KIND_RSK:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_RSK[i]);
-                break;
-            case CHAIN_KIND_EXPANSE:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_EXPANSE[i]);
-                break;
-            case CHAIN_KIND_UBIQ:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_UBIQ[i]);
-                break;
-            case CHAIN_KIND_WANCHAIN:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_WANCHAIN[i]);
-                break;
-            case CHAIN_KIND_KUSD:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_KUSD[i]);
-                break;
-            case CHAIN_KIND_MUSICOIN:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_MUSICOIN[i]);
-                break;
-            case CHAIN_KIND_CALLISTO:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_CALLISTO[i]);
-                break;
-            case CHAIN_KIND_ETHERSOCIAL:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ETHERSOCIAL[i]);
-                break;
-            case CHAIN_KIND_ELLAISM:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ELLAISM[i]);
-                break;
-            case CHAIN_KIND_ETHER1:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ETHER1[i]);
-                break;
-            case CHAIN_KIND_ETHERGEM:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ETHERGEM[i]);
-                break;
-            case CHAIN_KIND_ATHEIOS:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_ATHEIOS[i]);
-                break;
-            case CHAIN_KIND_GOCHAIN:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_GOCHAIN[i]);
-                break;
-            case CHAIN_KIND_MIX:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_MIX[i]);
-                break;
-            case CHAIN_KIND_REOSC:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_REOSC[i]);
-                break;
-            case CHAIN_KIND_HPB:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_HPB[i]);
-                break;
-            case CHAIN_KIND_TOMOCHAIN:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_TOMOCHAIN[i]);
-                break;
-            case CHAIN_KIND_TOBALABA:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_TOBALABA[i]);
-                break;
-            case CHAIN_KIND_DEXON:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_DEXON[i]);
-                break;
-            case CHAIN_KIND_VOLTA:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_VOLTA[i]);
-                break;
-            case CHAIN_KIND_EWC:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_EWC[i]);
-                break;
-            case CHAIN_KIND_WEBCHAIN:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_WEBCHAIN[i]);
-                break;
-            case CHAIN_KIND_THUNDERCORE:
-                currentToken = (tokenDefinition_t *)PIC(&TOKENS_THUNDERCORE[i]);
-                break;
-        }
-        if (memcmp(currentToken->address, tokenAddr, 20) == 0) {
-            return currentToken;
-        }
-    }
-#endif
 
-    for(size_t i=0; i<MAX_TOKEN; i++){
+    for(int i=0; i < MAX_TOKEN; i++) {
       currentToken = &tmpCtx.transactionContext.tokens[i];
       if (tmpCtx.transactionContext.tokenSet[i] && (memcmp(currentToken->address, tokenAddr, 20) == 0)) {
         PRINTF("Token found at index %d\n", i);
@@ -416,8 +218,8 @@ void finalizeParsing(bool direct) {
   uint32_t i;
   uint8_t decimals = WEI_TO_ETHER;
   uint8_t feeDecimals = WEI_TO_ETHER;
-  uint8_t *ticker = (uint8_t *)PIC(chainConfig->coinName);
-  uint8_t *feeTicker = (uint8_t *)PIC(chainConfig->coinName);
+  char *ticker = CHAINID_COINNAME " ";
+  char *feeTicker = CHAINID_COINNAME " ";
   uint8_t tickerOffset = 0;
 
   // Display correct currency if fee currency field sent
@@ -440,22 +242,6 @@ void finalizeParsing(bool direct) {
     }
   }
 
-  // Verify the chain
-  if (chainConfig->chainId != 0) {
-    uint32_t v = getV(&tmpContent.txContent);
-    if (chainConfig->chainId != v) {
-        reset_app_context();
-        PRINTF("Invalid chainId %d expected %d\n", v, chainConfig->chainId);
-        if (direct) {
-            THROW(0x6A80);
-        }
-        else {
-            io_seproxyhal_send_status(0x6A80);
-            ui_idle();
-            return;
-        }
-    }
-  }
   // Store the hash
   cx_hash((cx_hash_t *)&sha3, CX_LAST, tmpCtx.transactionContext.hash, 0, tmpCtx.transactionContext.hash, 32);
     // If there is a token to process, check if it is well known
@@ -488,7 +274,7 @@ void finalizeParsing(bool direct) {
   // Add address
   if (tmpContent.txContent.destinationLength != 0) {
     char address[41];
-    getEthAddressStringFromBinary(tmpContent.txContent.destination, address, &sha3);
+    getEthAddressStringFromBinary(tmpContent.txContent.destination, address, CHAIN_ID, &sha3);
     strings.common.fullAddress[0] = '0';
     strings.common.fullAddress[1] = 'x';
     memcpy(strings.common.fullAddress+2, address, 40);
@@ -501,7 +287,7 @@ void finalizeParsing(bool direct) {
   // Add gateway fee recipient address
   if (tmpContent.txContent.gatewayDestinationLength != 0) {
     char gatewayAddress[41];
-    getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination, gatewayAddress, &sha3);
+    getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination, gatewayAddress, CHAIN_ID, &sha3);
     strings.common.fullGatewayAddress[0] = '0';
     strings.common.fullGatewayAddress[1] = 'x';
     memcpy(strings.common.fullGatewayAddress+2, gatewayAddress, 40);

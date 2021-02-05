@@ -21,10 +21,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#define MAX_INT256 32
-#define MAX_ADDRESS 20
-#define MAX_V 4
-
 #ifdef TESTING
 #define PRINTF(...)
 #endif
@@ -468,9 +464,7 @@ static parserStatus_e processTxInternal(txContext_t *context) {
                 if (processContent(context)) {
                     return USTREAM_FAULT;
                 }
-                if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
-                    context->currentField++;
-                }
+                context->currentField++;
                 break;
             case TX_RLP_TYPE:
                 if (processType(context)) {
@@ -537,11 +531,9 @@ static parserStatus_e processTxInternal(txContext_t *context) {
     }
 }
 
-parserStatus_e processTx(txContext_t *context, const uint8_t *buffer,
-                         size_t length, uint32_t processingFlags) {
+parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
     context->workBuffer = buffer;
     context->commandLength = length;
-    context->processingFlags = processingFlags;
     return processTxInternal(context);
 }
 

@@ -1,9 +1,12 @@
 #pragma once
 
 #include "ethUstream.h"
-#include "chainConfig.h"
 #include "tokens.h"
 #include "cx.h"
+
+#define CHAINID_UPCASE "CELO"
+#define CHAINID_COINNAME "cGLD"
+#define CHAIN_ID 0
 
 typedef union {
   txContent_t txContent;
@@ -85,8 +88,6 @@ typedef struct internalStorage_t {
 
 extern const internalStorage_t N_storage_real;
 #define N_storage (*(internalStorage_t*) PIC(&N_storage_real))
-
-extern chain_config_t *chainConfig;
 
 extern char addressSummary[32];
 extern cx_sha3_t sha3;

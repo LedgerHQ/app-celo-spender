@@ -25,7 +25,6 @@
 #include "ethUtils.h"
 #include "uint256.h"
 #include "tokens.h"
-#include "chainConfig.h"
 #include "celo.h"
 
 #include "os_io_seproxyhal.h"
@@ -102,8 +101,6 @@ const internalStorage_t N_storage_real;
 
 static const char SIGN_MAGIC[] = "\x19"
                                  "Ethereum Signed Message:\n";
-
-chain_config_t *chainConfig;
 
 unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     switch (channel & ~(IO_FLAGS)) {
@@ -210,7 +207,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
   explicit_bzero(&privateKey, sizeof(privateKey));
   explicit_bzero(privateKeyData, sizeof(privateKeyData));
   io_seproxyhal_io_heartbeat();
-  getEthAddressStringFromKey(&tmpCtx.publicKeyContext.publicKey, tmpCtx.publicKeyContext.address, &sha3);
+  getEthAddressStringFromKey(&tmpCtx.publicKeyContext.publicKey, tmpCtx.publicKeyContext.address, CHAIN_ID, &sha3);
 #ifndef NO_CONSENT
   if (p1 == P1_NON_CONFIRM)
 #endif // NO_CONSENT
@@ -235,7 +232,6 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   UNUSED(tx);
   uint32_t offset = 0;
   uint8_t tickerLength;
-  uint32_t chainId;
   uint8_t hash[32];
   cx_ecfp_public_key_t tokenKey;
 
@@ -269,11 +265,8 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   token->decimals = U4BE(workBuffer, offset);
   offset += 4;
   dataLength -= 4;
-  chainId = U4BE(workBuffer, offset);
-  if ((chainConfig->chainId != 0) && (chainConfig->chainId != chainId)) {
-    PRINTF("ChainId token mismatch\n");
-    THROW(0x6A80);
-  }
+
+  // Skip chainId
   offset += 4;
   dataLength -= 4;
   cx_ecfp_init_public_key(CX_CURVE_256K1, TOKEN_SIGNATURE_PUBLIC_KEY, sizeof(TOKEN_SIGNATURE_PUBLIC_KEY), &tokenKey);
@@ -320,7 +313,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
     PRINTF("Parser not initialized\n");
     THROW(0x6985);
   }
-  txResult = processTx(&txContext, workBuffer, dataLength, (chainConfig->kind == CHAIN_KIND_WANCHAIN ? TX_FLAG_TYPE : 0));
+  txResult = processTx(&txContext, workBuffer, dataLength);
   switch (txResult) {
     case USTREAM_SUSPENDED:
       break;
@@ -675,26 +668,9 @@ void app_exit(void) {
     END_TRY_L(exit);
 }
 
-chain_config_t const C_chain_config = {
-  .coinName = CHAINID_COINNAME " ",
-  .chainId = CHAIN_ID,
-  .kind = CHAIN_KIND,
-};
-
-__attribute__((section(".boot"))) int main(int arg0) {
+__attribute__((section(".boot"))) int main(void) {
     // exit critical section
     __asm volatile("cpsie i");
-
-    if (arg0) {
-        if (((unsigned int *)arg0)[0] != 0x100) {
-            app_exit();
-            return 0;
-        }
-        chainConfig = (chain_config_t *)((unsigned int *)arg0)[1];
-    }
-    else {
-        chainConfig = (chain_config_t *)PIC(&C_chain_config);
-    }
 
     reset_app_context();
     tmpCtx.transactionContext.currentTokenIndex = 0;

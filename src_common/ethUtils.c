@@ -26,14 +26,11 @@
 #include "os.h"
 #include "cx.h"
 #include "ethUtils.h"
-#include "chainConfig.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
-extern chain_config_t *chainConfig;
 
 #ifdef CHECKSUM_1
 
@@ -85,29 +82,28 @@ void getEthAddressStringFromBinary(const uint8_t *address, uint8_t *out,
 
 static const uint8_t HEXDIGITS[] = "0123456789abcdef";
 
-void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out,
-                                cx_sha3_t *sha3Context) {
+void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out, int chainId, cx_sha3_t *sha3Context) {
     uint8_t hashAddress[32];
     cx_keccak_init(sha3Context, 256);
     cx_hash((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32);
-    getEthAddressStringFromBinary(hashAddress + 12, out, sha3Context);
+    getEthAddressStringFromBinary(hashAddress + 12, out, chainId, sha3Context);
 }
 
-void getEthAddressStringFromBinary(const uint8_t *address, char *out,
-                                   cx_sha3_t *sha3Context) {
+void getEthAddressStringFromBinary(const uint8_t *address, char *out, int chainId, cx_sha3_t *sha3Context) {
     uint8_t hashChecksum[32];
     char tmp[100];
     uint8_t i;
     bool eip1191 = false;
     uint32_t offset = 0;
-    switch(chainConfig->chainId) {
+
+    switch(chainId) {
         case 30:
         case 31:
             eip1191 = true;
             break;
     }
     if (eip1191) {
-        snprintf(tmp, sizeof(tmp), "%d0x", chainConfig->chainId);
+        snprintf(tmp, sizeof(tmp), "%d0x", chainId);
         offset = strlen(tmp);
     }
     for (i = 0; i < 20; i++) {
