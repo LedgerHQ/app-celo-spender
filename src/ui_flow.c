@@ -58,48 +58,68 @@ UX_FLOW(ux_idle_flow,
   &ux_idle_flow_4_step
 );
 
+#define SETTINGS_TEXT_SIZE 14
+
+static char g_SettingsText[SETTINGS_TEXT_SIZE];
+
 #if defined(TARGET_NANOS)
 
-UX_STEP_CB(
+UX_STEP_CB_INIT(
     ux_settings_flow_1_step,
     bnnn_paging,
+    {
+      const char *text = N_storage.dataAllowed ? "Allowed" : "NOT Allowed";
+      strlcpy(g_SettingsText, text, SETTINGS_TEXT_SIZE);
+    },
     switch_settings_contract_data(),
     {
       .title = "Contract data",
-      .text = strings.common.fullAddress,
+      .text = g_SettingsText,
     });
 
-UX_STEP_CB(
+UX_STEP_CB_INIT(
     ux_settings_flow_2_step,
     bnnn_paging,
+    {
+      const char *text = N_storage.contractDetails ? "Displayed" : "NOT Displayed";
+      strlcpy(g_SettingsText, text, SETTINGS_TEXT_SIZE);
+    },
     switch_settings_display_data(),
     {
       .title = "Debug data",
-      .text = strings.common.fullAddress + 20
+      .text = g_SettingsText,
     });
 
 #else
 
-UX_STEP_CB(
+UX_STEP_CB_INIT(
     ux_settings_flow_1_step,
     bnnn,
+    {
+      const char *text = N_storage.dataAllowed ? "Allowed" : "NOT Allowed";
+      strlcpy(g_SettingsText, text, SETTINGS_TEXT_SIZE);
+    },
     switch_settings_contract_data(),
     {
       "Contract data",
       "Allow contract data",
       "in transactions",
-      strings.common.fullAddress,
+      g_SettingsText
     });
 
-UX_STEP_CB(
+UX_STEP_CB_INIT(
     ux_settings_flow_2_step,
     bnnn,
+    {
+      const char *text = N_storage.contractDetails ? "Displayed" : "NOT Displayed";
+      strlcpy(g_SettingsText, text, SETTINGS_TEXT_SIZE);
+    },
     switch_settings_display_data(),
     {
       "Debug data",
       "Display contract data",
       "details",
-      strings.common.fullAddress + 20
+      g_SettingsText
     });
 
 #endif
@@ -120,8 +140,6 @@ UX_FLOW(ux_settings_flow,
 );
 
 void display_settings() {
-  strcpy(strings.common.fullAddress, (N_storage.dataAllowed ? "Allowed" : "NOT Allowed"));
-  strcpy(strings.common.fullAddress + 20, (N_storage.contractDetails ? "Displayed" : "NOT Displayed"));
   ux_flow_init(0, ux_settings_flow, NULL);
 }
 
