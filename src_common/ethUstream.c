@@ -249,7 +249,7 @@ static int processGatewayTo(txContext_t *context) {
         PRINTF("Invalid type for RLP_GATEWAYTO\n");
         return -1;
     }
-    if (context->currentFieldLength > MAX_ADDRESS) {
+    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_GATEWAYTO\n");
         return -1;
     }
@@ -303,7 +303,7 @@ static int processTo(txContext_t *context) {
         PRINTF("Invalid type for RLP_TO\n");
         return -1;
     }
-    if (context->currentFieldLength > MAX_ADDRESS) {
+    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_TO\n");
         return -1;
     }
