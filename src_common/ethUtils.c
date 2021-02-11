@@ -23,111 +23,14 @@
  * @date 8th of March 2016
  */
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-
 #include "os.h"
 #include "cx.h"
 #include "ethUtils.h"
-#include "chainConfig.h"
 
-extern chain_config_t *chainConfig;
-
-bool rlpCanDecode(uint8_t *buffer, uint32_t bufferLength, bool *valid) {
-    if (*buffer <= 0x7f) {
-    } else if (*buffer <= 0xb7) {
-    } else if (*buffer <= 0xbf) {
-        if (bufferLength < (1 + (*buffer - 0xb7))) {
-            return false;
-        }
-        if (*buffer > 0xbb) {
-            *valid = false; // arbitrary 32 bits length limitation
-            return true;
-        }
-    } else if (*buffer <= 0xf7) {
-    } else {
-        if (bufferLength < (1 + (*buffer - 0xf7))) {
-            return false;
-        }
-        if (*buffer > 0xfb) {
-            *valid = false; // arbitrary 32 bits length limitation
-            return true;
-        }
-    }
-    *valid = true;
-    return true;
-}
-
-bool rlpDecodeLength(uint8_t *buffer, uint32_t bufferLength,
-                     uint32_t *fieldLength, uint32_t *offset, bool *list) {
-    if (*buffer <= 0x7f) {
-        *offset = 0;
-        *fieldLength = 1;
-        *list = false;
-    } else if (*buffer <= 0xb7) {
-        *offset = 1;
-        *fieldLength = *buffer - 0x80;
-        *list = false;
-    } else if (*buffer <= 0xbf) {
-        *offset = 1 + (*buffer - 0xb7);
-        *list = false;
-        switch (*buffer) {
-        case 0xb8:
-            *fieldLength = *(buffer + 1);
-            break;
-        case 0xb9:
-            *fieldLength = (*(buffer + 1) << 8) + *(buffer + 2);
-            break;
-        case 0xba:
-            *fieldLength =
-                (*(buffer + 1) << 16) + (*(buffer + 2) << 8) + *(buffer + 3);
-            break;
-        case 0xbb:
-            *fieldLength = (*(buffer + 1) << 24) + (*(buffer + 2) << 16) +
-                           (*(buffer + 3) << 8) + *(buffer + 4);
-            break;
-        default:
-            return false; // arbitrary 32 bits length limitation
-        }
-    } else if (*buffer <= 0xf7) {
-        *offset = 1;
-        *fieldLength = *buffer - 0xc0;
-        *list = true;
-    } else {
-        *offset = 1 + (*buffer - 0xf7);
-        *list = true;
-        switch (*buffer) {
-        case 0xf8:
-            *fieldLength = *(buffer + 1);
-            break;
-        case 0xf9:
-            *fieldLength = (*(buffer + 1) << 8) + *(buffer + 2);
-            break;
-        case 0xfa:
-            *fieldLength =
-                (*(buffer + 1) << 16) + (*(buffer + 2) << 8) + *(buffer + 3);
-            break;
-        case 0xfb:
-            *fieldLength = (*(buffer + 1) << 24) + (*(buffer + 2) << 16) +
-                           (*(buffer + 3) << 8) + *(buffer + 4);
-            break;
-        default:
-            return false; // arbitrary 32 bits length limitation
-        }
-    }
-
-    return true;
-}
-
-void getEthAddressFromKey(cx_ecfp_public_key_t *publicKey, uint8_t *out,
-                                cx_sha3_t *sha3Context) {
-    uint8_t hashAddress[32];
-    cx_keccak_init(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32);
-    os_memmove(out, hashAddress + 12, 20);
-}
-
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifdef CHECKSUM_1
 
@@ -155,7 +58,7 @@ char convertDigit(uint8_t *address, uint8_t index, uint8_t *hash) {
     }
 }
 
-void getEthAddressStringFromKey(cx_ecfp_public_key_t *publicKey, uint8_t *out,
+void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out,
                                 cx_sha3_t *sha3Context) {
     uint8_t hashAddress[32];
     cx_keccak_init(sha3Context, 256);
@@ -163,7 +66,7 @@ void getEthAddressStringFromKey(cx_ecfp_public_key_t *publicKey, uint8_t *out,
     getEthAddressStringFromBinary(hashAddress + 12, out, sha3Context);
 }
 
-void getEthAddressStringFromBinary(uint8_t *address, uint8_t *out,
+void getEthAddressStringFromBinary(const uint8_t *address, uint8_t *out,
                                    cx_sha3_t *sha3Context) {
     uint8_t hashChecksum[32];
     uint8_t i;
@@ -177,31 +80,30 @@ void getEthAddressStringFromBinary(uint8_t *address, uint8_t *out,
 
 #else
 
-static const uint8_t const HEXDIGITS[] = "0123456789abcdef";
+static const uint8_t HEXDIGITS[] = "0123456789abcdef";
 
-void getEthAddressStringFromKey(cx_ecfp_public_key_t *publicKey, uint8_t *out,
-                                cx_sha3_t *sha3Context) {
+void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out, int chainId, cx_sha3_t *sha3Context) {
     uint8_t hashAddress[32];
     cx_keccak_init(sha3Context, 256);
     cx_hash((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32);
-    getEthAddressStringFromBinary(hashAddress + 12, out, sha3Context);
+    getEthAddressStringFromBinary(hashAddress + 12, out, chainId, sha3Context);
 }
 
-void getEthAddressStringFromBinary(uint8_t *address, uint8_t *out,
-                                   cx_sha3_t *sha3Context) {
+void getEthAddressStringFromBinary(const uint8_t *address, char *out, int chainId, cx_sha3_t *sha3Context) {
     uint8_t hashChecksum[32];
-    uint8_t tmp[100];
+    char tmp[100];
     uint8_t i;
     bool eip1191 = false;
     uint32_t offset = 0;
-    switch(chainConfig->chainId) {
+
+    switch(chainId) {
         case 30:
         case 31:
             eip1191 = true;
             break;
     }
     if (eip1191) {
-        snprintf(tmp, sizeof(tmp), "%d0x", chainConfig->chainId);
+        snprintf(tmp, sizeof(tmp), "%d0x", chainId);
         offset = strlen(tmp);
     }
     for (i = 0; i < 20; i++) {
@@ -210,7 +112,7 @@ void getEthAddressStringFromBinary(uint8_t *address, uint8_t *out,
         tmp[offset + 2 * i + 1] = HEXDIGITS[digit & 0x0f];
     }
     cx_keccak_init(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, tmp, offset + 40, hashChecksum, 32);
+    cx_hash((cx_hash_t*)sha3Context, CX_LAST, (uint8_t *) tmp, offset + 40, hashChecksum, 32);
     for (i = 0; i < 40; i++) {
         uint8_t digit = address[i / 2];
         if ((i % 2) == 0) {
@@ -236,8 +138,8 @@ void getEthAddressStringFromBinary(uint8_t *address, uint8_t *out,
 
 #endif
 
-bool adjustDecimals(char *src, uint32_t srcLength, char *target,
-                    uint32_t targetLength, uint8_t decimals) {
+bool adjustDecimals(const char *src, size_t srcLength, char *target,
+                    size_t targetLength, uint8_t decimals) {
     uint32_t startOffset;
     uint32_t lastZeroOffset = 0;
     uint32_t offset = 0;

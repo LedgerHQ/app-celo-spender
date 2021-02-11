@@ -15,31 +15,22 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include <stdint.h>
-
 #include "ethUstream.h"
-#include "ethUtils.h"
+#include "rlp.h"
 
-#define MAX_INT256 32
-#define MAX_ADDRESS 20
-#define MAX_V 4
+#include <stdint.h>
+#include <string.h>
 
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra) {
-    os_memset(context, 0, sizeof(txContext_t));
-    context->sha3 = sha3;
-    context->content = content;
-    context->customProcessor = customProcessor;
-    context->extra = extra;
-    context->currentField = TX_RLP_CONTENT;
-    cx_keccak_init(context->sha3, 256);
-}
+#ifdef TESTING
+#define PRINTF(...)
+#endif
 
-uint8_t readTxByte(txContext_t *context) {
+static int readTxByte(txContext_t *context, uint8_t *byte) {
     uint8_t data;
+
     if (context->commandLength < 1) {
         PRINTF("readTxByte Underflow\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     data = *context->workBuffer;
     context->workBuffer++;
@@ -47,50 +38,59 @@ uint8_t readTxByte(txContext_t *context) {
     if (context->processingField) {
         context->currentFieldPos++;
     }
+#ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
         cx_hash((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0);
     }
-    return data;
+#endif
+    if (byte) {
+        *byte = data;
+    }
+    return 0;
 }
 
-void copyTxData(txContext_t *context, uint8_t *out, uint32_t length) {
+int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     if (context->commandLength < length) {
         PRINTF("copyTxData Underflow\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (out != NULL) {
-        os_memmove(out, context->workBuffer, length);
+        memcpy(out, context->workBuffer, length);
     }
+#ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
         cx_hash((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0);
     }
+#endif
     context->workBuffer += length;
     context->commandLength -= length;
     if (context->processingField) {
         context->currentFieldPos += length;
     }
+    return 0;
 }
 
-static void processContent(txContext_t *context) {
+static int processContent(txContext_t *context) {
     // Keep the full length for sanity checks, move to the next field
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_CONTENT\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     context->dataLength = context->currentFieldLength;
     context->currentField++;
     context->processingField = false;
+    return 0;
 }
 
 
-static void processType(txContext_t *context) {
+static int processType(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TYPE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_TYPE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -98,22 +98,25 @@ static void processType(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, NULL, copySize);
+        if (copyTxData(context, NULL, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processNonce(txContext_t *context) {
+static int processNonce(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_NONCE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_NONCE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -121,23 +124,26 @@ static void processNonce(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, NULL, copySize);
+        if (copyTxData(context, NULL, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processStartGas(txContext_t *context) {
+static int processStartGas(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_STARTGAS\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_STARTGAS %d\n",
                       context->currentFieldLength);
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -145,25 +151,26 @@ static void processStartGas(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->startgas.value + context->currentFieldPos,
-                   copySize);
+        if (copyTxData(context, context->content->startgas.value + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->startgas.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processGasprice(txContext_t *context) {
+static int processGasprice(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GASPRICE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_GASPRICE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -171,25 +178,26 @@ static void processGasprice(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->gasprice.value + context->currentFieldPos,
-                   copySize);
+        if (copyTxData(context, context->content->gasprice.value + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->gasprice.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processGatewayFee(txContext_t *context) {
+static int processGatewayFee(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GATEWAYFEE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_GATEWAYFEE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -197,25 +205,26 @@ static void processGatewayFee(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->gatewayFee.value + context->currentFieldPos, 
-                   copySize);
+        if (copyTxData(context, context->content->gatewayFee.value + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->gatewayFee.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processFeeCurrency(txContext_t *context) {
+static int processFeeCurrency(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_FEECURRENCY\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_FEECURRENCY\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -223,25 +232,26 @@ static void processFeeCurrency(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->feeCurrency + context->currentFieldPos, 
-                   copySize);
+        if (copyTxData(context, context->content->feeCurrency + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->feeCurrencyLength = context->currentFieldLength;    
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processGatewayTo(txContext_t *context) {
+static int processGatewayTo(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GATEWAYTO\n");
-        THROW(EXCEPTION);
+        return -1;
     }
-    if (context->currentFieldLength > MAX_ADDRESS) {
+    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_GATEWAYTO\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -249,25 +259,26 @@ static void processGatewayTo(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->gatewayDestination + context->currentFieldPos,
-                   copySize);
+        if (copyTxData(context, context->content->gatewayDestination + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->gatewayDestinationLength = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processValue(txContext_t *context) {
+static int processValue(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_VALUE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_VALUE\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -275,25 +286,26 @@ static void processValue(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->value.value + context->currentFieldPos,
-                   copySize);
+        if (copyTxData(context, context->content->value.value + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->value.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processTo(txContext_t *context) {
+static int processTo(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TO\n");
-        THROW(EXCEPTION);
+        return -1;
     }
-    if (context->currentFieldLength > MAX_ADDRESS) {
+    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_TO\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -301,21 +313,22 @@ static void processTo(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->destination + context->currentFieldPos,
-                   copySize);
+        if (copyTxData(context, context->content->destination + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->destinationLength = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processData(txContext_t *context) {
+static int processData(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_DATA\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -323,22 +336,25 @@ static void processData(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, NULL, copySize);
+        if (copyTxData(context, NULL, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
-static void processV(txContext_t *context) {
+static int processV(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_V\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldLength > MAX_V) {
         PRINTF("Invalid length for RLP_V\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -346,15 +362,16 @@ static void processV(txContext_t *context) {
                      ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context,
-                   context->content->v + context->currentFieldPos,
-                   copySize);
+        if (copyTxData(context, context->content->v + context->currentFieldPos, copySize)) {
+            return -1;
+        }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->vLength = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
 
@@ -381,8 +398,11 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             while (context->commandLength != 0) {
                 bool valid;
                 // Feed the RLP buffer until the length can be decoded
-                context->rlpBuffer[context->rlpBufferPos++] =
-                    readTxByte(context);
+                uint8_t byte;
+                if (readTxByte(context, &byte)) {
+                    return USTREAM_FAULT;
+                }
+                context->rlpBuffer[context->rlpBufferPos++] = byte;
                 if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos,
                                  &valid)) {
                     // Can decode now, if valid
@@ -441,45 +461,67 @@ static parserStatus_e processTxInternal(txContext_t *context) {
         if (customStatus == CUSTOM_NOT_HANDLED) {
             switch (context->currentField) {
             case TX_RLP_CONTENT:
-                processContent(context);
-                if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
-                    context->currentField++;
+                if (processContent(context)) {
+                    return USTREAM_FAULT;
                 }
+                context->currentField++;
                 break;
             case TX_RLP_TYPE:
-                processType(context);
+                if (processType(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_NONCE:
-                processNonce(context);
+                if (processNonce(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_GASPRICE:
-                processGasprice(context);
+                if (processGasprice(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_STARTGAS:
-                processStartGas(context);
+                if (processStartGas(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_VALUE:
-                processValue(context);
+                if (processValue(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_TO:
-                processTo(context);
+                if (processTo(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_FEECURRENCY:
-                processFeeCurrency(context);
+                if (processFeeCurrency(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_GATEWAYTO:
-                processGatewayTo(context);
+                if (processGatewayTo(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_GATEWAYFEE:
-                processGatewayFee(context);
+                if (processGatewayFee(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_DATA:
             case TX_RLP_R:
             case TX_RLP_S:
-                processData(context);
+                if (processData(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             case TX_RLP_V:
-                processV(context);
+                if (processV(context)) {
+                    return USTREAM_FAULT;
+                }
                 break;
             default:
                 PRINTF("Invalid RLP decoder context\n");
@@ -489,38 +531,25 @@ static parserStatus_e processTxInternal(txContext_t *context) {
     }
 }
 
-parserStatus_e processTx(txContext_t *context, uint8_t *buffer,
-                         uint32_t length, uint32_t processingFlags) {
-    parserStatus_e result;
-    BEGIN_TRY {
-        TRY {
-            context->workBuffer = buffer;
-            context->commandLength = length;
-            context->processingFlags = processingFlags;
-            result = processTxInternal(context);
-        }
-        CATCH_OTHER(e) {
-            result = USTREAM_FAULT;
-        }
-        FINALLY {
-        }
-    }
-    END_TRY;
-    return result;
+parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
+    context->workBuffer = buffer;
+    context->commandLength = length;
+    return processTxInternal(context);
 }
 
 parserStatus_e continueTx(txContext_t *context) {
-    parserStatus_e result;
-    BEGIN_TRY {
-        TRY {
-            result = processTxInternal(context);
-        }
-        CATCH_OTHER(e) {
-            result = USTREAM_FAULT;
-        }
-        FINALLY {
-        }
-    }
-    END_TRY;
-    return result;
+    return processTxInternal(context);
+}
+
+void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
+            ustreamProcess_t customProcessor, void *extra) {
+    memset(context, 0, sizeof(txContext_t));
+    context->sha3 = sha3;
+    context->content = content;
+    context->customProcessor = customProcessor;
+    context->extra = extra;
+    context->currentField = TX_RLP_CONTENT;
+#ifndef TESTING
+    cx_keccak_init(context->sha3, 256);
+#endif
 }

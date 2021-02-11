@@ -21,10 +21,10 @@
 #include "ethUstream.h"
 #include "uint256.h"
 
-static const unsigned char hex_digits[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                                           '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+static const char hex_digits[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                  '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-void array_hexstr(char *strbuf, const void *bin, unsigned int len) {
+void array_hexstr(char *strbuf, const void *bin, size_t len) {
     while (len--) {
         *strbuf++ = hex_digits[((*((char *)bin)) >> 4) & 0xF];
         *strbuf++ = hex_digits[(*((char *)bin)) & 0xF];
@@ -33,22 +33,11 @@ void array_hexstr(char *strbuf, const void *bin, unsigned int len) {
     *strbuf = 0; // EOS
 }
 
-void convertUint256BE(uint8_t *data, uint32_t length, uint256_t *target) {
+void convertUint256BE(const uint8_t *data, size_t length, uint256_t *target) {
     uint8_t tmp[32];
-    os_memset(tmp, 0, 32);
-    os_memmove(tmp + 32 - length, data, length);
+    memset(tmp, 0, 32);
+    memcpy(tmp + 32 - length, data, length);
     readu256BE(tmp, target);
-}
-
-int local_strchr(char *string, char ch) {
-    unsigned int length = strlen(string);
-    unsigned int i;
-    for (i=0; i<length; i++) {
-        if (string[i] == ch) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 uint32_t getV(txContent_t *txContent) {
