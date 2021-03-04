@@ -5,7 +5,7 @@
 #include "cx.h"
 
 #define CHAINID_UPCASE "CELO"
-#define CHAINID_COINNAME "cGLD"
+#define CHAINID_COINNAME "CELO"
 #define CHAIN_ID 0
 
 typedef union {
