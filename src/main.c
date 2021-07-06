@@ -153,12 +153,12 @@ static int parse_bip32_path(bip32Path_t *derivationPath, const uint8_t *input, s
   return 0;
 }
 
+#ifndef HAVE_WALLET_ID_SDK
+
 unsigned int const U_os_perso_seed_cookie[] = {
   0xda7aba5e,
   0xc1a551c5,
 };
-
-#ifndef HAVE_WALLET_ID_SDK
 
 void handleGetWalletId(volatile unsigned int *tx) {
   unsigned char t[64];
@@ -172,12 +172,12 @@ void handleGetWalletId(volatile unsigned int *tx) {
   // pubkey -> sha512
   cx_hash_sha512(pub.W, sizeof(pub.W), t, sizeof(t));
   // ! cookie !
-  memcpy(G_io_apdu_buffer, t, 64);  
+  memcpy(G_io_apdu_buffer, t, 64);
   *tx = 64;
   THROW(0x9000);
 }
 
-#endif
+#endif // HAVE_WALLET_ID_SDK
 
 void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(dataLength);
