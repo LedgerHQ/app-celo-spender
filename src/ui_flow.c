@@ -329,14 +329,6 @@ UX_STEP_NOCB(
       .text = strings.common.fullGatewayAddress,
     });
 
-UX_STEP_NOCB(
-    ux_celo_approval_tx_gateway_no_fee_step,
-    bnnn_paging,
-    {
-      .title = "No Gateway Fee",
-      .text  = " "
-    });
-
 UX_STEP_CB(
     ux_approval_tx_5_step,
     pbb,
@@ -368,7 +360,6 @@ UX_FLOW(ux_approval_celo_tx_flow,
   &ux_approval_tx_2_step,
   &ux_approval_tx_3_step,
   &ux_approval_tx_4_step,
-  &ux_celo_approval_tx_gateway_no_fee_step,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
 );
@@ -390,7 +381,6 @@ UX_FLOW(ux_approval_celo_data_warning_tx_flow,
   &ux_approval_tx_2_step,
   &ux_approval_tx_3_step,
   &ux_approval_tx_4_step,
-  &ux_celo_approval_tx_gateway_no_fee_step,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
 );
