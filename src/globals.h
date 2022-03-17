@@ -62,6 +62,7 @@ typedef struct strData_t {
     char fullAmount[50];
     char maxFee[50];
     char gatewayFee[50];
+    char stakingType[10];
 } strData_t;
 
 typedef struct strDataTmp_t {
@@ -92,11 +93,31 @@ extern const internalStorage_t N_storage_real;
 extern char addressSummary[32];
 extern cx_sha3_t sha3;
 
-extern volatile bool tokenProvisioned;
+typedef enum {
+  PROVISION_NONE,
+  PROVISION_TOKEN,
+  PROVISION_LOCK,
+  PROVISION_VOTE,
+  PROVISION_ACTIVATE
+} provision_type_t;
+
+extern volatile provision_type_t provisionType;
 
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
 } tokenContext_t;
+
+typedef struct lockContext_t {
+    uint8_t data[4];
+} lockContext_t;
+
+typedef struct voteContext_t {
+    uint8_t data[4 + 32 + 32 + 32 + 32];
+} voteContext_t;
+
+typedef struct activateContext_t {
+    uint8_t data[4 + 32];
+} activateContext_t;
 
 typedef struct rawDataContext_t {
     uint8_t data[32];
@@ -106,6 +127,9 @@ typedef struct rawDataContext_t {
 
 typedef union {
     tokenContext_t tokenContext;
+    lockContext_t lockContext;
+    voteContext_t voteContext;
+    activateContext_t activateContext;
     rawDataContext_t rawDataContext;
 } dataContext_t;
 

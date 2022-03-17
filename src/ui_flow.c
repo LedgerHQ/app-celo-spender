@@ -322,6 +322,22 @@ UX_STEP_NOCB(
     });
 
 UX_STEP_NOCB(
+    ux_celo_approval_staking_type_step,
+    bnnn_paging,
+    {
+      .title = "Type",
+      .text = strings.common.stakingType,
+    });
+
+UX_STEP_NOCB(
+    ux_celo_approval_staking_validator_step,
+    bnnn_paging,
+    {
+      .title = "Validator",
+      .text = strings.common.fullAddress,
+    });
+
+UX_STEP_NOCB(
     ux_celo_approval_tx_gateway_address_step,
     bnnn_paging,
     {
@@ -396,6 +412,36 @@ UX_FLOW(ux_approval_celo_data_warning_gateway_tx_flow,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
 );
+
+UX_FLOW(ux_approval_celo_lock_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_2_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_vote_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_2_step,
+  &ux_celo_approval_staking_validator_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_activate_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_celo_approval_staking_validator_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+
 
 //////////////////////////////////////////////////////////////////////
 UX_STEP_NOCB(

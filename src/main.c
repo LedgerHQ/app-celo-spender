@@ -93,7 +93,7 @@ cx_sha3_t sha3;
 volatile uint8_t dataAllowed;
 volatile uint8_t contractDetails;
 volatile bool dataPresent;
-volatile bool tokenProvisioned;
+volatile provision_type_t provisionType;
 
 strings_t strings;
 
@@ -295,7 +295,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
 
     appState = APP_STATE_SIGNING_TX;
     dataPresent = false;
-    tokenProvisioned = false;
+    provisionType = PROVISION_NONE;
     //0x8000003c is the Ethereum path
     initTx(&txContext, &sha3, &tmpContent.txContent, customProcessor, tmpCtx.transactionContext.derivationPath.path[1] == 0x8000003c, NULL);
   }
