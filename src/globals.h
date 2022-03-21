@@ -98,7 +98,10 @@ typedef enum {
   PROVISION_TOKEN,
   PROVISION_LOCK,
   PROVISION_VOTE,
-  PROVISION_ACTIVATE
+  PROVISION_ACTIVATE,
+  PROVISION_REVOKE,
+  PROVISION_UNLOCK,
+  PROVISION_WITHDRAW
 } provision_type_t;
 
 extern volatile provision_type_t provisionType;
@@ -119,6 +122,18 @@ typedef struct activateContext_t {
     uint8_t data[4 + 32];
 } activateContext_t;
 
+typedef struct revokeContext_t {
+    uint8_t data[4 + 32 + 32 + 32 + 32 + 32];
+} revokeContext_t;
+
+typedef struct unlockContext_t {
+    uint8_t data[4 + 32];
+} unlockContext_t;
+
+typedef struct withdrawContext_t {
+    uint8_t data[4 + 32];
+} withdrawContext_t;
+
 typedef struct rawDataContext_t {
     uint8_t data[32];
     uint8_t fieldIndex;
@@ -130,6 +145,9 @@ typedef union {
     lockContext_t lockContext;
     voteContext_t voteContext;
     activateContext_t activateContext;
+    revokeContext_t revokeContext;
+    unlockContext_t unlockContext;
+    withdrawContext_t withdrawContext;
     rawDataContext_t rawDataContext;
 } dataContext_t;
 

@@ -13,6 +13,9 @@ static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
 static const uint8_t LOCK_METHOD_ID[] = { 0xf8, 0x3d, 0x08, 0xba };
 static const uint8_t VOTE_METHOD_ID[] = { 0x58, 0x0d, 0x74, 0x7a };
 static const uint8_t ACTIVATE_METHOD_ID[] = { 0x1c, 0x5a, 0x9d, 0x9c };
+static const uint8_t REVOKE_METHOD_ID[] = { 0x6e, 0x19, 0x84, 0x75 };
+static const uint8_t UNLOCK_METHOD_ID[] = { 0x61, 0x98, 0xe3, 0x39 };
+static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
 
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
@@ -137,11 +140,29 @@ customStatus_e customProcessor(txContext_t *context) {
                 (memcmp(context->workBuffer, VOTE_METHOD_ID, 4) == 0)) {
                   provisionType = PROVISION_VOTE;
                 }
-            // Initial check to see if the vote content can be processed
+            // Initial check to see if the activate content can be processed
             if (
                 (context->currentFieldLength == sizeof(dataContext.activateContext.data)) &&
                 (memcmp(context->workBuffer, ACTIVATE_METHOD_ID, 4) == 0)) {
                   provisionType = PROVISION_ACTIVATE;
+                }
+            // Initial check to see if the revoke content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.revokeContext.data)) &&
+                (memcmp(context->workBuffer, REVOKE_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_REVOKE;
+                }
+            // Initial check to see if the unlock content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.unlockContext.data)) &&
+                (memcmp(context->workBuffer, UNLOCK_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_UNLOCK;
+                }
+            // Initial check to see if the withdraw content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.withdrawContext.data)) &&
+                (memcmp(context->workBuffer, WITHDRAW_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_WITHDRAW;
                 }
         }
         if (provisionType != PROVISION_NONE) {
@@ -171,6 +192,21 @@ customStatus_e customProcessor(txContext_t *context) {
                   case PROVISION_ACTIVATE:
                     copyTxData(context,
                         dataContext.activateContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_REVOKE:
+                    copyTxData(context,
+                        dataContext.revokeContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_UNLOCK:
+                    copyTxData(context,
+                        dataContext.unlockContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_WITHDRAW:
+                    copyTxData(context,
+                        dataContext.withdrawContext.data + context->currentFieldPos,
                         copySize);
                     break;
                   default:
@@ -307,7 +343,18 @@ void finalizeParsing(bool direct) {
       tmpContent.txContent.value.length = 32;
     } else if (provisionType == PROVISION_ACTIVATE) {
       tmpContent.txContent.destinationLength = 20;
-      memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
+      memcpy(tmpContent.txContent.destination, dataContext.activateContext.data + 4 + 12, 20);
+    } else if (provisionType == PROVISION_REVOKE) {
+      tmpContent.txContent.destinationLength = 20;
+      memcpy(tmpContent.txContent.destination, dataContext.revokeContext.data + 4 + 12, 20);
+      memcpy(tmpContent.txContent.value.value, dataContext.revokeContext.data + 4 + 32, 32);
+      tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_UNLOCK) {
+      memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
+      tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_WITHDRAW) {
+      memcpy(tmpContent.txContent.value.value, dataContext.withdrawContext.data + 4, 32);
+      tmpContent.txContent.value.length = 32;
     } else {
       if (dataPresent && !N_storage.dataAllowed) {
           reset_app_context();
@@ -413,6 +460,15 @@ void finalizeParsing(bool direct) {
     case PROVISION_ACTIVATE:
       strcpy(strings.common.stakingType, "Activate");
       break;
+    case PROVISION_REVOKE:
+      strcpy(strings.common.stakingType, "Revoke");
+      break;
+    case PROVISION_UNLOCK:
+      strcpy(strings.common.stakingType, "Unlock");
+      break;
+    case PROVISION_WITHDRAW:
+      strcpy(strings.common.stakingType, "Withdraw");
+      break;
     default:
       break;
   }
@@ -422,13 +478,16 @@ void finalizeParsing(bool direct) {
 #else // NO_CONSENT
   switch(provisionType) {
     case PROVISION_LOCK:
+    case PROVISION_UNLOCK:
+    case PROVISION_WITHDRAW:
       ux_flow_init(0,
-        ux_approval_celo_lock_flow,
+        ux_approval_celo_lock_unlock_withdraw_flow,
         NULL);
       break;
     case PROVISION_VOTE:
+    case PROVISION_REVOKE:
       ux_flow_init(0,
-        ux_approval_celo_vote_flow,
+        ux_approval_celo_vote_revoke_flow,
         NULL);
       break;
     case PROVISION_ACTIVATE:

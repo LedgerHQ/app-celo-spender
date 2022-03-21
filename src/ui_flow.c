@@ -413,7 +413,7 @@ UX_FLOW(ux_approval_celo_data_warning_gateway_tx_flow,
   &ux_approval_tx_6_step
 );
 
-UX_FLOW(ux_approval_celo_lock_flow,
+UX_FLOW(ux_approval_celo_lock_unlock_withdraw_flow,
   &ux_approval_tx_1_step,
   &ux_celo_approval_staking_type_step,
   &ux_approval_tx_2_step,
@@ -422,7 +422,7 @@ UX_FLOW(ux_approval_celo_lock_flow,
   &ux_approval_tx_6_step
 );
 
-UX_FLOW(ux_approval_celo_vote_flow,
+UX_FLOW(ux_approval_celo_vote_revoke_flow,
   &ux_approval_tx_1_step,
   &ux_celo_approval_staking_type_step,
   &ux_approval_tx_2_step,
