@@ -10,7 +10,8 @@ extern const ux_flow_step_t* const ux_approval_celo_data_warning_gateway_tx_flow
 extern const ux_flow_step_t* const ux_approval_celo_gateway_tx_flow[];
 extern const ux_flow_step_t* const ux_approval_celo_data_warning_tx_flow[];
 extern const ux_flow_step_t* const ux_approval_celo_tx_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_lock_unlock_withdraw_flow[];
+extern const ux_flow_step_t* const ux_approval_celo_lock_unlock_flow[];
+extern const ux_flow_step_t* const ux_approval_celo_withdraw_flow[];
 extern const ux_flow_step_t* const ux_approval_celo_vote_revoke_flow[];
 extern const ux_flow_step_t* const ux_approval_celo_activate_flow[];
 extern const ux_flow_step_t* const ux_sign_flow[];

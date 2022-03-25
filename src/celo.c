@@ -13,7 +13,8 @@ static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
 static const uint8_t LOCK_METHOD_ID[] = { 0xf8, 0x3d, 0x08, 0xba };
 static const uint8_t VOTE_METHOD_ID[] = { 0x58, 0x0d, 0x74, 0x7a };
 static const uint8_t ACTIVATE_METHOD_ID[] = { 0x1c, 0x5a, 0x9d, 0x9c };
-static const uint8_t REVOKE_METHOD_ID[] = { 0x6e, 0x19, 0x84, 0x75 };
+static const uint8_t REVOKE_PENDING_METHOD_ID[] = { 0x9d, 0xfb, 0x60, 0x81 };
+static const uint8_t REVOKE_ACTIVE_METHOD_ID[] = { 0x6e, 0x19, 0x84, 0x75 };
 static const uint8_t UNLOCK_METHOD_ID[] = { 0x61, 0x98, 0xe3, 0x39 };
 static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
 
@@ -149,7 +150,7 @@ customStatus_e customProcessor(txContext_t *context) {
             // Initial check to see if the revoke content can be processed
             if (
                 (context->currentFieldLength == sizeof(dataContext.revokeContext.data)) &&
-                (memcmp(context->workBuffer, REVOKE_METHOD_ID, 4) == 0)) {
+                ((memcmp(context->workBuffer, REVOKE_PENDING_METHOD_ID, 4) == 0) || (memcmp(context->workBuffer, REVOKE_ACTIVE_METHOD_ID, 4) == 0))) {
                   provisionType = PROVISION_REVOKE;
                 }
             // Initial check to see if the unlock content can be processed
@@ -450,6 +451,17 @@ void finalizeParsing(bool direct) {
     i++;
   }
   strings.common.maxFee[tickerOffset + i] = '\0';
+
+  // Add withdrawal index
+  convertUint256BE(tmpContent.txContent.value.value, tmpContent.txContent.value.length, &uint256);
+  tostring256(&uint256, 10, (char *)G_io_apdu_buffer, 100);
+  i = 0;
+  while (G_io_apdu_buffer[i]) {
+      strings.common.withdrawalIndex[i] = G_io_apdu_buffer[i];
+      i++;
+  }
+  strings.common.withdrawalIndex[i] = '\0';
+
   switch (provisionType) {
     case PROVISION_LOCK:
       strcpy(strings.common.stakingType, "Lock");
@@ -479,9 +491,13 @@ void finalizeParsing(bool direct) {
   switch(provisionType) {
     case PROVISION_LOCK:
     case PROVISION_UNLOCK:
+      ux_flow_init(0,
+        ux_approval_celo_lock_unlock_flow,
+        NULL);
+      break;
     case PROVISION_WITHDRAW:
       ux_flow_init(0,
-        ux_approval_celo_lock_unlock_withdraw_flow,
+        ux_approval_celo_withdraw_flow,
         NULL);
       break;
     case PROVISION_VOTE:
