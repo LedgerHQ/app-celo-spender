@@ -12,7 +12,7 @@ void reset_app_context();
 tokenDefinition_t* getKnownToken(uint8_t *tokenAddr);
 
 customStatus_e customProcessor(txContext_t *context);
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustreamProcess_t customProcessor, void *extra);
+void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustreamProcess_t customProcessor, bool isEthereum, void *extra);
 void finalizeParsing(bool direct);
 
 // TODO: this should not be exposed

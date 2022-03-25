@@ -21,7 +21,7 @@ static void test_celo_tx_invalid_address(void **state) {
   txContent_t content;
   cx_sha3_t sha3;
 
-  initTx(&context, &sha3, &content, NULL, NULL);
+  initTx(&context, &sha3, &content, NULL, false, NULL);
   assert_int_equal(processTx(&context, tx_data, sizeof(tx_data)), USTREAM_FAULT);
 }
 
@@ -44,7 +44,7 @@ static void test_celo_tx(void **state) {
   txContent_t content;
   cx_sha3_t sha3;
 
-  initTx(&context, &sha3, &content, NULL, NULL);
+  initTx(&context, &sha3, &content, NULL, false, NULL);
   assert_int_equal(processTx(&context, tx_data, sizeof(tx_data)), USTREAM_FINISHED);
   assert_int_equal(content.destinationLength, MAX_ADDRESS);
   assert_memory_equal(content.destination, to, MAX_ADDRESS);
