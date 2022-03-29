@@ -17,6 +17,8 @@ static const uint8_t REVOKE_PENDING_METHOD_ID[] = { 0x9d, 0xfb, 0x60, 0x81 };
 static const uint8_t REVOKE_ACTIVE_METHOD_ID[] = { 0x6e, 0x19, 0x84, 0x75 };
 static const uint8_t UNLOCK_METHOD_ID[] = { 0x61, 0x98, 0xe3, 0x39 };
 static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
+static const uint8_t RELOCK_METHOD_ID[] = { 0xb2, 0xfb, 0x30, 0xcb };
+static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = { 0x9d, 0xca, 0x36, 0x2f };
 
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
@@ -165,6 +167,18 @@ customStatus_e customProcessor(txContext_t *context) {
                 (memcmp(context->workBuffer, WITHDRAW_METHOD_ID, 4) == 0)) {
                   provisionType = PROVISION_WITHDRAW;
                 }
+            // Initial check to see if the relock content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.relockContext.data)) &&
+                (memcmp(context->workBuffer, RELOCK_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_RELOCK;
+                }
+            // Initial check to see if the create account content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.createAccountContext.data)) &&
+                (memcmp(context->workBuffer, CREATE_ACCOUNT_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_CREATE_ACCOUNT;
+                }
         }
         if (provisionType != PROVISION_NONE) {
             if (context->currentFieldPos < context->currentFieldLength) {
@@ -209,6 +223,15 @@ customStatus_e customProcessor(txContext_t *context) {
                     copyTxData(context,
                         dataContext.withdrawContext.data + context->currentFieldPos,
                         copySize);
+                  case PROVISION_RELOCK:
+                    copyTxData(context,
+                        dataContext.relockContext.data + context->currentFieldPos,
+                        copySize);
+                  case PROVISION_CREATE_ACCOUNT:
+                    copyTxData(context,
+                        dataContext.createAccountContext.data + context->currentFieldPos,
+                        copySize);
+
                     break;
                   default:
                     break;
@@ -354,7 +377,12 @@ void finalizeParsing(bool direct) {
       memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
       tmpContent.txContent.value.length = 32;
     } else if (provisionType == PROVISION_WITHDRAW) {
-      memcpy(tmpContent.txContent.value.value, dataContext.withdrawContext.data + 4, 32);
+      memcpy(tmpContent.txContent.withdrawalOrRelockIndex.value, dataContext.withdrawContext.data + 4, 32);
+      tmpContent.txContent.withdrawalOrRelockIndex.length = 32;
+    } else if (provisionType == PROVISION_RELOCK) {
+      memcpy(tmpContent.txContent.withdrawalOrRelockIndex.value, dataContext.relockContext.data + 4, 32);
+      tmpContent.txContent.withdrawalOrRelockIndex.length = 32;
+      memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
       tmpContent.txContent.value.length = 32;
     } else {
       if (dataPresent && !N_storage.dataAllowed) {
@@ -453,7 +481,7 @@ void finalizeParsing(bool direct) {
   strings.common.maxFee[tickerOffset + i] = '\0';
 
   // Add withdrawal index
-  convertUint256BE(tmpContent.txContent.value.value, tmpContent.txContent.value.length, &uint256);
+  convertUint256BE(tmpContent.txContent.withdrawalOrRelockIndex.value, tmpContent.txContent.withdrawalOrRelockIndex.length, &uint256);
   tostring256(&uint256, 10, (char *)G_io_apdu_buffer, 100);
   i = 0;
   while (G_io_apdu_buffer[i]) {
@@ -480,6 +508,12 @@ void finalizeParsing(bool direct) {
       break;
     case PROVISION_WITHDRAW:
       strcpy(strings.common.stakingType, "Withdraw");
+      break;
+    case PROVISION_RELOCK:
+      strcpy(strings.common.stakingType, "Relock");
+      break;
+    case PROVISION_CREATE_ACCOUNT:
+      strcpy(strings.common.stakingType, "Create Account");
       break;
     default:
       break;
@@ -509,6 +543,16 @@ void finalizeParsing(bool direct) {
     case PROVISION_ACTIVATE:
       ux_flow_init(0,
         ux_approval_celo_activate_flow,
+        NULL);
+      break;
+    case PROVISION_RELOCK:
+      ux_flow_init(0,
+        ux_approval_celo_relock_flow,
+        NULL);
+      break;
+    case PROVISION_CREATE_ACCOUNT:
+      ux_flow_init(0,
+        ux_approval_celo_create_account_flow,
         NULL);
       break;
     default:

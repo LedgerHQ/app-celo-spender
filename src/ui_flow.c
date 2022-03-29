@@ -441,7 +441,6 @@ UX_FLOW(ux_approval_celo_withdraw_flow,
   &ux_approval_tx_6_step
 );
 
-
 UX_FLOW(ux_approval_celo_vote_revoke_flow,
   &ux_approval_tx_1_step,
   &ux_celo_approval_staking_type_step,
@@ -461,7 +460,23 @@ UX_FLOW(ux_approval_celo_activate_flow,
   &ux_approval_tx_6_step
 );
 
+UX_FLOW(ux_approval_celo_relock_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_celo_approval_staking_withdrawal_index_step,
+  &ux_approval_tx_2_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
 
+UX_FLOW(ux_approval_celo_create_account_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
 
 //////////////////////////////////////////////////////////////////////
 UX_STEP_NOCB(
