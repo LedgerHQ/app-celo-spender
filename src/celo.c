@@ -10,6 +10,7 @@
 #include <string.h>
 
 static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
+static const uint8_t TOKEN_TRANSFER_WITH_COMMENT_ID[] = { 0xe1, 0xd6, 0xac, 0xeb };
 static const uint8_t LOCK_METHOD_ID[] = { 0xf8, 0x3d, 0x08, 0xba };
 static const uint8_t VOTE_METHOD_ID[] = { 0x58, 0x0d, 0x74, 0x7a };
 static const uint8_t ACTIVATE_METHOD_ID[] = { 0x1c, 0x5a, 0x9d, 0x9c };
@@ -126,9 +127,18 @@ customStatus_e customProcessor(txContext_t *context) {
             }
             // Initial check to see if the token content can be processed
             if (
-                (context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
-                (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0) &&
-                (getKnownToken(tmpContent.txContent.destination) != NULL)) {
+                (
+                  (
+                    (context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
+                    (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0)
+                  ) ||
+                  (
+                    (context->currentFieldLength >= sizeof(dataContext.tokenContext.data)) &&
+                    (memcmp(context->workBuffer, TOKEN_TRANSFER_WITH_COMMENT_ID, 4) == 0)
+                  )
+                ) &&
+                (getKnownToken(tmpContent.txContent.destination) != NULL)
+              ) {
                   provisionType = PROVISION_TOKEN;
                 }
             // Initial check to see if the lock content can be processed
