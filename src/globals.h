@@ -63,7 +63,6 @@ typedef struct strData_t {
     char maxFee[50];
     char gatewayFee[50];
     char stakingType[20];
-    char withdrawalIndex[50];
 } strData_t;
 
 typedef struct strDataTmp_t {

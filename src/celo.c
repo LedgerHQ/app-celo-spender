@@ -386,12 +386,7 @@ void finalizeParsing(bool direct) {
     } else if (provisionType == PROVISION_UNLOCK) {
       memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
       tmpContent.txContent.value.length = 32;
-    } else if (provisionType == PROVISION_WITHDRAW) {
-      memcpy(tmpContent.txContent.withdrawalOrRelockIndex.value, dataContext.withdrawContext.data + 4, 32);
-      tmpContent.txContent.withdrawalOrRelockIndex.length = 32;
     } else if (provisionType == PROVISION_RELOCK) {
-      memcpy(tmpContent.txContent.withdrawalOrRelockIndex.value, dataContext.relockContext.data + 4, 32);
-      tmpContent.txContent.withdrawalOrRelockIndex.length = 32;
       memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
       tmpContent.txContent.value.length = 32;
     } else {
@@ -489,16 +484,6 @@ void finalizeParsing(bool direct) {
     i++;
   }
   strings.common.maxFee[tickerOffset + i] = '\0';
-
-  // Add withdrawal index
-  convertUint256BE(tmpContent.txContent.withdrawalOrRelockIndex.value, tmpContent.txContent.withdrawalOrRelockIndex.length, &uint256);
-  tostring256(&uint256, 10, (char *)G_io_apdu_buffer, 100);
-  i = 0;
-  while (G_io_apdu_buffer[i]) {
-      strings.common.withdrawalIndex[i] = G_io_apdu_buffer[i];
-      i++;
-  }
-  strings.common.withdrawalIndex[i] = '\0';
 
   switch (provisionType) {
     case PROVISION_LOCK:

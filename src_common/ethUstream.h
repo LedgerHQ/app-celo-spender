@@ -80,7 +80,6 @@ typedef struct txContent_t {
     txInt256_t startgas;
     txInt256_t value;
     txInt256_t gatewayFee;
-    txInt256_t withdrawalOrRelockIndex;
     uint8_t destination[MAX_ADDRESS];
     uint8_t destinationLength;
     uint8_t gatewayDestination[MAX_ADDRESS];

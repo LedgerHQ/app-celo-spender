@@ -338,16 +338,6 @@ UX_STEP_NOCB(
     });
 
 UX_STEP_NOCB(
-    ux_celo_approval_staking_withdrawal_index_step,
-    bnnn_paging,
-    {
-      .title = "Index",
-      .text = strings.common.withdrawalIndex,
-    });
-
-
-
-UX_STEP_NOCB(
     ux_celo_approval_tx_gateway_address_step,
     bnnn_paging,
     {
@@ -435,7 +425,6 @@ UX_FLOW(ux_approval_celo_lock_unlock_flow,
 UX_FLOW(ux_approval_celo_withdraw_flow,
   &ux_approval_tx_1_step,
   &ux_celo_approval_staking_type_step,
-  &ux_celo_approval_staking_withdrawal_index_step,
   &ux_approval_tx_4_step,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
@@ -463,7 +452,6 @@ UX_FLOW(ux_approval_celo_activate_flow,
 UX_FLOW(ux_approval_celo_relock_flow,
   &ux_approval_tx_1_step,
   &ux_celo_approval_staking_type_step,
-  &ux_celo_approval_staking_withdrawal_index_step,
   &ux_approval_tx_2_step,
   &ux_approval_tx_4_step,
   &ux_approval_tx_5_step,
