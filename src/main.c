@@ -297,7 +297,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
     dataPresent = false;
     provisionType = PROVISION_NONE;
     //0x8000003c is the Ethereum path
-    initTx(&txContext, &sha3, &tmpContent.txContent, customProcessor, tmpCtx.transactionContext.derivationPath.path[1] == 0x8000003c, NULL);
+    initTx(&txContext, &sha3, &tmpContent.txContent, customProcessor, NULL);
   }
   else
   if (p1 != P1_MORE) {

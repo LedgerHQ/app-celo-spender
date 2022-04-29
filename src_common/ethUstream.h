@@ -93,7 +93,6 @@ typedef struct txContent_t {
 
 typedef struct txContext_t {
     rlpTxField_e currentField;
-    bool isEthereum;
     cx_sha3_t *sha3;
     uint32_t currentFieldLength;
     uint32_t currentFieldPos;
@@ -111,7 +110,7 @@ typedef struct txContext_t {
 } txContext_t;
 
 void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, bool isEthereum, void *extra);
+            ustreamProcess_t customProcessor, void *extra);
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length);
 parserStatus_e continueTx(txContext_t *context);
 int copyTxData(txContext_t *context, uint8_t *out, size_t length);
