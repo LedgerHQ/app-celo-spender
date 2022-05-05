@@ -10,6 +10,16 @@
 #include <string.h>
 
 static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
+static const uint8_t TOKEN_TRANSFER_WITH_COMMENT_ID[] = { 0xe1, 0xd6, 0xac, 0xeb };
+static const uint8_t LOCK_METHOD_ID[] = { 0xf8, 0x3d, 0x08, 0xba };
+static const uint8_t VOTE_METHOD_ID[] = { 0x58, 0x0d, 0x74, 0x7a };
+static const uint8_t ACTIVATE_METHOD_ID[] = { 0x1c, 0x5a, 0x9d, 0x9c };
+static const uint8_t REVOKE_PENDING_METHOD_ID[] = { 0x9d, 0xfb, 0x60, 0x81 };
+static const uint8_t REVOKE_ACTIVE_METHOD_ID[] = { 0x6e, 0x19, 0x84, 0x75 };
+static const uint8_t UNLOCK_METHOD_ID[] = { 0x61, 0x98, 0xe3, 0x39 };
+static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
+static const uint8_t RELOCK_METHOD_ID[] = { 0xb2, 0xfb, 0x30, 0xcb };
+static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = { 0x9d, 0xca, 0x36, 0x2f };
 
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
@@ -116,12 +126,71 @@ customStatus_e customProcessor(txContext_t *context) {
                 return CUSTOM_FAULT;
             }
             // Initial check to see if the token content can be processed
-            tokenProvisioned =
-                (context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
-                (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0) &&
-                (getKnownToken(tmpContent.txContent.destination) != NULL);
+            if (
+                (
+                  (
+                    (context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
+                    (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0)
+                  ) ||
+                  (
+                    (context->currentFieldLength >= sizeof(dataContext.tokenContext.data)) &&
+                    (memcmp(context->workBuffer, TOKEN_TRANSFER_WITH_COMMENT_ID, 4) == 0)
+                  )
+                ) &&
+                (getKnownToken(tmpContent.txContent.destination) != NULL)
+              ) {
+                  provisionType = PROVISION_TOKEN;
+                }
+            // Initial check to see if the lock content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.lockContext.data)) &&
+                (memcmp(context->workBuffer, LOCK_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_LOCK;
+                }
+            // Initial check to see if the vote content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.voteContext.data)) &&
+                (memcmp(context->workBuffer, VOTE_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_VOTE;
+                }
+            // Initial check to see if the activate content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.activateContext.data)) &&
+                (memcmp(context->workBuffer, ACTIVATE_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_ACTIVATE;
+                }
+            // Initial check to see if the revoke content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.revokeContext.data)) &&
+                ((memcmp(context->workBuffer, REVOKE_PENDING_METHOD_ID, 4) == 0) || (memcmp(context->workBuffer, REVOKE_ACTIVE_METHOD_ID, 4) == 0))) {
+                  provisionType = PROVISION_REVOKE;
+                }
+            // Initial check to see if the unlock content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.unlockContext.data)) &&
+                (memcmp(context->workBuffer, UNLOCK_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_UNLOCK;
+                }
+            // Initial check to see if the withdraw content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.withdrawContext.data)) &&
+                (memcmp(context->workBuffer, WITHDRAW_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_WITHDRAW;
+                }
+            // Initial check to see if the relock content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.relockContext.data)) &&
+                (memcmp(context->workBuffer, RELOCK_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_RELOCK;
+                }
+            // Initial check to see if the create account content can be processed
+            if (
+                (context->currentFieldLength == sizeof(dataContext.createAccountContext.data)) &&
+                (memcmp(context->workBuffer, CREATE_ACCOUNT_METHOD_ID, 4) == 0)) {
+                  provisionType = PROVISION_CREATE_ACCOUNT;
+                }
         }
-        if (tokenProvisioned) {
+        if (provisionType != PROVISION_NONE) {
             if (context->currentFieldPos < context->currentFieldLength) {
                 uint32_t copySize = (context->commandLength <
                                         ((context->currentFieldLength -
@@ -129,9 +198,54 @@ customStatus_e customProcessor(txContext_t *context) {
                                         ? context->commandLength
                                             : context->currentFieldLength -
                                                    context->currentFieldPos);
-                copyTxData(context,
-                    dataContext.tokenContext.data + context->currentFieldPos,
-                    copySize);
+                switch (provisionType) {
+                  case PROVISION_TOKEN:
+                    copyTxData(context,
+                        dataContext.tokenContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_LOCK:
+                    copyTxData(context,
+                        dataContext.lockContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_VOTE:
+                    copyTxData(context,
+                        dataContext.voteContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_ACTIVATE:
+                    copyTxData(context,
+                        dataContext.activateContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_REVOKE:
+                    copyTxData(context,
+                        dataContext.revokeContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_UNLOCK:
+                    copyTxData(context,
+                        dataContext.unlockContext.data + context->currentFieldPos,
+                        copySize);
+                    break;
+                  case PROVISION_WITHDRAW:
+                    copyTxData(context,
+                        dataContext.withdrawContext.data + context->currentFieldPos,
+                        copySize);
+                  case PROVISION_RELOCK:
+                    copyTxData(context,
+                        dataContext.relockContext.data + context->currentFieldPos,
+                        copySize);
+                  case PROVISION_CREATE_ACCOUNT:
+                    copyTxData(context,
+                        dataContext.createAccountContext.data + context->currentFieldPos,
+                        copySize);
+
+                    break;
+                  default:
+                    break;
+                }
             }
             if (context->currentFieldPos == context->currentFieldLength) {
                 context->currentField++;
@@ -245,7 +359,7 @@ void finalizeParsing(bool direct) {
   // Store the hash
   cx_hash((cx_hash_t *)&sha3, CX_LAST, tmpCtx.transactionContext.hash, 0, tmpCtx.transactionContext.hash, 32);
     // If there is a token to process, check if it is well known
-    if (tokenProvisioned) {
+    if (provisionType == PROVISION_TOKEN) {
         tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
         if (currentToken != NULL) {
             dataPresent = false;
@@ -256,8 +370,26 @@ void finalizeParsing(bool direct) {
             memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
             tmpContent.txContent.value.length = 32;
         }
-    }
-    else {
+    } else if (provisionType == PROVISION_VOTE) {
+      tmpContent.txContent.destinationLength = 20;
+      memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
+      memcpy(tmpContent.txContent.value.value, dataContext.voteContext.data + 4 + 32, 32);
+      tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_ACTIVATE) {
+      tmpContent.txContent.destinationLength = 20;
+      memcpy(tmpContent.txContent.destination, dataContext.activateContext.data + 4 + 12, 20);
+    } else if (provisionType == PROVISION_REVOKE) {
+      tmpContent.txContent.destinationLength = 20;
+      memcpy(tmpContent.txContent.destination, dataContext.revokeContext.data + 4 + 12, 20);
+      memcpy(tmpContent.txContent.value.value, dataContext.revokeContext.data + 4 + 32, 32);
+      tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_UNLOCK) {
+      memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
+      tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_RELOCK) {
+      memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
+      tmpContent.txContent.value.length = 32;
+    } else {
       if (dataPresent && !N_storage.dataAllowed) {
           reset_app_context();
           PRINTF("Data field forbidden\n");
@@ -353,17 +485,81 @@ void finalizeParsing(bool direct) {
   }
   strings.common.maxFee[tickerOffset + i] = '\0';
 
+  switch (provisionType) {
+    case PROVISION_LOCK:
+      strcpy(strings.common.stakingType, "Lock");
+      break;
+    case PROVISION_VOTE:
+      strcpy(strings.common.stakingType, "Vote");
+      break;
+    case PROVISION_ACTIVATE:
+      strcpy(strings.common.stakingType, "Activate");
+      break;
+    case PROVISION_REVOKE:
+      strcpy(strings.common.stakingType, "Revoke");
+      break;
+    case PROVISION_UNLOCK:
+      strcpy(strings.common.stakingType, "Unlock");
+      break;
+    case PROVISION_WITHDRAW:
+      strcpy(strings.common.stakingType, "Withdraw");
+      break;
+    case PROVISION_RELOCK:
+      strcpy(strings.common.stakingType, "Relock");
+      break;
+    case PROVISION_CREATE_ACCOUNT:
+      strcpy(strings.common.stakingType, "Create Account");
+      break;
+    default:
+      break;
+  }
+
 #ifdef NO_CONSENT
   io_seproxyhal_touch_tx_ok(NULL);
 #else // NO_CONSENT
-  if (tmpContent.txContent.gatewayDestinationLength != 0) {
-    ux_flow_init(0,
-      ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_gateway_tx_flow : ux_approval_celo_gateway_tx_flow),
-      NULL);
-  } else {
-    ux_flow_init(0,
-      ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_tx_flow : ux_approval_celo_tx_flow),
-      NULL);
+  switch(provisionType) {
+    case PROVISION_LOCK:
+    case PROVISION_UNLOCK:
+      ux_flow_init(0,
+        ux_approval_celo_lock_unlock_flow,
+        NULL);
+      break;
+    case PROVISION_WITHDRAW:
+      ux_flow_init(0,
+        ux_approval_celo_withdraw_flow,
+        NULL);
+      break;
+    case PROVISION_VOTE:
+    case PROVISION_REVOKE:
+      ux_flow_init(0,
+        ux_approval_celo_vote_revoke_flow,
+        NULL);
+      break;
+    case PROVISION_ACTIVATE:
+      ux_flow_init(0,
+        ux_approval_celo_activate_flow,
+        NULL);
+      break;
+    case PROVISION_RELOCK:
+      ux_flow_init(0,
+        ux_approval_celo_relock_flow,
+        NULL);
+      break;
+    case PROVISION_CREATE_ACCOUNT:
+      ux_flow_init(0,
+        ux_approval_celo_create_account_flow,
+        NULL);
+      break;
+    default:
+      if (tmpContent.txContent.gatewayDestinationLength != 0) {
+        ux_flow_init(0,
+          ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_gateway_tx_flow : ux_approval_celo_gateway_tx_flow),
+          NULL);
+      } else {
+        ux_flow_init(0,
+          ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_tx_flow : ux_approval_celo_tx_flow),
+          NULL);
+      }
   }
 #endif // NO_CONSENT
 }
