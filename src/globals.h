@@ -62,6 +62,7 @@ typedef struct strData_t {
     char fullAmount[50];
     char maxFee[50];
     char gatewayFee[50];
+    char stakingType[20];
 } strData_t;
 
 typedef struct strDataTmp_t {
@@ -92,11 +93,56 @@ extern const internalStorage_t N_storage_real;
 extern char addressSummary[32];
 extern cx_sha3_t sha3;
 
-extern volatile bool tokenProvisioned;
+typedef enum {
+  PROVISION_NONE,
+  PROVISION_TOKEN,
+  PROVISION_LOCK,
+  PROVISION_VOTE,
+  PROVISION_ACTIVATE,
+  PROVISION_REVOKE,
+  PROVISION_UNLOCK,
+  PROVISION_WITHDRAW,
+  PROVISION_RELOCK,
+  PROVISION_CREATE_ACCOUNT
+} provision_type_t;
+
+extern volatile provision_type_t provisionType;
 
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
 } tokenContext_t;
+
+typedef struct lockContext_t {
+    uint8_t data[4];
+} lockContext_t;
+
+typedef struct voteContext_t {
+    uint8_t data[4 + 32 + 32 + 32 + 32];
+} voteContext_t;
+
+typedef struct activateContext_t {
+    uint8_t data[4 + 32];
+} activateContext_t;
+
+typedef struct revokeContext_t {
+    uint8_t data[4 + 32 + 32 + 32 + 32 + 32];
+} revokeContext_t;
+
+typedef struct unlockContext_t {
+    uint8_t data[4 + 32];
+} unlockContext_t;
+
+typedef struct withdrawContext_t {
+    uint8_t data[4 + 32];
+} withdrawContext_t;
+
+typedef struct relockContext_t {
+    uint8_t data[4 + 32 + 32];
+} relockContext_t;
+
+typedef struct createAccountContext_t {
+    uint8_t data[4];
+} createAccountContext_t;
 
 typedef struct rawDataContext_t {
     uint8_t data[32];
@@ -106,6 +152,14 @@ typedef struct rawDataContext_t {
 
 typedef union {
     tokenContext_t tokenContext;
+    lockContext_t lockContext;
+    voteContext_t voteContext;
+    activateContext_t activateContext;
+    revokeContext_t revokeContext;
+    unlockContext_t unlockContext;
+    withdrawContext_t withdrawContext;
+    relockContext_t relockContext;
+    createAccountContext_t createAccountContext;
     rawDataContext_t rawDataContext;
 } dataContext_t;
 

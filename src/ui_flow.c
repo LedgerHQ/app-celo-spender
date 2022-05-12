@@ -322,19 +322,27 @@ UX_STEP_NOCB(
     });
 
 UX_STEP_NOCB(
+    ux_celo_approval_staking_type_step,
+    bnnn_paging,
+    {
+      .title = "Type",
+      .text = strings.common.stakingType,
+    });
+
+UX_STEP_NOCB(
+    ux_celo_approval_staking_validator_step,
+    bnnn_paging,
+    {
+      .title = "Validator",
+      .text = strings.common.fullAddress,
+    });
+
+UX_STEP_NOCB(
     ux_celo_approval_tx_gateway_address_step,
     bnnn_paging,
     {
       .title = "Gateway Addr",
       .text = strings.common.fullGatewayAddress,
-    });
-
-UX_STEP_NOCB(
-    ux_celo_approval_tx_gateway_no_fee_step,
-    bnnn_paging,
-    {
-      .title = "No Gateway Fee",
-      .text  = " "
     });
 
 UX_STEP_CB(
@@ -368,7 +376,6 @@ UX_FLOW(ux_approval_celo_tx_flow,
   &ux_approval_tx_2_step,
   &ux_approval_tx_3_step,
   &ux_approval_tx_4_step,
-  &ux_celo_approval_tx_gateway_no_fee_step,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
 );
@@ -390,7 +397,6 @@ UX_FLOW(ux_approval_celo_data_warning_tx_flow,
   &ux_approval_tx_2_step,
   &ux_approval_tx_3_step,
   &ux_approval_tx_4_step,
-  &ux_celo_approval_tx_gateway_no_fee_step,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
 );
@@ -403,6 +409,59 @@ UX_FLOW(ux_approval_celo_data_warning_gateway_tx_flow,
   &ux_approval_tx_4_step,
   &ux_celo_approval_tx_gateway_fee_step,
   &ux_celo_approval_tx_gateway_address_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_lock_unlock_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_2_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_withdraw_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_vote_revoke_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_2_step,
+  &ux_celo_approval_staking_validator_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_activate_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_celo_approval_staking_validator_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_relock_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_2_step,
+  &ux_approval_tx_4_step,
+  &ux_approval_tx_5_step,
+  &ux_approval_tx_6_step
+);
+
+UX_FLOW(ux_approval_celo_create_account_flow,
+  &ux_approval_tx_1_step,
+  &ux_celo_approval_staking_type_step,
+  &ux_approval_tx_4_step,
   &ux_approval_tx_5_step,
   &ux_approval_tx_6_step
 );
