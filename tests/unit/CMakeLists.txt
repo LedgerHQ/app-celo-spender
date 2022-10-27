@@ -8,7 +8,7 @@ enable_testing()
 
 add_compile_definitions(TESTING)
 
-set(COMMON_SRC "../src_common")
+set(COMMON_SRC "../../src_common")
 include_directories(${COMMON_SRC})
 
 add_executable(test_uint256
