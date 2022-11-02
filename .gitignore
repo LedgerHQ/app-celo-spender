@@ -5,3 +5,6 @@ obj
 src/glyphs.c
 src/glyphs.h
 
+tests/elfs
+__pycache__
+
