@@ -1,10 +1,10 @@
+#ifdef HAVE_BAGL
 #include "bolos_target.h"
 
 #include "ui_flow.h"
 #include "globals.h"
 
 ux_state_t G_ux;
-bolos_ux_params_t G_ux_params;
 
 void ui_idle(void) {
     // reserve a display stack slot if none yet
@@ -510,3 +510,4 @@ UX_FLOW(ux_sign_flow,
   &ux_sign_flow_3_step,
   &ux_sign_flow_4_step
 );
+#endif // HAVE_BAGL

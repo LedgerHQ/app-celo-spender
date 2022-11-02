@@ -4,8 +4,7 @@
 #include "os.h"
 #include "utils.h"
 
-// TODO: remove this. This module should be independant from ui
-#include "ui_flow.h"
+#include "ui_common.h"
 
 #include <string.h>
 
@@ -302,7 +301,7 @@ customStatus_e customProcessor(txContext_t *context) {
                 dataContext.rawDataContext.fieldOffset = 0;
                 if (fieldPos == 0) {
                     array_hexstr(strings.tmp.tmp, dataContext.rawDataContext.data, 4);
-                    ux_flow_init(0, ux_confirm_selector_flow, NULL);
+                    ui_confirm_selector_flow();
                 }
                 else {
                     uint32_t offset = 0;
@@ -314,7 +313,7 @@ customStatus_e customProcessor(txContext_t *context) {
                             strings.tmp.tmp[offset++] = ':';
                         }
                     }
-                    ux_flow_init(0, ux_confirm_parameter_flow, NULL);
+                    ui_confirm_parameter_flow();
                 }
             }
             else {
@@ -520,45 +519,39 @@ void finalizeParsing(bool direct) {
   switch(provisionType) {
     case PROVISION_LOCK:
     case PROVISION_UNLOCK:
-      ux_flow_init(0,
-        ux_approval_celo_lock_unlock_flow,
-        NULL);
+        ui_approval_celo_lock_unlock_flow();
       break;
     case PROVISION_WITHDRAW:
-      ux_flow_init(0,
-        ux_approval_celo_withdraw_flow,
-        NULL);
+      ui_approval_celo_withdraw_flow();
       break;
     case PROVISION_VOTE:
     case PROVISION_REVOKE:
-      ux_flow_init(0,
-        ux_approval_celo_vote_revoke_flow,
-        NULL);
+      ui_approval_celo_vote_revoke_flow();
       break;
     case PROVISION_ACTIVATE:
-      ux_flow_init(0,
-        ux_approval_celo_activate_flow,
-        NULL);
+      ui_approval_celo_activate_flow();
       break;
     case PROVISION_RELOCK:
-      ux_flow_init(0,
-        ux_approval_celo_relock_flow,
-        NULL);
+      ui_approval_celo_relock_flow();
       break;
     case PROVISION_CREATE_ACCOUNT:
-      ux_flow_init(0,
-        ux_approval_celo_create_account_flow,
-        NULL);
+      ui_approval_celo_create_account_flow();
       break;
     default:
       if (tmpContent.txContent.gatewayDestinationLength != 0) {
-        ux_flow_init(0,
-          ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_gateway_tx_flow : ux_approval_celo_gateway_tx_flow),
-          NULL);
+          if (dataPresent && !N_storage.contractDetails) {
+              ui_approval_celo_data_warning_gateway_tx_flow();
+          }
+          else {
+              ui_approval_celo_gateway_tx_flow();
+          }
       } else {
-        ux_flow_init(0,
-          ((dataPresent && !N_storage.contractDetails) ? ux_approval_celo_data_warning_tx_flow : ux_approval_celo_tx_flow),
-          NULL);
+          if (dataPresent && !N_storage.contractDetails) {
+              ui_approval_celo_data_warning_tx_flow();
+          }
+          else {
+              ui_approval_celo_tx_flow();
+          }
       }
   }
 #endif // NO_CONSENT
