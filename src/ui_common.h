@@ -20,14 +20,14 @@ void ui_approval_celo_gateway_tx_flow(void);
 void ui_approval_celo_data_warning_tx_flow(void);
 void ui_approval_celo_tx_flow(void);
 
-unsigned int io_seproxyhal_touch_data_ok(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_data_cancel(const bagl_element_t *e);
+unsigned int io_seproxyhal_touch_data_ok(void);
+unsigned int io_seproxyhal_touch_data_cancel(void);
 
-unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e);
+unsigned int io_seproxyhal_touch_address_ok(void);
+unsigned int io_seproxyhal_touch_address_cancel(void);
 
-unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e);
+unsigned int io_seproxyhal_touch_tx_ok(void);
+unsigned int io_seproxyhal_touch_tx_cancel(void);
 
-unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_signMessage_cancel(const bagl_element_t *e);
+unsigned int io_seproxyhal_touch_signMessage_ok(void);
+unsigned int io_seproxyhal_touch_signMessage_cancel(void);

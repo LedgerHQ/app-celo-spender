@@ -173,7 +173,7 @@ UX_STEP_NOCB(
 UX_STEP_CB(
     ux_display_public_flow_3_step,
     pb,
-    io_seproxyhal_touch_address_ok(NULL),
+    io_seproxyhal_touch_address_ok(),
     {
       &C_icon_validate_14,
       "Approve",
@@ -181,7 +181,7 @@ UX_STEP_CB(
 UX_STEP_CB(
     ux_display_public_flow_4_step,
     pb,
-    io_seproxyhal_touch_address_cancel(NULL),
+    io_seproxyhal_touch_address_cancel(),
     {
       &C_icon_crossmark,
       "Reject",
@@ -214,7 +214,7 @@ UX_STEP_NOCB(
 UX_STEP_CB(
     ux_confirm_selector_flow_3_step,
     pb,
-    io_seproxyhal_touch_data_ok(NULL),
+    io_seproxyhal_touch_data_ok(),
     {
       &C_icon_validate_14,
       "Approve",
@@ -222,7 +222,7 @@ UX_STEP_CB(
 UX_STEP_CB(
     ux_confirm_selector_flow_4_step,
     pb,
-    io_seproxyhal_touch_data_cancel(NULL),
+    io_seproxyhal_touch_data_cancel(),
     {
       &C_icon_crossmark,
       "Reject",
@@ -256,7 +256,7 @@ UX_STEP_NOCB(
 UX_STEP_CB(
     ux_confirm_parameter_flow_3_step,
     pb,
-    io_seproxyhal_touch_data_ok(NULL),
+    io_seproxyhal_touch_data_ok(),
     {
       &C_icon_validate_14,
       "Approve",
@@ -265,7 +265,7 @@ UX_STEP_CB(
 UX_STEP_CB(
     ux_confirm_parameter_flow_4_step,
     pb,
-    io_seproxyhal_touch_data_cancel(NULL),
+    io_seproxyhal_touch_data_cancel(),
     {
       &C_icon_crossmark,
       "Reject",
@@ -346,7 +346,7 @@ UX_STEP_NOCB(
 UX_STEP_CB(
     ux_approval_tx_5_step,
     pbb,
-    io_seproxyhal_touch_tx_ok(NULL),
+    io_seproxyhal_touch_tx_ok(),
     {
       &C_icon_validate_14,
       "Accept",
@@ -355,7 +355,7 @@ UX_STEP_CB(
 UX_STEP_CB(
     ux_approval_tx_6_step,
     pb,
-    io_seproxyhal_touch_tx_cancel(NULL),
+    io_seproxyhal_touch_tx_cancel(),
     {
       &C_icon_crossmark,
       "Reject",
@@ -485,7 +485,7 @@ UX_STEP_NOCB(
 UX_STEP_CB(
     ux_sign_flow_3_step,
     pbb,
-    io_seproxyhal_touch_signMessage_ok(NULL),
+    io_seproxyhal_touch_signMessage_ok(),
     {
       &C_icon_validate_14,
       "Sign",
@@ -495,7 +495,7 @@ UX_STEP_CB(
 UX_STEP_CB(
     ux_sign_flow_4_step,
     pbb,
-    io_seproxyhal_touch_signMessage_cancel(NULL),
+    io_seproxyhal_touch_signMessage_cancel(),
     {
       &C_icon_crossmark,
       "Cancel",
