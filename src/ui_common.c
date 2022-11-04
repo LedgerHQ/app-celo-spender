@@ -15,18 +15,24 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
         break;
     case USTREAM_PROCESSING:
         io_seproxyhal_send_status(0x9000);
+#ifdef HAVE_BAGL
         ui_idle();
+#endif // HAVE_BAGL
         break;
     case USTREAM_FAULT:
         reset_app_context();
         io_seproxyhal_send_status(0x6A80);
+#ifdef HAVE_BAGL
         ui_idle();
+#endif // HAVE_BAGL
         break;
     default:
         PRINTF("Unexpected parser status\n");
         reset_app_context();
         io_seproxyhal_send_status(0x6A80);
+#ifdef HAVE_BAGL
         ui_idle();
+#endif // HAVE_BAGL
     }
 
     if (txResult == USTREAM_FINISHED) {
@@ -39,8 +45,10 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
 unsigned int io_seproxyhal_touch_data_cancel(void) {
     reset_app_context();
     io_seproxyhal_send_status(0x6985);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
 
@@ -51,8 +59,10 @@ unsigned int io_seproxyhal_touch_address_ok(void) {
     reset_app_context();
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
 
@@ -62,8 +72,10 @@ unsigned int io_seproxyhal_touch_address_cancel(void) {
     reset_app_context();
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
 
@@ -109,8 +121,10 @@ unsigned int io_seproxyhal_touch_tx_ok(void) {
     reset_app_context();
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
 
@@ -120,8 +134,10 @@ unsigned int io_seproxyhal_touch_tx_cancel(void) {
     G_io_apdu_buffer[1] = 0x85;
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
 
@@ -157,8 +173,10 @@ unsigned int io_seproxyhal_touch_signMessage_ok(void) {
     reset_app_context();
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
 
@@ -168,7 +186,9 @@ unsigned int io_seproxyhal_touch_signMessage_cancel(void) {
     G_io_apdu_buffer[1] = 0x85;
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
+#ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+#endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
