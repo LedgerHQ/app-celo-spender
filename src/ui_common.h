@@ -4,6 +4,14 @@
 
 #include "ux.h"
 
+#ifdef HAVE_NBGL
+#include "nbgl_use_case.h"
+
+extern nbgl_layoutTagValue_t tagValuePair[5];
+extern nbgl_layoutTagValueList_t tagValueList;
+extern nbgl_pageInfoLongPress_t infoLongPress;
+#endif // HAVE_NBGL
+
 void ui_idle(void);  // must be implemented by each ui handler
 void ui_display_public_flow(void); 
 void ui_display_sign_flow(void); 
