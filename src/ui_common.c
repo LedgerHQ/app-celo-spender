@@ -5,8 +5,7 @@
 #include "globals.h"
 #include "utils.h"
 
-unsigned int io_seproxyhal_touch_data_ok(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_data_ok(void) {
     parserStatus_e txResult = USTREAM_FINISHED;
     txResult = continueTx(&txContext);
     switch (txResult) {
@@ -37,8 +36,7 @@ unsigned int io_seproxyhal_touch_data_ok(const bagl_element_t *e) {
     return 0;
 }
 
-unsigned int io_seproxyhal_touch_data_cancel(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_data_cancel(void) {
     reset_app_context();
     io_seproxyhal_send_status(0x6985);
     // Display back the original UX
@@ -46,8 +44,7 @@ unsigned int io_seproxyhal_touch_data_cancel(const bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_address_ok(void) {
     uint32_t tx = set_result_get_publicKey();
     G_io_apdu_buffer[tx++] = 0x90;
     G_io_apdu_buffer[tx++] = 0x00;
@@ -59,8 +56,7 @@ unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_address_cancel(void) {
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
     reset_app_context();
@@ -71,8 +67,7 @@ unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_tx_ok(void) {
     uint8_t privateKeyData[32];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
@@ -119,8 +114,7 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_tx_cancel(void) {
     reset_app_context();
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
@@ -131,8 +125,7 @@ unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_signMessage_ok(void) {
     uint8_t privateKeyData[32];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
@@ -169,8 +162,7 @@ unsigned int io_seproxyhal_touch_signMessage_ok(const bagl_element_t *e) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_signMessage_cancel(const bagl_element_t *e) {
-    UNUSED(e);
+unsigned int io_seproxyhal_touch_signMessage_cancel(void) {
     reset_app_context();
     G_io_apdu_buffer[0] = 0x69;
     G_io_apdu_buffer[1] = 0x85;
