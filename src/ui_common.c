@@ -5,6 +5,12 @@
 #include "globals.h"
 #include "utils.h"
 
+#ifdef HAVE_NBGL
+nbgl_layoutTagValue_t tagValuePair[5];
+nbgl_layoutTagValueList_t tagValueList;
+nbgl_pageInfoLongPress_t infoLongPress;
+#endif // HAVE_NBGL
+
 unsigned int io_seproxyhal_touch_data_ok(void) {
     parserStatus_e txResult = USTREAM_FINISHED;
     txResult = continueTx(&txContext);
