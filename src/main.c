@@ -432,12 +432,17 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     cx_hash((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32);
     cx_hash((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32);
 
+#ifdef HAVE_BAGL
 #define HASH_LENGTH 4
     array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH / 2);
     strings.common.fullAddress[HASH_LENGTH / 2 * 2] = '.';
     strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 1] = '.';
     strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 2] = '.';
     array_hexstr(strings.common.fullAddress + HASH_LENGTH / 2 * 2 + 3, hashMessage + 32 - HASH_LENGTH / 2, HASH_LENGTH / 2);
+#else 
+#define HASH_LENGTH 32
+    array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH);
+#endif
 
 #ifdef NO_CONSENT
     io_seproxyhal_touch_signMessage_ok(NULL);
