@@ -24,7 +24,7 @@ void ui_display_sign_flow(void) {
     tagValueList.smallCaseForValue = false;
 
     infoLongPress.text = "Sign message";
-    infoLongPress.icon = &C_celo_32px;
+    infoLongPress.icon = &C_celo_64px;
     infoLongPress.longPressText = "Approve";
     infoLongPress.longPressToken = 0;
     infoLongPress.tuneId = TUNE_TAP_CASUAL;

@@ -27,7 +27,7 @@ static void continueCallback(void) {
     tagValueList.pairs = tagValuePair;
 
     infoLongPress.text = "Approve Transaction";
-    infoLongPress.icon = &C_celo_32px;
+    infoLongPress.icon = &C_celo_64px;
     infoLongPress.longPressText = "Approve";
     infoLongPress.longPressToken = 0;
     infoLongPress.tuneId = TUNE_TAP_CASUAL;
@@ -125,52 +125,52 @@ static void fill_vote_revoke(void) {
 
 void ui_approval_celo_tx_flow(void) {
     fill_data_tx();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_data_warning_tx_flow(void) {
     fill_data_tx();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", warningCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", warningCallback, rejectCallback);
 }
 
 void ui_approval_celo_gateway_tx_flow(void) {
     fill_gateway_tx();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_data_warning_gateway_tx_flow(void) {
     fill_gateway_tx();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", warningCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", warningCallback, rejectCallback);
 }
 
 void ui_approval_celo_lock_unlock_flow(void) {
     fill_lock_relock();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_relock_flow(void) {
     fill_lock_relock();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_withdraw_flow(void) {
     fill_withdraw_or_create_account();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_create_account_flow(void) {
     fill_withdraw_or_create_account();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_activate_flow(void) {
     fill_activate();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_approval_celo_vote_revoke_flow(void) {
     fill_vote_revoke();
-    nbgl_useCaseReviewStart(&C_celo_32px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Review transaction", "", "Cancel", continueCallback, rejectCallback);
 }
 
 #endif // HAVE_NBGL

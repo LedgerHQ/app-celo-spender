@@ -28,7 +28,7 @@ static void continueCallback(void) {
     tagValueList.smallCaseForValue = false;
 
     infoLongPress.text = "Approve selector";
-    infoLongPress.icon = &C_celo_32px;
+    infoLongPress.icon = &C_celo_64px;
     infoLongPress.longPressText = "Approve";
     infoLongPress.longPressToken = 0;
     infoLongPress.tuneId = TUNE_TAP_CASUAL;
@@ -42,7 +42,7 @@ void ui_confirm_selector_flow(void) {
 
     tagValueList.nbPairs = 1;
 
-    nbgl_useCaseReviewStart(&C_celo_32px, "Verify selector", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Verify selector", "", "Cancel", continueCallback, rejectCallback);
 }
 
 void ui_confirm_parameter_flow(void) {
@@ -51,7 +51,7 @@ void ui_confirm_parameter_flow(void) {
 
     tagValueList.nbPairs = 1;
 
-    nbgl_useCaseReviewStart(&C_celo_32px, "Verify", strings.tmp.tmp2, "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReviewStart(&C_celo_64px, "Verify", strings.tmp.tmp2, "Cancel", continueCallback, rejectCallback);
 }
 
 #endif // HAVE_NBGL

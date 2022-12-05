@@ -41,6 +41,8 @@ APP_LOAD_PARAMS += $(APP_LOAD_FLAGS)
 #prepare hsm generation
 ifeq ($(TARGET_NAME), TARGET_NANOS)
 ICONNAME=nanos_app_celo.gif
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+ICONNAME=stax_app_celo.gif
 else
 ICONNAME=nanox_app_celo.gif
 endif
