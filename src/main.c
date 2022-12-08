@@ -653,6 +653,9 @@ unsigned char io_event(unsigned char channel) {
 #ifdef HAVE_BAGL
         UX_DISPLAYED_EVENT({});
 #endif // HAVE_BAGL
+#ifdef HAVE_NBGL
+        UX_DEFAULT_EVENT();
+#endif // HAVE_NBGL
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
