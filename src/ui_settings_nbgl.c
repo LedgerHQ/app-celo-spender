@@ -99,7 +99,7 @@ static void displaySettingsMenu(void) {
 
 void ui_idle(void) {
     nbgl_useCaseHome("Celo", &C_celo_64px, 
-            "Go to Ledger Live to create a\ntransaction. You will approve it\non Stax.", true, 
+            NULL, true, 
             displaySettingsMenu, onQuitCallback);
 }
 

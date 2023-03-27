@@ -28,7 +28,7 @@ static void continueCallback(void) {
 
     infoLongPress.text = "Approve Transaction";
     infoLongPress.icon = &C_celo_64px;
-    infoLongPress.longPressText = "Approve";
+    infoLongPress.longPressText = "Hold to sign";
     infoLongPress.longPressToken = 0;
     infoLongPress.tuneId = TUNE_TAP_CASUAL;
 
