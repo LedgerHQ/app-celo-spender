@@ -29,7 +29,7 @@ static void sign_display(void) {
 
     infoLongPress.text = "Sign message";
     infoLongPress.icon = &C_celo_64px;
-    infoLongPress.longPressText = "Approve";
+    infoLongPress.longPressText = "Hold to sign";
     infoLongPress.longPressToken = 0;
     infoLongPress.tuneId = TUNE_TAP_CASUAL;
 
