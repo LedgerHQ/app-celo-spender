@@ -7,7 +7,7 @@
 #define NB_INFO_FIELDS 2
 #define PAGE_START 0
 #define NB_PAGE_SETTING 2
-#define IS_TOUCHABLE true
+#define IS_TOUCHABLE false
 
 // Forward declaration
 static void displaySettingsMenu(void);
@@ -31,6 +31,12 @@ static void onQuitCallback(void) {
 
 static bool settingsNavCallback(uint8_t page, nbgl_pageContent_t *content) {
     if (page == 0) {
+        content->type = INFOS_LIST;
+        content->infosList.nbInfos = NB_INFO_FIELDS;
+        content->infosList.infoTypes = (const char**) infoTypes;
+        content->infosList.infoContents = (const char**) infoContents;
+    }
+    else if (page == 1) {
         switches[0].text = "Contract data";
         switches[0].subText = "Allow contract data\nin transactions";
         switches[0].token = SWITCH_CONTRACT_DATA_SET_TOKEN;
@@ -46,12 +52,6 @@ static bool settingsNavCallback(uint8_t page, nbgl_pageContent_t *content) {
         content->type = SWITCHES_LIST;
         content->switchesList.nbSwitches = NB_SETTINGS_SWITCHES - FIRST_USER_TOKEN,
         content->switchesList.switches = (nbgl_layoutSwitch_t*) switches;
-    }
-    else if (page == 1) {
-        content->type = INFOS_LIST;
-        content->infosList.nbInfos = NB_INFO_FIELDS;
-        content->infosList.infoTypes = (const char**) infoTypes;
-        content->infosList.infoContents = (const char**) infoContents;
     }
     else {
         return false;
