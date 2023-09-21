@@ -21,6 +21,9 @@ static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
 static const uint8_t RELOCK_METHOD_ID[] = { 0xb2, 0xfb, 0x30, 0xcb };
 static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = { 0x9d, 0xca, 0x36, 0x2f };
 
+static uint32_t ALLOWED_CHAIN_IDS[3]={ 42220, 44787, 17323 };
+#define NUM_ALLOWED_CHAIN_IDS 3
+
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
     G_io_apdu_buffer[1] = (sw & 0xff);
@@ -336,6 +339,28 @@ void finalizeParsing(bool direct) {
   char *ticker = CHAINID_COINNAME " ";
   char *feeTicker = CHAINID_COINNAME " ";
   uint8_t tickerOffset = 0;
+  uint32_t v;
+  bool foundV = false;
+
+  // Check for allowed chain IDs
+  v = getV(&tmpContent.txContent);
+
+  for (i=0; i<NUM_ALLOWED_CHAIN_IDS; i++) {
+    if (v == ALLOWED_CHAIN_IDS[i]) {
+      foundV = true;
+      break;
+    }
+  }
+  if (!foundV) {
+      if (direct) {
+          THROW(0x6A80);
+      }
+      else {
+          io_seproxyhal_send_status(0x6A80);
+          ui_idle();
+          return;
+      }
+  }
 
   // Display correct currency if fee currency field sent
   if (tmpContent.txContent.feeCurrencyLength != 0) {
