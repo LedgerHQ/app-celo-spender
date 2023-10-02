@@ -21,8 +21,8 @@ static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
 static const uint8_t RELOCK_METHOD_ID[] = { 0xb2, 0xfb, 0x30, 0xcb };
 static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = { 0x9d, 0xca, 0x36, 0x2f };
 
-static uint32_t ALLOWED_CHAIN_IDS[3]={ 42220, 44787, 17323 };
-#define NUM_ALLOWED_CHAIN_IDS 3
+static uint32_t ALLOWED_CHAIN_IDS[4]={ 42220, 44787, 17323, 62320 };
+#define NUM_ALLOWED_CHAIN_IDS 4
 
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
