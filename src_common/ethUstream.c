@@ -497,8 +497,16 @@ static parserStatus_e processTxInternal(txContext_t *context) {
                 }
                 break;
             case TX_RLP_FEECURRENCY:
-                if (processFeeCurrency(context)) {
-                    return USTREAM_FAULT;
+                //if this is an Ethereum transaction, skip the Celo fields
+                if (context->isEthereum) {
+                    context->currentField+=3;
+                    if (processTo(context)) {
+                        return USTREAM_FAULT;
+                    }
+                } else {
+                    if (processFeeCurrency(context)) {
+                        return USTREAM_FAULT;
+                    }
                 }
                 break;
             case TX_RLP_GATEWAYTO:
@@ -542,11 +550,12 @@ parserStatus_e continueTx(txContext_t *context) {
 }
 
 void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra) {
+            ustreamProcess_t customProcessor, bool isEthereum, void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
     context->customProcessor = customProcessor;
+    context->isEthereum = isEthereum;
     context->extra = extra;
     context->currentField = TX_RLP_CONTENT;
 #ifndef TESTING
