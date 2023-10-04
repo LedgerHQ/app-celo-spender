@@ -335,8 +335,8 @@ void finalizeParsing(bool direct) {
   uint32_t i;
   uint8_t decimals = WEI_TO_ETHER;
   uint8_t feeDecimals = WEI_TO_ETHER;
-  char *ticker = CHAINID_COINNAME " ";
-  char *feeTicker = CHAINID_COINNAME " ";
+  const char *ticker = CHAINID_COINNAME " ";
+  const char *feeTicker = CHAINID_COINNAME " ";
   uint8_t tickerOffset = 0;
   uint32_t v;
   bool foundV = false;
