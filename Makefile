@@ -29,6 +29,10 @@ APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
 # Celo
 APP_LOAD_PARAMS += --path "44'/52752'"
+# Ethereum path
+APP_LOAD_PARAMS += --path "44'/60'"
+APP_LOAD_PARAMS += --path "44'/1'"
+
 APPNAME = "Celo"
 APP_LOAD_FLAGS=--appFlags 0
 ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
