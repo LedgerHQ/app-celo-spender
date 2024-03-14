@@ -29,8 +29,8 @@ APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
 # Celo
 APP_LOAD_PARAMS += --path "44'/52752'"
-# Ethereum
-APP_LOAD_PARAMS += --path "44'/60'/0'/0/0" --path "44'/60'/0'" --path "44'/60'/0'/0"
+# Ethereum path
+# APP_LOAD_PARAMS += --path "44'/60'/0'/0/0" --path "44'/60'/0'" --path "44'/60'/0'/0"
 
 APPNAME = "Celo"
 APP_LOAD_FLAGS=--appFlags 0
@@ -136,13 +136,13 @@ endif
 
 CC       := $(CLANGPATH)clang
 
-CFLAGS   += -O0
-# CFLAGS   += -O3 -Os
+# CFLAGS   += -O0
+CFLAGS   += -O3 -Os
 
 AS     := $(GCCPATH)arm-none-eabi-gcc
 
 LD       := $(GCCPATH)arm-none-eabi-gcc
-# LDFLAGS  += -O3 -Os
+LDFLAGS  += -O3 -Os
 LDLIBS   += -lm -lgcc -lc
 
 # import rules to compile glyphs(/pone)
