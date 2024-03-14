@@ -168,7 +168,10 @@ void handleGetWalletId(volatile unsigned int *tx) {
   cx_ecfp_256_private_key_t priv;
   cx_ecfp_256_public_key_t pub;
   // seed => priv key
-  os_perso_derive_node_bip32(CX_CURVE_256K1, U_os_perso_seed_cookie, 2, t, NULL);
+  cx_err_t result_derive =  os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2, t, NULL);
+  if (result_derive != CX_OK) {
+    THROW(result_derive);
+  }
   // priv key => pubkey
   cx_ecdsa_init_private_key(CX_CURVE_256K1, t, 32, &priv);
   cx_ecfp_generate_pair(CX_CURVE_256K1, &pub, &priv, 1);
@@ -184,7 +187,7 @@ void handleGetWalletId(volatile unsigned int *tx) {
 
 void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(dataLength);
-  uint8_t privateKeyData[32];
+  uint8_t privateKeyData[64];
   bip32Path_t derivationPath;
   cx_ecfp_private_key_t privateKey;
 
@@ -203,7 +206,15 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
 
   tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
   io_seproxyhal_io_heartbeat();
-  os_perso_derive_node_bip32(CX_CURVE_256K1, derivationPath.path, derivationPath.len, privateKeyData, (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL));
+  cx_err_t result_derive =  os_derive_bip32_no_throw(CX_CURVE_256K1,
+                                derivationPath.path,
+                                derivationPath.len,
+                                privateKeyData,
+                                (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL));
+  if (result_derive != CX_OK) {
+    THROW(result_derive);
+  }
+
   cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
   io_seproxyhal_io_heartbeat();
   cx_ecfp_generate_pair(CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1);

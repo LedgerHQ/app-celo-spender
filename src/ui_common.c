@@ -86,15 +86,18 @@ unsigned int io_seproxyhal_touch_address_cancel(void) {
 }
 
 unsigned int io_seproxyhal_touch_tx_ok(void) {
-    uint8_t privateKeyData[32];
+    uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
     uint32_t v = getV(&tmpContent.txContent);
     io_seproxyhal_io_heartbeat();
-    os_perso_derive_node_bip32(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
+    cx_err_t result_derive = os_derive_bip32_no_throw(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
                                tmpCtx.transactionContext.derivationPath.len,
                                privateKeyData, NULL);
+    if (result_derive != CX_OK) {
+        THROW(result_derive);
+    }
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32,
                                  &privateKey);
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
@@ -148,14 +151,18 @@ unsigned int io_seproxyhal_touch_tx_cancel(void) {
 }
 
 unsigned int io_seproxyhal_touch_signMessage_ok(void) {
-    uint8_t privateKeyData[32];
+    uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
     io_seproxyhal_io_heartbeat();
-    os_perso_derive_node_bip32(
-        CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
-        tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL);
+    cx_err_t result_derive = os_derive_bip32_no_throw(
+                                CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
+                                tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL);
+    if (result_derive != CX_OK) {
+        THROW(result_derive);
+    }
+
     io_seproxyhal_io_heartbeat();
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
