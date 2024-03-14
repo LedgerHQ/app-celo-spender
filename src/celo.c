@@ -232,15 +232,16 @@ customStatus_e customProcessor(txContext_t *context) {
                     copyTxData(context,
                         dataContext.withdrawContext.data + context->currentFieldPos,
                         copySize);
+                    break;
                   case PROVISION_RELOCK:
                     copyTxData(context,
                         dataContext.relockContext.data + context->currentFieldPos,
                         copySize);
+                    break;
                   case PROVISION_CREATE_ACCOUNT:
                     copyTxData(context,
                         dataContext.createAccountContext.data + context->currentFieldPos,
                         copySize);
-
                     break;
                   default:
                     break;
