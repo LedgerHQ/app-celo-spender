@@ -550,6 +550,6 @@ void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
     context->extra = extra;
     context->currentField = TX_RLP_CONTENT;
 #ifndef TESTING
-    cx_keccak_init(context->sha3, 256);
+    cx_keccak_init_no_throw(context->sha3, 256);
 #endif
 }

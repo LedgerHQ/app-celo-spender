@@ -398,7 +398,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     workBuffer += 4;
     dataLength -= 4;
     // Initialize message header + length
-    cx_keccak_init(&sha3, 256);
+    cx_keccak_init_no_throw(&sha3, 256);
     cx_hash((cx_hash_t *)&sha3, 0, (uint8_t*)SIGN_MAGIC, sizeof(SIGN_MAGIC) - 1, NULL, 0);
     for (i = 1; (((i * base) <= tmpCtx.messageSigningContext.remainingLength) &&
                          (((i * base) / base) == i));
