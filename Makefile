@@ -27,8 +27,8 @@ APPVERSION_N=1
 APPVERSION_P=10
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
-# Celo
-APP_LOAD_PARAMS += --path "44'/52752'" --path "44'/60'"
+# Celo and Ethereum derivation paths
+APP_LOAD_PARAMS += --path "44'/52752'" --path "44'/60'/0'/0/0" --path "44'/60'/0'" --path "44'/60'/0'/0"
 
 APPNAME = "Celo"
 APP_LOAD_FLAGS=--appFlags 0
