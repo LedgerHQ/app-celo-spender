@@ -168,12 +168,9 @@ void handleGetWalletId(volatile unsigned int *tx) {
   cx_ecfp_256_private_key_t priv;
   cx_ecfp_256_public_key_t pub;
   // seed => priv key
-  cx_err_t result_derive =  os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2, t, NULL);
-  if (result_derive != CX_OK) {
-    THROW(result_derive);
-  }
+  CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2, t, NULL));
   // priv key => pubkey
-  cx_ecdsa_init_private_key(CX_CURVE_256K1, t, 32, &priv);
+  CX_THROW(cx_ecdsa_init_private_key(CX_CURVE_256K1, t, 32, &priv));
   cx_ecfp_generate_pair(CX_CURVE_256K1, &pub, &priv, 1);
   // pubkey -> sha512
   cx_hash_sha512(pub.W, sizeof(pub.W), t, sizeof(t));
@@ -206,14 +203,12 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
 
   tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
   io_seproxyhal_io_heartbeat();
-  cx_err_t result_derive =  os_derive_bip32_no_throw(CX_CURVE_256K1,
+  CX_THROW(os_derive_bip32_no_throw(
+                                CX_CURVE_256K1,
                                 derivationPath.path,
                                 derivationPath.len,
                                 privateKeyData,
-                                (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL));
-  if (result_derive != CX_OK) {
-    THROW(result_derive);
-  }
+                                (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL)));
 
   cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
   io_seproxyhal_io_heartbeat();
@@ -409,15 +404,13 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     workBuffer += 4;
     dataLength -= 4;
     // Initialize message header + length
-    cx_keccak_init_no_throw(&sha3, 256);
-    if(cx_hash_no_throw((cx_hash_t *)&sha3,
+    CX_THROW(cx_keccak_init_no_throw(&sha3, 256));
+    CX_THROW(cx_hash_no_throw((cx_hash_t *)&sha3,
                          0,
                          (uint8_t*)SIGN_MAGIC,
                          sizeof(SIGN_MAGIC) - 1,
                          NULL,
-                         0) != CX_OK) {
-      THROW(0x6A8B);
-    };
+                         0));
 
     for (i = 1; (((i * base) <= tmpCtx.messageSigningContext.remainingLength) &&
                          (((i * base) / base) == i));
@@ -427,9 +420,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     }
     tmp[pos] = '\0';
 
-    if(cx_hash_no_throw((cx_hash_t *) &sha3, 0, (uint8_t*)tmp, pos, NULL, 0) != CX_OK) {
-      THROW(0x6A8B);
-    };
+    CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, (uint8_t*)tmp, pos, NULL, 0));
 
     cx_sha256_init(&tmpContent.sha2);
   }
@@ -446,22 +437,14 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
   if (dataLength > tmpCtx.messageSigningContext.remainingLength) {
       THROW(0x6A80);
   }
-  if(cx_hash_no_throw((cx_hash_t *)&sha3, 0, workBuffer, dataLength, NULL, 0) != CX_OK) {
-      THROW(0x6A8B);
-  };
-  if(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0)!= CX_OK) {
-      THROW(0x6A8B);
-  };
+  CX_THROW(cx_hash_no_throw((cx_hash_t *)&sha3, 0, workBuffer, dataLength, NULL, 0));
+  CX_THROW(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0));
   tmpCtx.messageSigningContext.remainingLength -= dataLength;
   if (tmpCtx.messageSigningContext.remainingLength == 0) {
     uint8_t hashMessage[32];
 
-  if(cx_hash_no_throw((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32)!= CX_OK) {
-      THROW(0x6A8B);
-  };
-  if(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32)!= CX_OK) {
-      THROW(0x6A8B);
-  };
+  CX_THROW(cx_hash_no_throw((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32));
+  CX_THROW(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32));
 
 #ifdef HAVE_BAGL
 #define HASH_LENGTH 4
@@ -679,6 +662,8 @@ unsigned char io_event(unsigned char channel) {
          THROW(EXCEPTION_IO_RESET);
         }
         // no break is intentional
+        __attribute__((fallthrough)); // ignore fall-through warning
+
     default:
         UX_DEFAULT_EVENT();
         break;

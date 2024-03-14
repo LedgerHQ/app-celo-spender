@@ -40,9 +40,7 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        if(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0) != CX_OK) {
-            THROW(0x6A8B);
-        };
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0));
     }
 #endif
     if (byte) {
@@ -61,9 +59,7 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        if(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0)!= CX_OK) {
-            THROW(0x6A8B);
-        };
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0));
     }
 #endif
     context->workBuffer += length;
@@ -554,6 +550,6 @@ void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
     context->extra = extra;
     context->currentField = TX_RLP_CONTENT;
 #ifndef TESTING
-    cx_keccak_init_no_throw(context->sha3, 256);
+    CX_THROW(cx_keccak_init_no_throw(context->sha3, 256));
 #endif
 }
