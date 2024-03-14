@@ -62,7 +62,9 @@ void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out
                                 cx_sha3_t *sha3Context) {
     uint8_t hashAddress[32];
     cx_keccak_init_no_throw(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32);
+    if(cx_hash_no_throw((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32)!= CX_OK) {
+      THROW(0x6A8B);
+    };
     getEthAddressStringFromBinary(hashAddress + 12, out, sha3Context);
 }
 
@@ -71,7 +73,9 @@ void getEthAddressStringFromBinary(const uint8_t *address, uint8_t *out,
     uint8_t hashChecksum[32];
     uint8_t i;
     cx_keccak_init_no_throw(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, address, 20, hashChecksum, 32);
+    if(cx_hash_no_throw((cx_hash_t*)sha3Context, CX_LAST, address, 20, hashChecksum, 32)!= CX_OK) {
+      THROW(0x6A8B);
+    };
     for (i = 0; i < 40; i++) {
         out[i] = convertDigit(address, i, hashChecksum);
     }
@@ -85,7 +89,9 @@ static const uint8_t HEXDIGITS[] = "0123456789abcdef";
 void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out, int chainId, cx_sha3_t *sha3Context) {
     uint8_t hashAddress[32];
     cx_keccak_init_no_throw(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32);
+    if(cx_hash_no_throw((cx_hash_t*)sha3Context, CX_LAST, publicKey->W + 1, 64, hashAddress, 32)!= CX_OK) {
+      THROW(0x6A8B);
+    };
     getEthAddressStringFromBinary(hashAddress + 12, out, chainId, sha3Context);
 }
 
@@ -112,7 +118,9 @@ void getEthAddressStringFromBinary(const uint8_t *address, char *out, int chainI
         tmp[offset + 2 * i + 1] = HEXDIGITS[digit & 0x0f];
     }
     cx_keccak_init_no_throw(sha3Context, 256);
-    cx_hash((cx_hash_t*)sha3Context, CX_LAST, (uint8_t *) tmp, offset + 40, hashChecksum, 32);
+    if(cx_hash_no_throw((cx_hash_t*)sha3Context, CX_LAST, (uint8_t *) tmp, offset + 40, hashChecksum, 32)!= CX_OK) {
+      THROW(0x6A8B);
+    };
     for (i = 0; i < 40; i++) {
         uint8_t digit = address[i / 2];
         if ((i % 2) == 0) {

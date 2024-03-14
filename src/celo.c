@@ -357,7 +357,14 @@ void finalizeParsing(bool direct) {
   }
 
   // Store the hash
-  cx_hash((cx_hash_t *)&sha3, CX_LAST, tmpCtx.transactionContext.hash, 0, tmpCtx.transactionContext.hash, 32);
+   if( cx_hash_no_throw((cx_hash_t *) &sha3,
+                        CX_LAST,
+                        tmpCtx.transactionContext.hash,
+                        0,
+                        tmpCtx.transactionContext.hash,
+                        32) != CX_OK) {
+      THROW(0x6A8B);
+    };
     // If there is a token to process, check if it is well known
     if (provisionType == PROVISION_TOKEN) {
         tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);

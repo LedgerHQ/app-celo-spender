@@ -399,7 +399,15 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     dataLength -= 4;
     // Initialize message header + length
     cx_keccak_init_no_throw(&sha3, 256);
-    cx_hash((cx_hash_t *)&sha3, 0, (uint8_t*)SIGN_MAGIC, sizeof(SIGN_MAGIC) - 1, NULL, 0);
+    if(cx_hash_no_throw((cx_hash_t *)&sha3,
+                         0,
+                         (uint8_t*)SIGN_MAGIC,
+                         sizeof(SIGN_MAGIC) - 1,
+                         NULL,
+                         0) != CX_OK) {
+      THROW(0x6A8B);
+    };
+
     for (i = 1; (((i * base) <= tmpCtx.messageSigningContext.remainingLength) &&
                          (((i * base) / base) == i));
              i *= base);
@@ -407,7 +415,11 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
       tmp[pos++] = '0' + ((tmpCtx.messageSigningContext.remainingLength / i) % base);
     }
     tmp[pos] = '\0';
-    cx_hash((cx_hash_t *)&sha3, 0, (uint8_t*)tmp, pos, NULL, 0);
+
+    if(cx_hash_no_throw((cx_hash_t *) &sha3, 0, (uint8_t*)tmp, pos, NULL, 0) != CX_OK) {
+      THROW(0x6A8B);
+    };
+
     cx_sha256_init(&tmpContent.sha2);
   }
   else if (p1 != P1_MORE) {
@@ -423,14 +435,22 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
   if (dataLength > tmpCtx.messageSigningContext.remainingLength) {
       THROW(0x6A80);
   }
-  cx_hash((cx_hash_t *)&sha3, 0, workBuffer, dataLength, NULL, 0);
-  cx_hash((cx_hash_t *)&tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0);
+  if(cx_hash_no_throw((cx_hash_t *)&sha3, 0, workBuffer, dataLength, NULL, 0) != CX_OK) {
+      THROW(0x6A8B);
+  };
+  if(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0)!= CX_OK) {
+      THROW(0x6A8B);
+  };
   tmpCtx.messageSigningContext.remainingLength -= dataLength;
   if (tmpCtx.messageSigningContext.remainingLength == 0) {
     uint8_t hashMessage[32];
 
-    cx_hash((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32);
-    cx_hash((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32);
+  if(cx_hash_no_throw((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32)!= CX_OK) {
+      THROW(0x6A8B);
+  };
+  if(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32)!= CX_OK) {
+      THROW(0x6A8B);
+  };
 
 #ifdef HAVE_BAGL
 #define HASH_LENGTH 4

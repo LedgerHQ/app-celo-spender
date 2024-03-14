@@ -40,7 +40,9 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        cx_hash((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0);
+        if(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0) != CX_OK) {
+            THROW(0x6A8B);
+        };
     }
 #endif
     if (byte) {
@@ -59,7 +61,9 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        cx_hash((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0);
+        if(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0)!= CX_OK) {
+            THROW(0x6A8B);
+        };
     }
 #endif
     context->workBuffer += length;
