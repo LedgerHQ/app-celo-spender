@@ -95,14 +95,15 @@ unsigned int io_seproxyhal_touch_tx_ok(void) {
     CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
                                tmpCtx.transactionContext.derivationPath.len,
                                privateKeyData, NULL));
-    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32,
-                                 &privateKey);
+    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32,
+                                 &privateKey));
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
+    size_t sig_len = sizeof(signature);
     io_seproxyhal_io_heartbeat();
-    cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+    CX_THROW(cx_ecdsa_sign_no_throw(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
                   tmpCtx.transactionContext.hash,
-                  sizeof(tmpCtx.transactionContext.hash), signature, sizeof(signature), &info);
+                  sizeof(tmpCtx.transactionContext.hash), signature, &sig_len, &info));
     explicit_bzero(&privateKey, sizeof(privateKey));
     // Parity is present in the sequence tag in the legacy API
     if (tmpContent.txContent.vLength == 0) {
@@ -158,13 +159,14 @@ unsigned int io_seproxyhal_touch_signMessage_ok(void) {
                                 tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL));
 
     io_seproxyhal_io_heartbeat();
-    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32, &privateKey));
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
+    size_t sig_len = sizeof(signature);
     io_seproxyhal_io_heartbeat();
-    cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+    CX_THROW(cx_ecdsa_sign_no_throw(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
                   tmpCtx.messageSigningContext.hash,
-                  sizeof(tmpCtx.messageSigningContext.hash), signature, sizeof(signature), &info);
+                  sizeof(tmpCtx.messageSigningContext.hash), signature, &sig_len, &info));
     explicit_bzero(&privateKey, sizeof(privateKey));
     G_io_apdu_buffer[0] = 27;
     if (info & CX_ECCINFO_PARITY_ODD) {

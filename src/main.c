@@ -171,7 +171,7 @@ void handleGetWalletId(volatile unsigned int *tx) {
   CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2, t, NULL));
   // priv key => pubkey
   CX_THROW(cx_ecdsa_init_private_key(CX_CURVE_256K1, t, 32, &priv));
-  cx_ecfp_generate_pair(CX_CURVE_256K1, &pub, &priv, 1);
+  CX_THROW(cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &pub, &priv, 1));
   // pubkey -> sha512
   cx_hash_sha512(pub.W, sizeof(pub.W), t, sizeof(t));
   // ! cookie !
@@ -210,9 +210,9 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
                                 privateKeyData,
                                 (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL)));
 
-  cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+  CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32, &privateKey));
   io_seproxyhal_io_heartbeat();
-  cx_ecfp_generate_pair(CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1);
+  CX_THROW(cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1));
   explicit_bzero(&privateKey, sizeof(privateKey));
   explicit_bzero(privateKeyData, sizeof(privateKeyData));
   io_seproxyhal_io_heartbeat();
@@ -278,8 +278,8 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   // Skip chainId
   offset += 4;
   dataLength -= 4;
-  cx_ecfp_init_public_key(CX_CURVE_256K1, TOKEN_SIGNATURE_PUBLIC_KEY, sizeof(TOKEN_SIGNATURE_PUBLIC_KEY), &tokenKey);
-  if (!cx_ecdsa_verify(&tokenKey, CX_LAST, CX_SHA256, hash, 32, workBuffer + offset, dataLength)) {
+  CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1, TOKEN_SIGNATURE_PUBLIC_KEY, sizeof(TOKEN_SIGNATURE_PUBLIC_KEY), &tokenKey));
+  if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset, dataLength)) {
     PRINTF("Invalid token signature\n");
     THROW(0x6A80);
   }
