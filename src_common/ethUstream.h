@@ -33,7 +33,80 @@ typedef void * cx_sha3_t;
 #define MAX_ADDRESS 20
 #define MAX_V 4
 
+#define TX_FLAG_TYPE 0x01
+
+// First variant of every Tx enum.
+#define RLP_NONE 0
+
+#define PARSING_IS_DONE(ctx)                                              \
+    ((ctx->txType == CELO_LEGACY && ctx->currentField == CELO_LEGACY_RLP_DONE) || \
+     (ctx->txType == CIP64 && ctx->currentField == CIP64_RLP_DONE) || \
+     (ctx->txType == EIP1559 && ctx->currentField == EIP1559_RLP_DONE))
+
+typedef enum rlpCeloLegacyTxField_e {
+    CELO_LEGACY_RLP_NONE = RLP_NONE,
+    CELO_LEGACY_RLP_CONTENT,
+    CELO_LEGACY_RLP_TYPE,
+    CELO_LEGACY_RLP_NONCE,
+    CELO_LEGACY_RLP_GASPRICE,
+    CELO_LEGACY_RLP_STARTGAS,
+    CELO_LEGACY_RLP_FEECURRENCY,
+    CELO_LEGACY_RLP_GATEWAYTO,
+    CELO_LEGACY_RLP_GATEWAYFEE,
+    CELO_LEGACY_RLP_TO,
+    CELO_LEGACY_RLP_VALUE,
+    CELO_LEGACY_RLP_DATA,
+    CELO_LEGACY_RLP_V,
+    CELO_LEGACY_RLP_R,
+    CELO_LEGACY_RLP_S,
+    CELO_LEGACY_RLP_DONE
+} rlpCeloLegacyTxField_e;
+
+typedef enum rlpCIP64TxField_e {
+    CIP64_RLP_NONE = RLP_NONE,
+    CIP64_RLP_CONTENT,
+    CIP64_RLP_TYPE,
+    CIP64_RLP_CHAINID,
+    CIP64_RLP_NONCE,
+    CIP64_RLP_MAX_PRIORITY_FEE_PER_GAS,
+    CIP64_RLP_MAX_FEE_PER_GAS,
+    CIP64_RLP_GASLIMIT,
+    CIP64_RLP_TO,
+    CIP64_RLP_VALUE,
+    CIP64_RLP_DATA,
+    CIP64_RLP_ACCESS_LIST,
+    CIP64_RLP_FEECURRENCY,
+    CIP64_RLP_SIGNATURE_Y_PARITY,
+    CIP64_RLP_R,
+    CIP64_RLP_S,
+    CIP64_RLP_DONE
+} rlpCIP64TxField_e;
+
+typedef enum rlpEIP1559TxField_e {
+    EIP1559_RLP_NONE = RLP_NONE,
+    EIP1559_RLP_CONTENT,
+    EIP1559_RLP_TYPE,
+    EIP1559_RLP_CHAINID,
+    EIP1559_RLP_NONCE,
+    EIP1559_RLP_MAX_PRIORITY_FEE_PER_GAS,
+    EIP1559_RLP_MAX_FEE_PER_GAS,
+    EIP1559_RLP_GASLIMIT,
+    EIP1559_RLP_TO,
+    EIP1559_RLP_VALUE,
+    EIP1559_RLP_DATA,
+    EIP1559_RLP_ACCESS_LIST,
+    EIP1559_RLP_DONE
+} rlpEIP1559TxField_e;
+
+
 struct txContext_t;
+
+// Valid transaction types
+typedef enum txType_e {
+    CELO_LEGACY = 0x01,
+    EIP1559 = 0x02,
+    CIP64 = 0x7b, // 123
+} txType_e;
 
 typedef enum customStatus_e {
     CUSTOM_NOT_HANDLED,
@@ -44,24 +117,6 @@ typedef enum customStatus_e {
 
 typedef customStatus_e (*ustreamProcess_t)(struct txContext_t *context);
 
-typedef enum rlpTxField_e {
-    TX_RLP_NONE = 0,
-    TX_RLP_CONTENT,
-    TX_RLP_TYPE,
-    TX_RLP_NONCE,
-    TX_RLP_GASPRICE,
-    TX_RLP_STARTGAS,
-    TX_RLP_FEECURRENCY,
-    TX_RLP_GATEWAYTO,
-    TX_RLP_GATEWAYFEE,
-    TX_RLP_TO,
-    TX_RLP_VALUE,
-    TX_RLP_DATA,
-    TX_RLP_V,
-    TX_RLP_R,
-    TX_RLP_S,
-    TX_RLP_DONE
-} rlpTxField_e;
 
 typedef enum parserStatus_e {
     USTREAM_PROCESSING,
@@ -92,7 +147,7 @@ typedef struct txContent_t {
 } txContent_t;
 
 typedef struct txContext_t {
-    rlpTxField_e currentField;
+    uint8_t currentField;
     cx_sha3_t *sha3;
     uint32_t currentFieldLength;
     uint32_t currentFieldPos;
@@ -104,9 +159,11 @@ typedef struct txContext_t {
     uint32_t rlpBufferPos;
     const uint8_t *workBuffer;
     uint32_t commandLength;
+    uint32_t processingFlags;
     ustreamProcess_t customProcessor;
     txContent_t *content;
     void *extra;
+    uint8_t txType;
 } txContext_t;
 
 void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,

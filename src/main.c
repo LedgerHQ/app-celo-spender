@@ -305,11 +305,24 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
     appState = APP_STATE_SIGNING_TX;
     dataPresent = false;
     provisionType = PROVISION_NONE;
-    //0x8000003c is the Ethereum path
     initTx(&txContext, &sha3, &tmpContent.txContent, customProcessor, NULL);
+    // Extract and validate the transaction type
+    uint8_t txType = *workBuffer;
+    if (txType == EIP1559 || txType == CIP64) {
+      // Initialize the SHA3 hashing with the transaction type
+      CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, workBuffer, 1, NULL, 0));
+      // Save the transaction type
+      txContext.txType = txType;
+      workBuffer++;
+      dataLength--;
+    }
+    else {
+      txContext.txType = CELO_LEGACY;
+    }
+
+
   }
-  else
-  if (p1 != P1_MORE) {
+  else if (p1 != P1_MORE) {
     THROW(0x6B00);
   }
   if (p2 != 0) {
@@ -319,7 +332,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
     PRINTF("Signature not initialized\n");
     THROW(0x6985);
   }
-  if (txContext.currentField == TX_RLP_NONE) {
+  if (txContext.currentField == RLP_NONE) {
     PRINTF("Parser not initialized\n");
     THROW(0x6985);
   }
