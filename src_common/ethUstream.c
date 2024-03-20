@@ -377,6 +377,20 @@ static void processAndDiscard(txContext_t *context) {
         context->processingField = false;
     }
 }
+#define NUM_CHAIN_IDS 3
+                                                        // Mainnet, Alfajores, Baklava,
+static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
+
+static int isChainIDAuthorized(uint8_t chainID[4]) {
+    uint16_t chainIDInt = (chainID[0] << 8) | chainID[1];
+    for (int i = 0; i < NUM_CHAIN_IDS; i++) {
+        if (chainIDInt == AUTHORIZED_CHAIN_IDS[i]) {
+            return 1;
+        }
+    }
+    return 0;
+
+}
 
 static int processV(txContext_t *context) {
     if (context->currentFieldIsList) {
@@ -395,6 +409,11 @@ static int processV(txContext_t *context) {
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->v + context->currentFieldPos, copySize)) {
             return -1;
+        }
+        if (!isChainIDAuthorized(context->content->v)) {
+            PRINTF("ChainID not authorized\n");
+            THROW(0x6A8D);
+            // return -1;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
