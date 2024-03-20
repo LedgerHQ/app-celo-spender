@@ -382,6 +382,9 @@ static void processAndDiscard(txContext_t *context) {
 static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
 
 static int isChainIDAuthorized(uint8_t chainID[4]) {
+    if(chainID == NULL) {
+        return 0;
+    }
     uint16_t chainIDInt = (chainID[0] << 8) | chainID[1];
     for (int i = 0; i < NUM_CHAIN_IDS; i++) {
         if (chainIDInt == AUTHORIZED_CHAIN_IDS[i]) {
