@@ -98,6 +98,7 @@ static int processAccessList(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 
 static int processType(txContext_t *context) {
@@ -378,6 +379,7 @@ static int processAndDiscard(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
+    return 0;
 }
 #define NUM_CHAIN_IDS 3
                                                         // Mainnet, Alfajores, Baklava,
