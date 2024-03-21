@@ -15,11 +15,13 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "ethUstream.h"
-#include "rlp.h"
 
 #include <stdint.h>
 #include <string.h>
+
+#include "ethUstream.h"
+#include "rlp.h"
+
 
 #ifdef TESTING
 #define PRINTF(...)
@@ -82,10 +84,10 @@ static int processContent(txContext_t *context) {
     return 0;
 }
 
-static void processAccessList(txContext_t *context) {
+static int processAccessList(txContext_t *context) {
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_ACCESS_LIST\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -362,10 +364,10 @@ static int processData(txContext_t *context) {
     return 0;
 }
 
-static void processAndDiscard(txContext_t *context) {
+static int processAndDiscard(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for Discarded field\n");
-        THROW(EXCEPTION);
+        return -1;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -415,8 +417,7 @@ static int processV(txContext_t *context) {
         }
         if (!isChainIDAuthorized(context->content->v)) {
             PRINTF("ChainID not authorized\n");
-            THROW(0x6A8D);
-            // return -1;
+            return -1;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {

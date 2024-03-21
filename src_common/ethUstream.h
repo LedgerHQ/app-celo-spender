@@ -24,6 +24,9 @@
 
 #ifdef TESTING
 typedef void * cx_sha3_t;
+#ifndef MIN
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#endif
 #else
 #include "os.h"
 #include "cx.h"
