@@ -45,6 +45,7 @@ static void test_celo_tx(void **state) {
   cx_sha3_t sha3;
 
   initTx(&context, &sha3, &content, NULL, NULL);
+  context.txType = CELO_LEGACY;
   assert_int_equal(processTx(&context, tx_data, sizeof(tx_data)), USTREAM_FINISHED);
   assert_int_equal(content.destinationLength, MAX_ADDRESS);
   assert_memory_equal(content.destination, to, MAX_ADDRESS);
