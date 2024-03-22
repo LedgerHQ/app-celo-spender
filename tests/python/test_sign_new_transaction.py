@@ -25,9 +25,6 @@ def sign_transaction_with_rawTx(test_name, backend, navigator, instructions, raw
 
     assert (response.status == StatusCode.STATUS_OK)
 
-
-
-
 def test_sign_transaction_eip1559(test_name, backend, firmware, navigator):
     if firmware.device == "nanos":
         instructions = get_nano_review_instructions(9)
@@ -47,5 +44,5 @@ def test_sign_transaction_cip64(test_name, backend, firmware, navigator):
     else:
         instructions = get_stax_review_instructions_with_warning(1)
 
-    rawTx = "7b"
+    rawTx = "7bf84382aef38084773594008502f2856bb08301688c94da52c9ffebd4d54c94a072776126069d43e74f9e8080c094874069fa1eb16d44d622f2e0ca25eea172369bc1018080"
     sign_transaction_with_rawTx(test_name, backend, navigator, instructions, rawTx)
