@@ -91,3 +91,12 @@ class CeloClient:
 
         with self.send_in_chunk_async(INS.INS_SIGN, payload):
             yield
+
+    @contextmanager
+    def sign_transaction_with_rawTx_async(self, derivation_path : bytes, rawTx: str) -> Generator[None, None, None]:
+        encoded = bytes.fromhex(rawTx)
+        payload: bytes = derivation_path
+        payload += encoded
+
+        with self.send_in_chunk_async(INS.INS_SIGN, payload):
+            yield

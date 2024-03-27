@@ -111,7 +111,9 @@ static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
 }
 
 customStatus_e customProcessor(txContext_t *context) {
-    if ((context->currentField == TX_RLP_DATA) &&
+    if (((context->txType == CELO_LEGACY && context->currentField == CELO_LEGACY_RLP_DATA) ||
+         (context->txType == CIP64 && context->currentField == CIP64_RLP_DATA) ||
+         (context->txType == EIP1559 && context->currentField == EIP1559_RLP_DATA)) &&
         (context->currentFieldLength != 0)) {
         dataPresent = true;
         // If handling a new contract rather than a function call, abort immediately
@@ -232,15 +234,16 @@ customStatus_e customProcessor(txContext_t *context) {
                     copyTxData(context,
                         dataContext.withdrawContext.data + context->currentFieldPos,
                         copySize);
+                    break;
                   case PROVISION_RELOCK:
                     copyTxData(context,
                         dataContext.relockContext.data + context->currentFieldPos,
                         copySize);
+                    break;
                   case PROVISION_CREATE_ACCOUNT:
                     copyTxData(context,
                         dataContext.createAccountContext.data + context->currentFieldPos,
                         copySize);
-
                     break;
                   default:
                     break;
@@ -331,8 +334,8 @@ void finalizeParsing(bool direct) {
   uint32_t i;
   uint8_t decimals = WEI_TO_ETHER;
   uint8_t feeDecimals = WEI_TO_ETHER;
-  char *ticker = CHAINID_COINNAME " ";
-  char *feeTicker = CHAINID_COINNAME " ";
+  const char *ticker = CHAINID_COINNAME " ";
+  const char *feeTicker = CHAINID_COINNAME " ";
   uint8_t tickerOffset = 0;
 
   // Display correct currency if fee currency field sent
@@ -356,7 +359,12 @@ void finalizeParsing(bool direct) {
   }
 
   // Store the hash
-  cx_hash((cx_hash_t *)&sha3, CX_LAST, tmpCtx.transactionContext.hash, 0, tmpCtx.transactionContext.hash, 32);
+  CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
+                        CX_LAST,
+                        tmpCtx.transactionContext.hash,
+                        0,
+                        tmpCtx.transactionContext.hash,
+                        32));
     // If there is a token to process, check if it is well known
     if (provisionType == PROVISION_TOKEN) {
         tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
