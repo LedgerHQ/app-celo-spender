@@ -7,6 +7,22 @@
 
 #include "../src_common/ethUstream.h"
 
+static void test_process_tx(uint8_t txType, const uint8_t* tx_data, size_t tx_data_size, const uint8_t* expected_to, int expected_status) {
+  txContext_t context;
+  txContent_t content;
+  cx_sha3_t sha3;
+
+  initTx(&context, &sha3, &content, NULL, NULL);
+  context.txType = txType;
+  assert_int_equal(processTx(&context, tx_data, tx_data_size), expected_status);
+  // do not perform other checks if expected_to is NULL
+  if(expected_to == NULL) {
+    return;
+  }
+  assert_int_equal(content.destinationLength, MAX_ADDRESS);
+  assert_memory_equal(content.destination, expected_to, MAX_ADDRESS);
+}
+
 static void test_celo_tx_invalid_address(void **state) {
   (void) state;
 
@@ -18,26 +34,10 @@ static void test_celo_tx_invalid_address(void **state) {
     0x74, 0x25, 0x46, 0x6F, 0x80, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80
   };
 
-  txContext_t context;
-  txContent_t content;
-  cx_sha3_t sha3;
-
-  initTx(&context, &sha3, &content, NULL, NULL);
-  assert_int_equal(processTx(&context, tx_data, sizeof(tx_data)), USTREAM_FAULT);
+  test_process_tx(CELO_LEGACY, tx_data, sizeof(tx_data), NULL, USTREAM_FAULT);
 }
 
 
-static void test_process_tx(uint8_t txType, const uint8_t* tx_data, const uint8_t* to, size_t tx_data_size, int expected_status) {
-  txContext_t context;
-  txContent_t content;
-  cx_sha3_t sha3;
-
-  initTx(&context, &sha3, &content, NULL, NULL);
-  context.txType = txType;
-  assert_int_equal(processTx(&context, tx_data, tx_data_size), expected_status);
-  assert_int_equal(content.destinationLength, MAX_ADDRESS);
-  assert_memory_equal(content.destination, to, MAX_ADDRESS);
-}
 
 static void test_celo_legacy_tx(void **state) {
   (void) state;
@@ -54,7 +54,7 @@ static void test_celo_legacy_tx(void **state) {
     0x53, 0x5F, 0x6E, 0xC9, 0x9C, 0xD8, 0x60, 0xCA
   };
 
-  test_process_tx(CELO_LEGACY, tx_data, to, sizeof(tx_data), USTREAM_FINISHED);
+  test_process_tx(CELO_LEGACY, tx_data, sizeof(tx_data), to, USTREAM_FINISHED);
 }
 
 
