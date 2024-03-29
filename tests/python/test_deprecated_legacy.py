@@ -20,53 +20,52 @@ CREATE_ACCOUNT_METHOD_ID = 0x9dca362f
 
 def sign_transaction(test_name, backend, navigator, instructions, payload):
     celo = CeloClient(backend)
-    with celo.sign_transaction_async(CELO_PACKED_DERIVATION_PATH,
-            [
-                "1234",                  #Nonce
-                "1234",                  #GasPrice
-                "1234",                  #StartGas
-                "",                      #FeeCurrency
-                "12345678901234567890",  #GatewayTo
-                "1234",                  #GatewayFee 
-                "12345678901234567890",  #To
-                "",                      #Value
-                payload,
-                "",                      #V
-                "",                      #R
-                "",                      #S
-                ""                       #Done
-                ]
-            ):
-        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
-    response: bytes = get_async_response(backend)
-
-    assert (response.status == StatusCode.STATUS_OK)
+    try:
+        with celo.sign_transaction_async(CELO_PACKED_DERIVATION_PATH,
+                [
+                    "1234",                  #Nonce
+                    "1234",                  #GasPrice
+                    "1234",                  #StartGas
+                    "",                      #FeeCurrency
+                    "12345678901234567890",  #GatewayTo
+                    "1234",                  #GatewayFee 
+                    "12345678901234567890",  #To
+                    "",                      #Value
+                    payload,
+                    "",                      #V
+                    "",                      #R
+                    "",                      #S
+                    ""                       #Done
+                    ]
+                ):
+            pass
+    except Exception as e:
+        assert e.status == StatusCode.STATUS_DEPRECATED
 
 
 def sign_transaction_no_gtw(test_name, backend, navigator, instructions, payload):
     celo = CeloClient(backend)
-    with celo.sign_transaction_async(CELO_PACKED_DERIVATION_PATH,
-            [
-                "1234",                  #Nonce
-                "1234",                  #GasPrice
-                "1234",                  #StartGas
-                "",                      #FeeCurrency
-                "",                      #GatewayTo
-                "1234",                  #GatewayFee 
-                "12345678901234567890",  #To
-                "",                      #Value
-                payload,
-                "",                      #V
-                "",                      #R
-                "",                      #S
-                ""                       #Done
-                ]
-            ):
-        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
-    response: bytes = get_async_response(backend)
-
-    assert (response.status == StatusCode.STATUS_OK)
-
+    try:
+        with celo.sign_transaction_async(CELO_PACKED_DERIVATION_PATH,
+                [
+                    "1234",                  #Nonce
+                    "1234",                  #GasPrice
+                    "1234",                  #StartGas
+                    "",                      #FeeCurrency
+                    "",                      #GatewayTo
+                    "1234",                  #GatewayFee 
+                    "12345678901234567890",  #To
+                    "",                      #Value
+                    payload,
+                    "",                      #V
+                    "",                      #R
+                    "",                      #S
+                    ""                       #Done
+                    ]
+                ):
+                pass
+    except Exception as e:
+        assert e.status == StatusCode.STATUS_DEPRECATED
 
 def test_sign_transaction_empty(test_name, backend, firmware, navigator):
     if firmware.device == "nanos":

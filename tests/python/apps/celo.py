@@ -23,6 +23,7 @@ MAX_CHUNK_SIZE = 255
 
 class StatusCode(IntEnum):
     STATUS_OK = 0x9000
+    STATUS_DEPRECATED = 0x6501
 
 
 class Param(IntEnum):
