@@ -37,6 +37,7 @@ static void test_process_tx(uint8_t txType, const uint8_t* tx_data, size_t tx_da
 //   test_process_tx(CELO_LEGACY, tx_data, sizeof(tx_data), NULL, USTREAM_FAULT);
 // }
 
+// Test if legacy tx return deprecated status
 static void test_celo_legacy_tx(void **state) {
   (void) state;
 
@@ -55,12 +56,20 @@ static void test_celo_legacy_tx(void **state) {
   test_process_tx(CELO_LEGACY, tx_data, sizeof(tx_data), to, 0x6501);
 }
 
+
 static void test_celo_eip1559_tx(void **state) {
   (void) state;
-  // TO DO: IMPLEMENT
-  const uint8_t tx_data[] = {};
+  const uint8_t tx_data[] = {
+    0xed, 0x82, 0xa4, 0xec, 0x80, 0x84, 0x77, 0x35, 0x94, 0x00, 0x85, 0x02,
+    0xcb, 0x41, 0x78, 0x00, 0x82, 0x6a, 0xa4, 0x94, 0xda, 0x52, 0xc9, 0xff,
+    0xeb, 0xd4, 0xd5, 0x4c, 0x94, 0xa0, 0x72, 0x77, 0x61, 0x26, 0x06, 0x9d,
+    0x43, 0xe7, 0x4f, 0x9e, 0x80, 0x80, 0xc0, 0x01, 0x80, 0x80
+  };
 
-  const uint8_t to[] = {};
+  const uint8_t to[] = {
+    0xda, 0x52, 0xc9, 0xff, 0xeb, 0xd4, 0xd5, 0x4c, 0x94, 0xa0, 0x72, 0x77,
+    0x61, 0x26, 0x06, 0x9d, 0x43, 0xe7, 0x4f, 0x9e
+  };
 
   test_process_tx(EIP1559, tx_data, sizeof(tx_data), to, USTREAM_FINISHED);
 }
@@ -80,6 +89,7 @@ static void test_celo_cip64_tx(void **state) {
 int main(void) {
     const struct CMUnitTest tests[] = {
       cmocka_unit_test(test_celo_legacy_tx),
+      cmocka_unit_test(test_celo_eip1559_tx),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
