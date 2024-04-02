@@ -317,7 +317,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
       dataLength--;
     }
     else {
-      txContext.txType = CELO_LEGACY;
+      THROW(0x6501);
     }
 
 

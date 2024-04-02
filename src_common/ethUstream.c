@@ -431,8 +431,59 @@ static int processV(txContext_t *context) {
 }
 
 static bool processCIP64Tx(txContext_t *context){
-    // ToDo: Implement this
     switch (context->currentField) {
+        case CIP64_RLP_CONTENT: {
+            processContent(context);
+            if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
+                context->currentField++;
+            }
+            break;
+        }
+        // This gets hit only by Wanchain
+        case CIP64_RLP_TYPE: {
+            processType(context);
+            break;
+        }
+        case CIP64_RLP_CHAINID: {
+            processV(context);
+            break;
+        }
+        case CIP64_RLP_NONCE: {
+            processNonce(context);
+            break;
+        }
+        case CIP64_RLP_MAX_PRIORITY_FEE_PER_GAS: {
+            processAndDiscard(context);
+            break;
+        }
+        case CIP64_RLP_MAX_FEE_PER_GAS: {
+            processGasprice(context);
+            break;
+        }
+        case CIP64_RLP_GASLIMIT: {
+            processStartGas(context);
+            break;
+        }
+        case CIP64_RLP_TO: {
+            processTo(context);
+            break;
+        }
+        case CIP64_RLP_VALUE: {
+            processValue(context);
+            break;
+        }
+        case CIP64_RLP_DATA: {
+            processData(context);
+            break;
+        }
+        case CIP64_RLP_ACCESS_LIST: {
+            processAccessList(context);
+            break;
+        }
+        case CIP64_RLP_FEECURRENCY: {
+            processFeeCurrency(context);
+            break;
+        }
         default:
             PRINTF("Invalid RLP decoder context\n");
             return true;
