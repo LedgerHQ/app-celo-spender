@@ -31,10 +31,13 @@
 
 #include "globals.h"
 #include "utils.h"
-
-#include "ui_flow.h"
+#include "ui_common.h"
 
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
+bolos_ux_params_t G_ux_params;
+ux_state_t G_ux;
+
+
 
 #define APP_FLAG_DATA_ALLOWED 0x01
 #define APP_FLAG_EXTERNAL_TOKEN_NEEDED 0x02
@@ -219,7 +222,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
   else {
     // prepare for a UI based reply
     snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
-    ux_flow_init(0, ux_display_public_flow, NULL);
+    ui_display_public_flow();
     *flags |= IO_ASYNCH_REPLY;
   }
 #endif // NO_CONSENT
@@ -429,17 +432,22 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     cx_hash((cx_hash_t *)&sha3, CX_LAST, workBuffer, 0, tmpCtx.messageSigningContext.hash, 32);
     cx_hash((cx_hash_t *)&tmpContent.sha2, CX_LAST, workBuffer, 0, hashMessage, 32);
 
+#ifdef HAVE_BAGL
 #define HASH_LENGTH 4
     array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH / 2);
     strings.common.fullAddress[HASH_LENGTH / 2 * 2] = '.';
     strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 1] = '.';
     strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 2] = '.';
     array_hexstr(strings.common.fullAddress + HASH_LENGTH / 2 * 2 + 3, hashMessage + 32 - HASH_LENGTH / 2, HASH_LENGTH / 2);
+#else 
+#define HASH_LENGTH 32
+    array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH);
+#endif
 
 #ifdef NO_CONSENT
     io_seproxyhal_touch_signMessage_ok(NULL);
 #else
-    ux_flow_init(0, ux_sign_flow, NULL);
+    ui_display_sign_flow();
 #endif // NO_CONSENT
 
     *flags |= IO_ASYNCH_REPLY;
@@ -609,9 +617,11 @@ void sample_main(void) {
 }
 
 // override point, but nothing more to do
+#ifdef HAVE_BAGL
 void io_seproxyhal_display(const bagl_element_t *element) {
   io_seproxyhal_display_default((bagl_element_t *)element);
 }
+#endif // HAVE_BAGL
 
 unsigned char io_event(unsigned char channel) {
     UNUSED(channel);
@@ -621,12 +631,16 @@ unsigned char io_event(unsigned char channel) {
 
     // can't have more than one tag in the reply, not supported yet.
     switch (G_io_seproxyhal_spi_buffer[0]) {
+#ifdef HAVE_NBGL
     case SEPROXYHAL_TAG_FINGER_EVENT:
     		UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
     		break;
+#endif // HAVE_NBGL
 
     case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
+#ifdef HAVE_BAGL
         UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
+#endif // HAVE_BAGL
         break;
 
     case SEPROXYHAL_TAG_STATUS_EVENT:
@@ -637,9 +651,13 @@ unsigned char io_event(unsigned char channel) {
     default:
         UX_DEFAULT_EVENT();
         break;
-
     case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
+#ifdef HAVE_BAGL
         UX_DISPLAYED_EVENT({});
+#endif // HAVE_BAGL
+#ifdef HAVE_NBGL
+        UX_DEFAULT_EVENT();
+#endif // HAVE_NBGL
         break;
 
     case SEPROXYHAL_TAG_TICKER_EVENT:
@@ -680,16 +698,18 @@ __attribute__((section(".boot"))) int main(void) {
     os_boot();
 
     for (;;) {
+#ifdef HAVE_BAGL
         UX_INIT();
+#endif  // HAVE_BAGL
 
         BEGIN_TRY {
             TRY {
                 io_seproxyhal_init();
 
-#ifdef TARGET_NANOX
+#ifdef HAVE_BLE
                 // grab the current plane mode setting
                 G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
-#endif // TARGET_NANOX
+#endif // HAVE_BLE
 
                 if (N_storage.initialized != 0x01) {
                   internalStorage_t storage;
@@ -707,7 +727,7 @@ __attribute__((section(".boot"))) int main(void) {
 #ifdef HAVE_BLE
                 // BLE has to be powered on before ui_idle() call for Blue devices only
                 BLE_power(0, NULL);
-                BLE_power(1, "Nano X");
+                BLE_power(1, NULL);
 #endif // HAVE_BLE
                 
                 ui_idle();
@@ -715,9 +735,11 @@ __attribute__((section(".boot"))) int main(void) {
             }
             CATCH(EXCEPTION_IO_RESET) {
               // reset IO and UX before continuing
+              CLOSE_TRY;
               continue;
             }
             CATCH_ALL {
+              CLOSE_TRY;
               break;
             }
             FINALLY {
