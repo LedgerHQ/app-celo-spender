@@ -38,7 +38,7 @@ def test_sign_transaction_eip1559(test_name, backend, firmware, navigator):
 
 def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
     celo = CeloClient(backend)
-    data = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec3045022100a704051cd04a5e9f95da3abc04c0f6cbfe40c02f5b84f4361f8853fef325fc1e022056a5395b4114644450a314fc5e6f0e524b790ad39fa1907837abb6907616932f"
+    data = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1"
     encoded_data = bytes.fromhex(data)
     with celo.send_in_chunk_async(
             INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
