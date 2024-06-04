@@ -1,0 +1,199 @@
+This file contains the data neccessary to use a different feeCurrency than Celo. Use the method provideERC20TokenInformation and give it the data_hex.
+
+
+It's been parsed with a script from ledgerhq that can be found here:
+https://github.com/LedgerHQ/ledger-live/blob/develop/libs/ledgerjs/packages/hw-app-eth/src/services/ledger/erc20.ts
+(with the added data_b64 that's the base64 encoded data as well as data_hex, which is the same data hex encoded)
+
+[
+  {
+    ticker: 'USDT',
+    address: '0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72',
+    decimals: 18,
+    chainId: 42220,
+    signature: <Buffer 30 45 02 20 27 0f 3b 05 aa 35 86 63 31 4c ff 7f 13 5f 0c 31 8f 53 00 fe e2 f8 b8 77 37 b7 3d 47 7f d2 64 b5 02 21 00 9c 12 f0 44 44 93 54 2f 55 fe c1 ... 21 more bytes>,
+    data: <Buffer 04 55 53 44 54 0e 2a 3e 05 bc 9a 16 f5 29 2a 61 70 45 6a 71 0c b8 9c 6f 72 00 00 00 12 00 00 a4 ec 30 45 02 20 27 0f 3b 05 aa 35 86 63 31 4c ff 7f 13 ... 54 more bytes>,
+    data_b64: 'BFVTRFQOKj4FvJoW9SkqYXBFanEMuJxvcgAAABIAAKTsMEUCICcPOwWqNYZjMUz/fxNfDDGPUwD+4vi4dze3PUd/0mS1AiEAnBLwRESTVC9V/sFr4u3RRK/b3O9uCQMHYVxMnYpSsGg=',
+    data_hex: '04555344540e2a3e05bc9a16f5292a6170456a710cb89c6f72000000120000a4ec30450220270f3b05aa358663314cff7f135f0c318f5300fee2f8b87737b73d477fd264b50221009c12f0444493542f55fec16be2edd144afdbdcef6e090307615c4c9d8a52b068'
+  },
+  {
+    ticker: 'USDC',
+    address: '0x2f25deb3848c207fc8e0c34035b3ba7fc157602b',
+    decimals: 6,
+    chainId: 42220,
+    signature: <Buffer 30 46 02 21 00 c9 86 d7 d1 03 dc f0 e4 33 e0 83 5a d8 8e db de b6 5d 0e 14 88 ec 68 d0 d4 eb f6 f1 0a 65 8c 3e 02 21 00 9f 5f 28 e7 94 4d 80 3e 00 db ... 22 more bytes>,
+    data: <Buffer 04 55 53 44 43 2f 25 de b3 84 8c 20 7f c8 e0 c3 40 35 b3 ba 7f c1 57 60 2b 00 00 00 06 00 00 a4 ec 30 46 02 21 00 c9 86 d7 d1 03 dc f0 e4 33 e0 83 5a ... 55 more bytes>,
+    data_b64: 'BFVTREMvJd6zhIwgf8jgw0A1s7p/wVdgKwAAAAYAAKTsMEYCIQDJhtfRA9zw5DPgg1rYjtvetl0OFIjsaNDU6/bxCmWMPgIhAJ9fKOeUTYA+ANtlquFLzx3qQOL7extlUmsMruoDMJsl',
+    data_hex: '04555344432f25deb3848c207fc8e0c34035b3ba7fc157602b000000060000a4ec3046022100c986d7d103dcf0e433e0835ad88edbdeb65d0e1488ec68d0d4ebf6f10a658c3e0221009f5f28e7944d803e00db65aae14bcf1dea40e2fb7b1b65526b0caeea03309b25'
+  },
+  {
+    ticker: 'eXOF',
+    address: '0x73f93dcc49cb8a239e2032663e9475dd5ef29a08',
+    decimals: 18,
+    chainId: 42220,
+    signature: <Buffer 30 44 02 20 71 c4 5a 6c dc c2 a0 7e f4 b3 ad b9 b9 25 11 53 4f 5d 65 d8 4a 7f f1 35 25 bf e1 c3 bc e4 e8 e0 02 20 0d 83 19 1e 24 f2 7d 08 d1 d5 b8 52 ... 20 more bytes>,
+    data: <Buffer 04 65 58 4f 46 73 f9 3d cc 49 cb 8a 23 9e 20 32 66 3e 94 75 dd 5e f2 9a 08 00 00 00 12 00 00 a4 ec 30 44 02 20 71 c4 5a 6c dc c2 a0 7e f4 b3 ad b9 b9 ... 53 more bytes>,
+    data_b64: 'BGVYT0Zz+T3MScuKI54gMmY+lHXdXvKaCAAAABIAAKTsMEQCIHHEWmzcwqB+9LOtubklEVNPXWXYSn/xNSW/4cO85OjgAiANgxkeJPJ9CNHVuFIaSvarVNmVt/x0EfDLryBeeBAI6w==',
+    data_hex: '0465584f4673f93dcc49cb8a239e2032663e9475dd5ef29a08000000120000a4ec3044022071c45a6cdcc2a07ef4b3adb9b92511534f5d65d84a7ff13525bfe1c3bce4e8e002200d83191e24f27d08d1d5b8521a4af6ab54d995b7fc7411f0cbaf205e781008eb'
+  },
+  {
+    ticker: 'cUSD',
+    address: '0x765de816845861e75a25fca122bb6898b8b1282a',
+    decimals: 18,
+    chainId: 42220,
+    signature: <Buffer 30 44 02 20 1f 82 17 a6 31 0b 78 bf e6 3f 40 e7 67 b1 41 3e 74 80 40 36 03 48 6f 8d 3b 2c fd 4a aa 86 07 47 02 20 57 7c 04 cc 84 d1 e0 ad 9d 34 4c 73 ... 20 more bytes>,
+    data: <Buffer 04 63 55 53 44 76 5d e8 16 84 58 61 e7 5a 25 fc a1 22 bb 68 98 b8 b1 28 2a 00 00 00 12 00 00 a4 ec 30 44 02 20 1f 82 17 a6 31 0b 78 bf e6 3f 40 e7 67 ... 53 more bytes>,
+    data_b64: 'BGNVU0R2XegWhFhh51ol/KEiu2iYuLEoKgAAABIAAKTsMEQCIB+CF6YxC3i/5j9A52exQT50gEA2A0hvjTss/UqqhgdHAiBXfATMhNHgrZ00THO2JOD8NsY9Sl8zZUqwvNiSsGjnoQ==',
+    data_hex: '0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1'
+  },
+  {
+    ticker: 'cEUR',
+    address: '0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73',
+    decimals: 18,
+    chainId: 42220,
+    signature: <Buffer 30 46 02 21 00 8c d6 6d d4 d1 ec be 8c 02 74 48 64 d7 8d d2 70 2b fe aa 6f b5 30 b1 11 8c db 3e 7f e3 49 76 d3 02 21 00 ce 87 0e ed a2 5a 52 81 9d 15 ... 22 more bytes>,
+    data: <Buffer 04 63 45 55 52 d8 76 3c ba 27 6a 37 38 e6 de 85 b4 b3 bf 5f de d6 d6 ca 73 00 00 00 12 00 00 a4 ec 30 46 02 21 00 8c d6 6d d4 d1 ec be 8c 02 74 48 64 ... 55 more bytes>,
+    data_b64: 'BGNFVVLYdjy6J2o3OObehbSzv1/e1tbKcwAAABIAAKTsMEYCIQCM1m3U0ey+jAJ0SGTXjdJwK/6qb7UwsRGM2z5/40l20wIhAM6HDu2iWlKBnRUVuWNNsKrnqVUcdhnt6+cJpOxylBXt',
+    data_hex: '0463455552d8763cba276a3738e6de85b4b3bf5fded6d6ca73000000120000a4ec30460221008cd66dd4d1ecbe8c02744864d78dd2702bfeaa6fb530b1118cdb3e7fe34976d3022100ce870eeda25a52819d1515b9634db0aae7a9551c7619edebe709a4ec729415ed'
+  },
+  {
+    ticker: 'cREAL',
+    address: '0xe8537a3d056da446677b9e9d6c5db704eaab4787',
+    decimals: 18,
+    chainId: 42220,
+    signature: <Buffer 30 46 02 21 00 cb c2 65 1a 55 5b ee 21 14 01 87 fe 81 9f 59 5d 70 4d 3a 16 66 2c 7f a0 01 6c 3c 90 04 19 d2 9f 02 21 00 dc 14 b3 f4 58 e4 47 6f 1d 82 ... 22 more bytes>,
+    data: <Buffer 05 63 52 45 41 4c e8 53 7a 3d 05 6d a4 46 67 7b 9e 9d 6c 5d b7 04 ea ab 47 87 00 00 00 12 00 00 a4 ec 30 46 02 21 00 cb c2 65 1a 55 5b ee 21 14 01 87 ... 56 more bytes>,
+    data_b64: 'BWNSRUFM6FN6PQVtpEZne56dbF23BOqrR4cAAAASAACk7DBGAiEAy8JlGlVb7iEUAYf+gZ9ZXXBNOhZmLH+gAWw8kAQZ0p8CIQDcFLP0WORHbx2CmRBZpuCM7rlfgI/TCpv+JdqEvQsx1Q==',
+    data_hex: '05635245414ce8537a3d056da446677b9e9d6c5db704eaab4787000000120000a4ec3046022100cbc2651a555bee21140187fe819f595d704d3a16662c7fa0016c3c900419d29f022100dc14b3f458e4476f1d82991059a6e08ceeb95f808fd30a9bfe25da84bd0b31d5'
+  },
+  {
+    ticker: 'b cUSD',
+    address: '0x62492a644a588fd904270bed06ad52b9abfea1ae',
+    decimals: 18,
+    chainId: 62320,
+    signature: <Buffer 30 44 02 20 0f 64 d7 b8 cd ef 15 6d c9 b4 af 61 df 80 4b 4f b0 fd cc 56 2f 61 3e 38 68 94 ba a7 c5 28 79 db 02 20 79 98 a0 30 e8 ed 6b a4 cb 3f 17 96 ... 20 more bytes>,
+    data: <Buffer 06 62 20 63 55 53 44 62 49 2a 64 4a 58 8f d9 04 27 0b ed 06 ad 52 b9 ab fe a1 ae 00 00 00 12 00 00 f3 70 30 44 02 20 0f 64 d7 b8 cd ef 15 6d c9 b4 af ... 55 more bytes>,
+    data_b64: 'BmIgY1VTRGJJKmRKWI/ZBCcL7QatUrmr/qGuAAAAEgAA83AwRAIgD2TXuM3vFW3JtK9h34BLT7D9zFYvYT44aJS6p8UoedsCIHmYoDDo7Wukyz8XlsNzEBbWBbUH6LHI3zqpBNj+fSFJ',
+    data_hex: '0662206355534462492a644a588fd904270bed06ad52b9abfea1ae000000120000f370304402200f64d7b8cdef156dc9b4af61df804b4fb0fdcc562f613e386894baa7c52879db02207998a030e8ed6ba4cb3f1796c3731016d605b507e8b1c8df3aa904d8fe7d2149'
+  },
+  {
+    ticker: 'b eXOF',
+    address: '0x64c1d812673e93bc036adc3d547d9950696da5af',
+    decimals: 18,
+    chainId: 62320,
+    signature: <Buffer 30 45 02 21 00 a2 e4 6d c9 91 fa 23 c8 b3 0d d4 5e 3c d3 90 b1 d5 f6 96 86 20 d1 eb 9a 1f cd 97 45 2e f1 d1 b3 02 20 60 ea ac 9d 01 96 50 69 97 40 7c ... 21 more bytes>,
+    data: <Buffer 06 62 20 65 58 4f 46 64 c1 d8 12 67 3e 93 bc 03 6a dc 3d 54 7d 99 50 69 6d a5 af 00 00 00 12 00 00 f3 70 30 45 02 21 00 a2 e4 6d c9 91 fa 23 c8 b3 0d ... 56 more bytes>,
+    data_b64: 'BmIgZVhPRmTB2BJnPpO8A2rcPVR9mVBpbaWvAAAAEgAA83AwRQIhAKLkbcmR+iPIsw3UXjzTkLHV9paGINHrmh/Nl0Uu8dGzAiBg6qydAZZQaZdAfDCYUHNm89pii4NSts8PC0FXZlvhFg==',
+    data_hex: '06622065584f4664c1d812673e93bc036adc3d547d9950696da5af000000120000f3703045022100a2e46dc991fa23c8b30dd45e3cd390b1d5f6968620d1eb9a1fcd97452ef1d1b3022060eaac9d0196506997407c3098507366f3da628b8352b6cf0f0b4157665be116'
+  },
+  {
+    ticker: 'b cREAL',
+    address: '0x6a0eef2bed4c30dc2cb42fe6c5f01f80f7ef16d1',
+    decimals: 18,
+    chainId: 62320,
+    signature: <Buffer 30 45 02 21 00 94 ac 6e e4 4f ac b6 16 39 42 05 ce 22 25 a4 da 50 5f 25 79 a9 ba 97 ae 1f 6d c5 f4 59 62 66 4e 02 20 48 02 30 63 07 fa 3c 1b 9b c2 5e ... 21 more bytes>,
+    data: <Buffer 07 62 20 63 52 45 41 4c 6a 0e ef 2b ed 4c 30 dc 2c b4 2f e6 c5 f0 1f 80 f7 ef 16 d1 00 00 00 12 00 00 f3 70 30 45 02 21 00 94 ac 6e e4 4f ac b6 16 39 ... 57 more bytes>,
+    data_b64: 'B2IgY1JFQUxqDu8r7Uww3Cy0L+bF8B+A9+8W0QAAABIAAPNwMEUCIQCUrG7kT6y2FjlCBc4iJaTaUF8leam6l64fbcX0WWJmTgIgSAIwYwf6PBubwl7ny7WvK8OayCjOnmQKmJ/yIGc3vbs=',
+    data_hex: '076220635245414c6a0eef2bed4c30dc2cb42fe6c5f01f80f7ef16d1000000120000f370304502210094ac6ee44facb616394205ce2225a4da505f2579a9ba97ae1f6dc5f45962664e02204802306307fa3c1b9bc25ee7cbb5af2bc39ac828ce9e640a989ff2206737bdbb'
+  },
+  {
+    ticker: 'b cEUR',
+    address: '0xf9ece301247ad2ce21894941830a2470f4e774ca',
+    decimals: 18,
+    chainId: 62320,
+    signature: <Buffer 30 44 02 20 48 f3 ac 27 a5 18 b0 5e 1f f4 1a 3c 8a 0a e3 f4 48 e7 02 19 c7 7e 29 c6 8a 91 8d 9a a4 cb e7 bb 02 20 0b 59 b7 4c 7b 17 e2 51 3c 72 d1 2b ... 20 more bytes>,
+    data: <Buffer 06 62 20 63 45 55 52 f9 ec e3 01 24 7a d2 ce 21 89 49 41 83 0a 24 70 f4 e7 74 ca 00 00 00 12 00 00 f3 70 30 44 02 20 48 f3 ac 27 a5 18 b0 5e 1f f4 1a ... 55 more bytes>,
+    data_b64: 'BmIgY0VVUvns4wEketLOIYlJQYMKJHD053TKAAAAEgAA83AwRAIgSPOsJ6UYsF4f9Bo8igrj9EjnAhnHfinGipGNmqTL57sCIAtZt0x7F+JRPHLRKxDcRRZW68mzURqPe0gZY+BNtcp7',
+    data_hex: '06622063455552f9ece301247ad2ce21894941830a2470f4e774ca000000120000f3703044022048f3ac27a518b05e1ff41a3c8a0ae3f448e70219c77e29c68a918d9aa4cbe7bb02200b59b74c7b17e2513c72d12b10dc451656ebc9b3511a8f7b481963e04db5ca7b'
+  },
+  {
+    ticker: 'a G$',
+    address: '0x03d3dab843e6c03b3d271eff9178e6a96c28d25f',
+    decimals: 18,
+    chainId: 44787,
+    signature: <Buffer 30 45 02 21 00 df 82 dd a7 a9 3a b2 42 04 e0 c5 89 36 2b 5e b0 c2 29 c2 f6 7c d6 38 30 9b be ec a1 b1 d0 84 bd 02 20 33 7c 94 6d b2 32 8d 8c b2 7e 62 ... 21 more bytes>,
+    data: <Buffer 04 61 20 47 24 03 d3 da b8 43 e6 c0 3b 3d 27 1e ff 91 78 e6 a9 6c 28 d2 5f 00 00 00 12 00 00 ae f3 30 45 02 21 00 df 82 dd a7 a9 3a b2 42 04 e0 c5 89 ... 54 more bytes>,
+    data_b64: 'BGEgRyQD09q4Q+bAOz0nHv+ReOapbCjSXwAAABIAAK7zMEUCIQDfgt2nqTqyQgTgxYk2K16wwinC9nzWODCbvuyhsdCEvQIgM3yUbbIyjYyyfmL7CxLwovxQehY7EGFM5355FVDImLY=',
+    data_hex: '046120472403d3dab843e6c03b3d271eff9178e6a96c28d25f000000120000aef33045022100df82dda7a93ab24204e0c589362b5eb0c229c2f67cd638309bbeeca1b1d084bd0220337c946db2328d8cb27e62fb0b12f0a2fc507a163b10614ce77e791550c898b6'
+  },
+  {
+    ticker: 'a cEUR',
+    address: '0x10c892a6ec43a53e45d0b916b4b7d383b1b78c0f',
+    decimals: 18,
+    chainId: 44787,
+    signature: <Buffer 30 44 02 20 2d b5 55 5d 4e fb da bd c4 9c 36 14 ca 3b 35 bf 57 c0 d4 4e 5e 75 4c ef f2 4c de 0b af b5 03 61 02 20 10 27 12 99 c9 7c c9 45 18 f2 7f 32 ... 20 more bytes>,
+    data: <Buffer 06 61 20 63 45 55 52 10 c8 92 a6 ec 43 a5 3e 45 d0 b9 16 b4 b7 d3 83 b1 b7 8c 0f 00 00 00 12 00 00 ae f3 30 44 02 20 2d b5 55 5d 4e fb da bd c4 9c 36 ... 55 more bytes>,
+    data_b64: 'BmEgY0VVUhDIkqbsQ6U+RdC5FrS304Oxt4wPAAAAEgAArvMwRAIgLbVVXU772r3EnDYUyjs1v1fA1E5edUzv8kzeC6+1A2ECIBAnEpnJfMlFGPJ/MnGMcrA4W2H0dzODscv4IXAHyhW7',
+    data_hex: '0661206345555210c892a6ec43a53e45d0b916b4b7d383b1b78c0f000000120000aef3304402202db5555d4efbdabdc49c3614ca3b35bf57c0d44e5e754ceff24cde0bafb50361022010271299c97cc94518f27f32718c72b0385b61f4773383b1cbf8217007ca15bb'
+  },
+  {
+    ticker: 'a EFC',
+    address: '0x1ad7b617cb6c5156a6dea6e47514d16476b99f38',
+    decimals: 6,
+    chainId: 44787,
+    signature: <Buffer 30 45 02 21 00 f4 f2 45 e8 c0 d4 42 e3 74 70 e0 ee 30 92 87 60 62 27 22 56 b6 27 2e e6 48 91 60 86 d0 98 44 70 02 20 5c e9 fe 66 a2 86 a3 c2 c3 c9 c8 ... 21 more bytes>,
+    data: <Buffer 05 61 20 45 46 43 1a d7 b6 17 cb 6c 51 56 a6 de a6 e4 75 14 d1 64 76 b9 9f 38 00 00 00 06 00 00 ae f3 30 45 02 21 00 f4 f2 45 e8 c0 d4 42 e3 74 70 e0 ... 55 more bytes>,
+    data_b64: 'BWEgRUZDGte2F8tsUVam3qbkdRTRZHa5nzgAAAAGAACu8zBFAiEA9PJF6MDUQuN0cODuMJKHYGInIla2Jy7mSJFghtCYRHACIFzp/maihqPCw8nI87yTqkThOUM4dFzMCHiZDabMBa1U',
+    data_hex: '0561204546431ad7b617cb6c5156a6dea6e47514d16476b99f38000000060000aef33045022100f4f245e8c0d442e37470e0ee3092876062272256b6272ee648916086d098447002205ce9fe66a286a3c2c3c9c8f3bc93aa44e1394338745ccc0878990da6cc05ad54'
+  },
+  {
+    ticker: 'a USDC',
+    address: '0x4822e58de6f5e485ef90df51c41ce01721331dc0',
+    decimals: 6,
+    chainId: 44787,
+    signature: <Buffer 30 45 02 21 00 e9 7a c2 81 42 72 a9 82 3c f9 4c 6e 8c 81 3e ae 72 ed 95 48 40 18 be fd a8 2c 93 ea 22 f2 8f 1d 02 20 59 aa d1 a3 56 c5 7a 45 37 50 ca ... 21 more bytes>,
+    data: <Buffer 06 61 20 55 53 44 43 48 22 e5 8d e6 f5 e4 85 ef 90 df 51 c4 1c e0 17 21 33 1d c0 00 00 00 06 00 00 ae f3 30 45 02 21 00 e9 7a c2 81 42 72 a9 82 3c f9 ... 56 more bytes>,
+    data_b64: 'BmEgVVNEQ0gi5Y3m9eSF75DfUcQc4BchMx3AAAAABgAArvMwRQIhAOl6woFCcqmCPPlMboyBPq5y7ZVIQBi+/agsk+oi8o8dAiBZqtGjVsV6RTdQynpkvv7aIQBpPC1T5vXl58B+qwmJZQ==',
+    data_hex: '066120555344434822e58de6f5e485ef90df51c41ce01721331dc0000000060000aef33045022100e97ac2814272a9823cf94c6e8c813eae72ed95484018befda82c93ea22f28f1d022059aad1a356c57a453750ca7a64befeda2100693c2d53e6f5e5e7c07eab098965'
+  },
+  {
+    ticker: 'a EFC',
+    address: '0x7d027790998f714b294c96fda9e27af586d1ebb5',
+    decimals: 6,
+    chainId: 44787,
+    signature: <Buffer 30 45 02 21 00 ed 4a 91 f9 39 57 ea 32 73 fd fe 5f 5e 99 8f 6f 34 a4 f8 32 24 74 63 0f 38 4e 4c 4b 66 e6 02 4d 02 20 14 21 7c 12 60 00 72 1e 3d e4 db ... 21 more bytes>,
+    data: <Buffer 05 61 20 45 46 43 7d 02 77 90 99 8f 71 4b 29 4c 96 fd a9 e2 7a f5 86 d1 eb b5 00 00 00 06 00 00 ae f3 30 45 02 21 00 ed 4a 91 f9 39 57 ea 32 73 fd fe ... 55 more bytes>,
+    data_b64: 'BWEgRUZDfQJ3kJmPcUspTJb9qeJ69YbR67UAAAAGAACu8zBFAiEA7UqR+TlX6jJz/f5fXpmPbzSk+DIkdGMPOE5MS2bmAk0CIBQhfBJgAHIePeTbAo916FTs+CyaeQP9qCPzurzHgg9U',
+    data_hex: '0561204546437d027790998f714b294c96fda9e27af586d1ebb5000000060000aef33045022100ed4a91f93957ea3273fdfe5f5e998f6f34a4f8322474630f384e4c4b66e6024d022014217c126000721e3de4db028f75e854ecf82c9a7903fda823f3babcc7820f54'
+  },
+  {
+    ticker: 'a cUSD',
+    address: '0x874069fa1eb16d44d622f2e0ca25eea172369bc1',
+    decimals: 18,
+    chainId: 44787,
+    signature: <Buffer 30 45 02 21 00 94 68 00 b0 2f b0 08 f5 d7 14 a4 60 e0 87 e0 87 c7 30 d5 dd ec 31 82 45 6c 54 63 52 e1 33 4a 6c 02 20 17 4c 8a 33 d3 e0 43 a0 e5 10 f2 ... 21 more bytes>,
+    data: <Buffer 06 61 20 63 55 53 44 87 40 69 fa 1e b1 6d 44 d6 22 f2 e0 ca 25 ee a1 72 36 9b c1 00 00 00 12 00 00 ae f3 30 45 02 21 00 94 68 00 b0 2f b0 08 f5 d7 14 ... 56 more bytes>,
+    data_b64: 'BmEgY1VTRIdAafoesW1E1iLy4Mol7qFyNpvBAAAAEgAArvMwRQIhAJRoALAvsAj11xSkYOCH4IfHMNXd7DGCRWxUY1LhM0psAiAXTIoz0+BDoOUQ8r+MKIJtG+Xd0N/QGeyHxXNBvuJ1YQ==',
+    data_hex: '06612063555344874069fa1eb16d44d622f2e0ca25eea172369bc1000000120000aef33045022100946800b02fb008f5d714a460e087e087c730d5ddec3182456c546352e1334a6c0220174c8a33d3e043a0e510f2bf8c28826d1be5ddd0dfd019ec87c57341bee27561'
+  },
+  {
+    ticker: 'a eXOF',
+    address: '0xb0fa15e002516d0301884059c0aac0f0c72b019d',
+    decimals: 18,
+    chainId: 44787,
+    signature: <Buffer 30 44 02 20 21 bc 9b 34 a6 46 72 be ff cd 42 d1 c9 b7 16 8f 1d 4a 8a 65 a9 59 81 6d 00 8f 81 b3 6e 41 0e eb 02 20 24 10 7b 93 50 7f bd f9 af c0 3b 29 ... 20 more bytes>,
+    data: <Buffer 06 61 20 65 58 4f 46 b0 fa 15 e0 02 51 6d 03 01 88 40 59 c0 aa c0 f0 c7 2b 01 9d 00 00 00 12 00 00 ae f3 30 44 02 20 21 bc 9b 34 a6 46 72 be ff cd 42 ... 55 more bytes>,
+    data_b64: 'BmEgZVhPRrD6FeACUW0DAYhAWcCqwPDHKwGdAAAAEgAArvMwRAIgIbybNKZGcr7/zULRybcWjx1KimWpWYFtAI+Bs25BDusCICQQe5NQf735r8A7KW32IkI77yZ/tVSiMOrQxiGsudEQ',
+    data_hex: '06612065584f46b0fa15e002516d0301884059c0aac0f0c72b019d000000120000aef33044022021bc9b34a64672beffcd42d1c9b7168f1d4a8a65a959816d008f81b36e410eeb022024107b93507fbdf9afc03b296df622423bef267fb554a230ead0c621acb9d110'
+  },
+  {
+    ticker: 'a USDT',
+    address: '0xc4f86e9b4a588d501c1c3e25628dfd50bc8d615e',
+    decimals: 18,
+    chainId: 44787,
+    signature: <Buffer 30 45 02 20 0d 67 8c a7 f9 db 0a 8b 30 62 d9 39 05 0f ab 13 f9 6d 7b 6a 38 2b 59 b4 f1 e5 26 f0 db 15 5b 6c 02 21 00 bf 40 af 62 7b 63 7c 03 10 b7 c3 ... 21 more bytes>,
+    data: <Buffer 06 61 20 55 53 44 54 c4 f8 6e 9b 4a 58 8d 50 1c 1c 3e 25 62 8d fd 50 bc 8d 61 5e 00 00 00 12 00 00 ae f3 30 45 02 20 0d 67 8c a7 f9 db 0a 8b 30 62 d9 ... 56 more bytes>,
+    data_b64: 'BmEgVVNEVMT4bptKWI1QHBw+JWKN/VC8jWFeAAAAEgAArvMwRQIgDWeMp/nbCoswYtk5BQ+rE/lte2o4K1m08eUm8NsVW2wCIQC/QK9ie2N8AxC3wwxByNgeJOZMl7BKxNlWHOVOzbSMhA==',
+    data_hex: '06612055534454c4f86e9b4a588d501c1c3e25628dfd50bc8d615e000000120000aef3304502200d678ca7f9db0a8b3062d939050fab13f96d7b6a382b59b4f1e526f0db155b6c022100bf40af627b637c0310b7c30c41c8d81e24e64c97b04ac4d9561ce54ecdb48c84'
+  },
+  {
+    ticker: 'a cREAL',
+    address: '0xe4d517785d091d3c54818832db6094bcc2744545',
+    decimals: 18,
+    chainId: 44787,
+    signature: <Buffer 30 46 02 21 00 a9 70 5c 55 16 06 20 8b e1 ec d9 f1 86 ee ef 96 6f d3 b3 d6 69 fc c8 0f 36 7c 10 68 c1 7c a4 ab 02 21 00 fe 65 da e3 31 23 12 f7 1e a5 ... 22 more bytes>,
+    data: <Buffer 07 61 20 63 52 45 41 4c e4 d5 17 78 5d 09 1d 3c 54 81 88 32 db 60 94 bc c2 74 45 45 00 00 00 12 00 00 ae f3 30 46 02 21 00 a9 70 5c 55 16 06 20 8b e1 ... 58 more bytes>,
+    data_b64: 'B2EgY1JFQUzk1Rd4XQkdPFSBiDLbYJS8wnRFRQAAABIAAK7zMEYCIQCpcFxVFgYgi+Hs2fGG7u+Wb9Oz1mn8yA82fBBowXykqwIhAP5l2uMxIxL3HqWoPfxTjRANM9ZRM31H347Pwo6P/kr5',
+    data_hex: '076120635245414ce4d517785d091d3c54818832db6094bcc2744545000000120000aef33046022100a9705c551606208be1ecd9f186eeef966fd3b3d669fcc80f367c1068c17ca4ab022100fe65dae3312312f71ea5a83dfc538d100d33d651337d47df8ecfc28e8ffe4af9'
+  }
+]
