@@ -345,10 +345,10 @@ void finalizeParsing(bool direct) {
       reset_app_context();
       PRINTF("Invalid fee currency");
       if (direct) {
-          THROW(0x6A80);
+          THROW(SW_ERROR_IN_DATA);
       }
       else {
-          io_seproxyhal_send_status(0x6A80);
+          io_seproxyhal_send_status(SW_ERROR_IN_DATA);
           ui_idle();
           return;
       }
@@ -401,10 +401,10 @@ void finalizeParsing(bool direct) {
           reset_app_context();
           PRINTF("Data field forbidden\n");
           if (direct) {
-            THROW(0x6A80);
+            THROW(SW_ERROR_IN_DATA);
           }
           else {
-            io_seproxyhal_send_status(0x6A80);
+            io_seproxyhal_send_status(SW_ERROR_IN_DATA);
             ui_idle();
             return;
           }

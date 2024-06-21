@@ -177,7 +177,7 @@ void handleGetWalletId(volatile unsigned int *tx) {
   // ! cookie !
   memcpy(G_io_apdu_buffer, t, 64);
   *tx = 64;
-  THROW(0x9000);
+  THROW(SW_OK);
 }
 
 #endif // HAVE_WALLET_ID_SDK
@@ -190,15 +190,15 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
 
   reset_app_context();
   if ((p1 != P1_CONFIRM) && (p1 != P1_NON_CONFIRM)) {
-    THROW(0x6B00);
+    THROW(SW_WRONG_P1_OR_P2);
   }
   if ((p2 != P2_CHAINCODE) && (p2 != P2_NO_CHAINCODE)) {
-    THROW(0x6B00);
+    THROW(SW_WRONG_P1_OR_P2);
   }
 
   if (parse_bip32_path(&derivationPath, dataBuffer, dataLength)) {
       PRINTF("Invalid path\n");
-      THROW(0x6a80);
+      THROW(SW_ERROR_IN_DATA);
   }
 
   tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
@@ -222,7 +222,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
 #endif // NO_CONSENT
   {
     *tx = set_result_get_publicKey();
-    THROW(0x9000);
+    THROW(SW_OK);
   }
 #ifndef NO_CONSENT
   else {
@@ -251,16 +251,16 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   PRINTF("Provisioning currentTokenIndex %d\n", tmpCtx.transactionContext.currentTokenIndex);
 
   if (dataLength < 1) {
-    THROW(0x6A80);
+    THROW(SW_ERROR_IN_DATA);
   }
   tickerLength = workBuffer[offset++];
   dataLength--;
   // We need to make sure we can write the ticker, a space and a zero byte at the end
   if ((tickerLength + 2) >= sizeof(token->ticker)) {
-    THROW(0x6A80);
+    THROW(SW_ERROR_IN_DATA);
   }
   if (dataLength < tickerLength + 20 + 4 + 4) {
-    THROW(0x6A80);
+    THROW(SW_ERROR_IN_DATA);
   }
   cx_hash_sha256(workBuffer + offset, tickerLength + 20 + 4 + 4, hash, 32);
   memcpy(token->ticker, workBuffer + offset, tickerLength);
@@ -281,10 +281,10 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1, TOKEN_SIGNATURE_PUBLIC_KEY, sizeof(TOKEN_SIGNATURE_PUBLIC_KEY), &tokenKey));
   if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset, dataLength)) {
     PRINTF("Invalid token signature\n");
-    THROW(0x6A80);
+    THROW(SW_ERROR_IN_DATA);
   }
   tmpCtx.transactionContext.tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
-  THROW(0x9000);
+  THROW(SW_OK);
 }
 
 void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
@@ -297,7 +297,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
 
     if (parse_bip32_path(&tmpCtx.transactionContext.derivationPath, workBuffer, dataLength)) {
       PRINTF("Invalid path\n");
-      THROW(0x6a80);
+      THROW(SW_ERROR_IN_DATA);
     }
     workBuffer += 1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
     dataLength -= 1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
@@ -317,24 +317,24 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
       dataLength--;
     }
     else {
-      THROW(0x6501);
+      THROW(SW_TX_TYPE_NOT_SUPPORTED);
     }
 
 
   }
   else if (p1 != P1_MORE) {
-    THROW(0x6B00);
+    THROW(SW_WRONG_P1_OR_P2);
   }
   if (p2 != 0) {
-    THROW(0x6B00);
+    THROW(SW_WRONG_P1_OR_P2);
   }
   if ((p1 == P1_MORE) && (appState != APP_STATE_SIGNING_TX)) {
     PRINTF("Signature not initialized\n");
-    THROW(0x6985);
+    THROW(SW_INITIALIZATION_ERROR);
   }
   if (txContext.currentField == RLP_NONE) {
     PRINTF("Parser not initialized\n");
-    THROW(0x6985);
+    THROW(SW_INITIALIZATION_ERROR);
   }
   txResult = processTx(&txContext, workBuffer, dataLength);
   switch (txResult) {
@@ -343,12 +343,12 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
     case USTREAM_FINISHED:
       break;
     case USTREAM_PROCESSING:
-      THROW(0x9000);
+      THROW(SW_OK);
     case USTREAM_FAULT:
-      THROW(0x6A80);
+      THROW(SW_ERROR_IN_DATA);
     default:
       PRINTF("Unexpected parser status\n");
-      THROW(0x6A80);
+      THROW(SW_ERROR_IN_DATA);
   }
 
   *flags |= IO_ASYNCH_REPLY;
@@ -372,7 +372,7 @@ void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
   G_io_apdu_buffer[2] = LEDGER_MINOR_VERSION;
   G_io_apdu_buffer[3] = LEDGER_PATCH_VERSION;
   *tx = 4;
-  THROW(0x9000);
+  THROW(SW_OK);
 }
 
 void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
@@ -383,7 +383,7 @@ void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t data
   UNUSED(flags);
   G_io_apdu_buffer[0] = APP_TYPE;
   *tx = 1;
-  THROW(0x9000);
+  THROW(SW_OK);
 }
 			
 
@@ -402,7 +402,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 
     if (parse_bip32_path(&tmpCtx.messageSigningContext.derivationPath, workBuffer, dataLength)) {
       PRINTF("Invalid path\n");
-      THROW(0x6a80);
+      THROW(SW_ERROR_IN_DATA);
     }
     workBuffer += 1 + tmpCtx.messageSigningContext.derivationPath.len * sizeof(uint32_t);
     dataLength -= 1 + tmpCtx.messageSigningContext.derivationPath.len * sizeof(uint32_t);
@@ -411,7 +411,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 
     if (dataLength < 4) {
       PRINTF("Invalid data\n");
-      THROW(0x6a80);
+      THROW(SW_ERROR_IN_DATA);
     }    
     tmpCtx.messageSigningContext.remainingLength = U4BE(workBuffer, 0);
     workBuffer += 4;
@@ -438,17 +438,17 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     cx_sha256_init(&tmpContent.sha2);
   }
   else if (p1 != P1_MORE) {
-    THROW(0x6B00);
+    THROW(SW_WRONG_P1_OR_P2);
   }
   if (p2 != 0) {
-    THROW(0x6B00);
+    THROW(SW_WRONG_P1_OR_P2);
   }
   if ((p1 == P1_MORE) && (appState != APP_STATE_SIGNING_MESSAGE)) {
     PRINTF("Signature not initialized\n");
-    THROW(0x6985);
+    THROW(SW_INITIALIZATION_ERROR);
   }
   if (dataLength > tmpCtx.messageSigningContext.remainingLength) {
-      THROW(0x6A80);
+      THROW(SW_ERROR_IN_DATA);
   }
   CX_THROW(cx_hash_no_throw((cx_hash_t *)&sha3, 0, workBuffer, dataLength, NULL, 0));
   CX_THROW(cx_hash_no_throw((cx_hash_t *)&tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0));
@@ -480,7 +480,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     *flags |= IO_ASYNCH_REPLY;
 
   } else {
-    THROW(0x9000);
+    THROW(SW_OK);
   }
 }
 
@@ -500,7 +500,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 #endif
 
       if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
-        THROW(0x6E00);
+        THROW(SW_CLA_NOT_SUPPORTED);
       }
 
       switch (G_io_apdu_buffer[OFFSET_INS]) {
@@ -536,7 +536,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 #endif
 
         default:
-          THROW(0x6D00);
+          THROW(SW_INS_NOT_SUPPORTED);
       }
     }
     CATCH(EXCEPTION_IO_RESET) {
@@ -549,7 +549,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
           sw = e;
           reset_app_context();
           break;
-        case 0x9000:
+        case SW_OK:
           // All is well
           sw = e;
           break;
@@ -559,7 +559,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
           reset_app_context();
           break;
         }
-        if (e != 0x9000) {
+        if (e != SW_OK) {
           *flags &= ~IO_ASYNCH_REPLY;
         }
         // Unexpected exception => report
@@ -598,7 +598,7 @@ void sample_main(void) {
                 // no apdu received, well, reset the session, and reset the
                 // bootloader configuration
                 if (rx == 0) {
-                    THROW(0x6982);
+                    THROW(SW_NO_APDU_RECEIVED);
                 }
 
                 PRINTF("New APDU received:\n%.*H\n", rx, G_io_apdu_buffer);
@@ -615,7 +615,7 @@ void sample_main(void) {
                     sw = e;
                     reset_app_context();
                     break;
-                case 0x9000:
+                case SW_OK:
                     // All is well
                     sw = e;
                     break;
@@ -625,7 +625,7 @@ void sample_main(void) {
                     reset_app_context();
                     break;
                 }
-                if (e != 0x9000) {
+                if (e != SW_OK) {
                     flags &= ~IO_ASYNCH_REPLY;
                 }
                 // Unexpected exception => report
