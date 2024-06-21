@@ -208,33 +208,6 @@ static int processGasprice(txContext_t *context) {
     return 0;
 }
 
-static int processGatewayFee(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_GATEWAYFEE\n");
-        return -1;
-    }
-    if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_GATEWAYFEE\n");
-        return -1;
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                 ? context->commandLength
-                 : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gatewayFee.value + context->currentFieldPos, copySize)) {
-            return -1;
-        }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->gatewayFee.length = context->currentFieldLength;
-        context->currentField++;
-        context->processingField = false;
-    }
-    return 0;
-}
-
 static int processFeeCurrency(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_FEECURRENCY\n");
@@ -256,33 +229,6 @@ static int processFeeCurrency(txContext_t *context) {
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->content->feeCurrencyLength = context->currentFieldLength;    
-        context->currentField++;
-        context->processingField = false;
-    }
-    return 0;
-}
-
-static int processGatewayTo(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_GATEWAYTO\n");
-        return -1;
-    }
-    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
-        PRINTF("Invalid length for RLP_GATEWAYTO\n");
-        return -1;
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                 ? context->commandLength
-                 : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gatewayDestination + context->currentFieldPos, copySize)) {
-            return -1;
-        }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->gatewayDestinationLength = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
@@ -548,78 +494,6 @@ static bool processEIP1559Tx(txContext_t *context) {
     return false;
 }
 
-static bool processCeloLegacyTx(txContext_t *context) {
-    switch (context->currentField) {
-        case CELO_LEGACY_RLP_CONTENT:
-            if (processContent(context)) {
-                return USTREAM_FAULT;
-            }
-            context->currentField++;
-            break;
-        case CELO_LEGACY_RLP_TYPE:
-            if (processType(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_NONCE:
-            if (processNonce(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_GASPRICE:
-            if (processGasprice(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_STARTGAS:
-            if (processStartGas(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_VALUE:
-            if (processValue(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_TO:
-            if (processTo(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_FEECURRENCY:
-            if (processFeeCurrency(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_GATEWAYTO:
-            if (processGatewayTo(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_GATEWAYFEE:
-            if (processGatewayFee(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_DATA:
-        case CELO_LEGACY_RLP_R:
-        case CELO_LEGACY_RLP_S:
-            if (processData(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_V:
-            if (processV(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        default:
-            PRINTF("Invalid RLP decoder context\n");
-            return USTREAM_FAULT;
-    }
-    return 0;
-}
-
 static parserStatus_e parseRLP(txContext_t *context) {
     bool canDecode = false;
     uint32_t offset;
@@ -716,11 +590,6 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             switch(context->txType) {
                 case EIP1559:
                     if (processEIP1559Tx(context)) {
-                        return USTREAM_FAULT;
-                    }
-                    break;
-                case CELO_LEGACY:
-                    if (processCeloLegacyTx(context)) {
                         return USTREAM_FAULT;
                     }
                     break;
