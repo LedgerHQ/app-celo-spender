@@ -379,7 +379,9 @@ static int processV(txContext_t *context) {
 static bool processCIP64Tx(txContext_t *context){
     switch (context->currentField) {
         case CIP64_RLP_CONTENT: {
-            processContent(context);
+            if(processContent(context)) {
+                return true;
+            }
             if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
                 context->currentField++;
             }
@@ -387,47 +389,69 @@ static bool processCIP64Tx(txContext_t *context){
         }
         // This gets hit only by Wanchain
         case CIP64_RLP_TYPE: {
-            processType(context);
+            if(processType(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_CHAINID: {
-            processV(context);
+            if(processV(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_NONCE: {
-            processNonce(context);
+            if(processNonce(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_MAX_PRIORITY_FEE_PER_GAS: {
-            processAndDiscard(context);
+            if(processAndDiscard(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_MAX_FEE_PER_GAS: {
-            processGasprice(context);
+            if(processGasprice(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_GASLIMIT: {
-            processStartGas(context);
+            if(processStartGas(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_TO: {
-            processTo(context);
+            if(processTo(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_VALUE: {
-            processValue(context);
+            if(processValue(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_DATA: {
-            processData(context);
+            if(processData(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_ACCESS_LIST: {
-            processAccessList(context);
+            if(processAccessList(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_FEECURRENCY: {
-            processFeeCurrency(context);
+            if(processFeeCurrency(context)) {
+                return true;
+            }
             break;
         }
         default:
@@ -441,7 +465,9 @@ static bool processCIP64Tx(txContext_t *context){
 static bool processEIP1559Tx(txContext_t *context) {
     switch (context->currentField) {
         case EIP1559_RLP_CONTENT: {
-            processContent(context);
+            if(processContent(context)) {
+                return true;
+            }
             if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
                 context->currentField++;
             }
@@ -449,43 +475,63 @@ static bool processEIP1559Tx(txContext_t *context) {
         }
         // This gets hit only by Wanchain
         case EIP1559_RLP_TYPE: {
-            processType(context);
+            if(processType(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_CHAINID: {
-            processV(context);
+            if(processV(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_NONCE: {
-            processNonce(context);
+            if(processNonce(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_MAX_FEE_PER_GAS: {
-            processGasprice(context);
+            if(processGasprice(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_GASLIMIT: {
-            processStartGas(context);
+            if(processStartGas(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_TO: {
-            processTo(context);
+            if(processTo(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_VALUE: {
-            processValue(context);
+            if(processValue(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_DATA: {
-            processData(context);
+            if(processData(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_ACCESS_LIST: {
-            processAccessList(context);
+            if(processAccessList(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_MAX_PRIORITY_FEE_PER_GAS:
-            processAndDiscard(context);
+            if(processAndDiscard(context)) {
+                return true;
+            }
             break;
         default:
             PRINTF("Invalid RLP decoder context\n");
