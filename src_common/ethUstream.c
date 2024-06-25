@@ -27,6 +27,14 @@
 #define PRINTF(...)
 #endif
 
+/**
+ * @brief Reads a byte from the transaction buffer.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[out] byte The byte read from the buffer.
+ *
+ * @return 0 if successful, -1 if underflow occurs.
+ */
 static int readTxByte(txContext_t *context, uint8_t *byte) {
     uint8_t data;
 
@@ -51,6 +59,15 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     return 0;
 }
 
+/**
+ * @brief Copies data from the transaction buffer to the output buffer.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[out] out The output buffer.
+ * @param[in] length The length of data to be copied.
+ *
+ * @return 0 if successful, -1 if underflow occurs.
+ */
 int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     if (context->commandLength < length) {
         PRINTF("copyTxData Underflow\n");
@@ -72,8 +89,15 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_CONTENT field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processContent(txContext_t *context) {
-if (context == NULL) {
+    if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
         return -1;
     }
@@ -88,6 +112,13 @@ if (context == NULL) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_ACCESS_LIST field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processAccessList(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -109,6 +140,13 @@ static int processAccessList(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_TYPE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processType(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -139,6 +177,13 @@ static int processType(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_NONCE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processNonce(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -169,6 +214,13 @@ static int processNonce(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_STARTGAS field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processStartGas(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -201,6 +253,13 @@ static int processStartGas(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_GASPRICE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processGasprice(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -232,6 +291,13 @@ static int processGasprice(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_FEECURRENCY field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processFeeCurrency(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -263,6 +329,13 @@ static int processFeeCurrency(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_VALUE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processValue(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -294,6 +367,13 @@ static int processValue(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_TO field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processTo(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -325,6 +405,13 @@ static int processTo(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_DATA field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processData(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -351,6 +438,13 @@ static int processData(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes a discarded field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processAndDiscard(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -375,6 +469,13 @@ static int processAndDiscard(txContext_t *context) {
                                                         // Mainnet, Alfajores, Baklava,
 static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
 
+/**
+ * @brief Checks if the given chain ID is authorized.
+ *
+ * @param[in] chainID The chain ID to check.
+ *
+ * @return 1 if authorized, 0 otherwise.
+ */
 static int isChainIDAuthorized(uint8_t chainID[4]) {
     if(chainID == NULL) {
         return 0;
@@ -386,9 +487,15 @@ static int isChainIDAuthorized(uint8_t chainID[4]) {
         }
     }
     return 0;
-
 }
 
+/**
+ * @brief Processes the RLP_V field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processV(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -424,6 +531,13 @@ static int processV(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes a CIP64 transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if the transaction is processed successfully, true otherwise.
+ */
 static bool processCIP64Tx(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -511,9 +625,15 @@ static bool processCIP64Tx(txContext_t *context) {
             return true;
     }
     return false;
-
 }
 
+/**
+ * @brief Processes an EIP1559 transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if the transaction is processed successfully, true otherwise.
+ */
 static bool processEIP1559Tx(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -529,7 +649,6 @@ static bool processEIP1559Tx(txContext_t *context) {
             }
             break;
         }
-        // This gets hit only by Wanchain
         case EIP1559_RLP_TYPE: {
             if(processType(context)) {
                 return true;
@@ -596,6 +715,13 @@ static bool processEIP1559Tx(txContext_t *context) {
     return false;
 }
 
+/**
+ * @brief Parses the RLP buffer and decodes the current field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_PROCESSING if the RLP buffer is being processed, USTREAM_FAULT if there is an error, USTREAM_PROCESSING if more data is needed.
+ */
 static parserStatus_e parseRLP(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -611,8 +737,7 @@ static parserStatus_e parseRLP(txContext_t *context) {
             return USTREAM_FAULT;
         }
         context->rlpBuffer[context->rlpBufferPos++] = byte;
-        if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos,
-                            &valid)) {
+        if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos, &valid)) {
             // Can decode now, if valid
             if (!valid) {
                 PRINTF("RLP pre-decode error\n");
@@ -652,6 +777,13 @@ static parserStatus_e parseRLP(txContext_t *context) {
     return USTREAM_PROCESSING;
 }
 
+/**
+ * @brief Processes the transaction fields based on the transaction type.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 static parserStatus_e processTxInternal(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -659,7 +791,7 @@ static parserStatus_e processTxInternal(txContext_t *context) {
     }
     for (;;) {
         customStatus_e customStatus = CUSTOM_NOT_HANDLED;
-        // EIP 155 style transasction
+        // EIP 155 style transaction
         if (PARSING_IS_DONE(context)) {
             PRINTF("Parsing done\n");
             return USTREAM_FINISHED;
@@ -712,10 +844,19 @@ static parserStatus_e processTxInternal(txContext_t *context) {
                     PRINTF("Transaction type %d not supported\n", context->txType);
                     return USTREAM_FAULT;
             }
+        }
     }
 }
-}
 
+/**
+ * @brief Processes the transaction.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[in] buffer The input buffer containing the transaction data.
+ * @param[in] length The length of the input buffer.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -726,6 +867,13 @@ parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t len
     return processTxInternal(context);
 }
 
+/**
+ * @brief Continues processing the transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 parserStatus_e continueTx(txContext_t *context) {
     if (context == NULL) {
         PRINTF("Context pointer is NULL\n");
@@ -734,8 +882,16 @@ parserStatus_e continueTx(txContext_t *context) {
     return processTxInternal(context);
 }
 
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra) {
+/**
+ * @brief Initializes the transaction context.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[in] sha3 The SHA3 context.
+ * @param[in] content The transaction content.
+ * @param[in] customProcessor The custom processor function.
+ * @param[in] extra Additional data for the custom processor.
+ */
+void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustreamProcess_t customProcessor, void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
