@@ -8,6 +8,18 @@
 #define CHAINID_COINNAME "CELO"
 #define CHAIN_ID 0
 
+// RETURN CODES
+#define SW_TX_TYPE_NOT_SUPPORTED 0x6501
+#define SW_NO_APDU_RECEIVED 0x6982
+#define SW_INITIALIZATION_ERROR 0x6985
+#define SW_ERROR_IN_DATA 0x6A80
+#define SW_WRONG_P1_OR_P2 0x6b00
+#define SW_OK 0x9000
+#define SW_INS_NOT_SUPPORTED 0x6d00
+#define SW_CLA_NOT_SUPPORTED 0x6e00
+
+
+
 typedef union {
   txContent_t txContent;
   cx_sha256_t sha2;

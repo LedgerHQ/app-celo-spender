@@ -27,6 +27,14 @@
 #define PRINTF(...)
 #endif
 
+/**
+ * @brief Reads a byte from the transaction buffer.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[out] byte The byte read from the buffer.
+ *
+ * @return 0 if successful, -1 if underflow occurs.
+ */
 static int readTxByte(txContext_t *context, uint8_t *byte) {
     uint8_t data;
 
@@ -51,6 +59,15 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     return 0;
 }
 
+/**
+ * @brief Copies data from the transaction buffer to the output buffer.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[out] out The output buffer.
+ * @param[in] length The length of data to be copied.
+ *
+ * @return 0 if successful, -1 if underflow occurs.
+ */
 int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     if (context->commandLength < length) {
         PRINTF("copyTxData Underflow\n");
@@ -72,7 +89,18 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_CONTENT field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processContent(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     // Keep the full length for sanity checks, move to the next field
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_CONTENT\n");
@@ -84,7 +112,18 @@ static int processContent(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_ACCESS_LIST field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processAccessList(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_ACCESS_LIST\n");
         return -1;
@@ -101,7 +140,18 @@ static int processAccessList(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_TYPE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processType(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TYPE\n");
         return -1;
@@ -127,7 +177,18 @@ static int processType(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_NONCE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processNonce(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_NONCE\n");
         return -1;
@@ -153,7 +214,18 @@ static int processNonce(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_STARTGAS field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processStartGas(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_STARTGAS\n");
         return -1;
@@ -181,7 +253,18 @@ static int processStartGas(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_GASPRICE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processGasprice(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GASPRICE\n");
         return -1;
@@ -208,34 +291,18 @@ static int processGasprice(txContext_t *context) {
     return 0;
 }
 
-static int processGatewayFee(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_GATEWAYFEE\n");
-        return -1;
-    }
-    if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_GATEWAYFEE\n");
-        return -1;
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                 ? context->commandLength
-                 : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gatewayFee.value + context->currentFieldPos, copySize)) {
-            return -1;
-        }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->gatewayFee.length = context->currentFieldLength;
-        context->currentField++;
-        context->processingField = false;
-    }
-    return 0;
-}
-
+/**
+ * @brief Processes the RLP_FEECURRENCY field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processFeeCurrency(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_FEECURRENCY\n");
         return -1;
@@ -262,34 +329,18 @@ static int processFeeCurrency(txContext_t *context) {
     return 0;
 }
 
-static int processGatewayTo(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_GATEWAYTO\n");
-        return -1;
-    }
-    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
-        PRINTF("Invalid length for RLP_GATEWAYTO\n");
-        return -1;
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                 ? context->commandLength
-                 : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gatewayDestination + context->currentFieldPos, copySize)) {
-            return -1;
-        }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->gatewayDestinationLength = context->currentFieldLength;
-        context->currentField++;
-        context->processingField = false;
-    }
-    return 0;
-}
-
+/**
+ * @brief Processes the RLP_VALUE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processValue(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_VALUE\n");
         return -1;
@@ -316,7 +367,18 @@ static int processValue(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_TO field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processTo(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TO\n");
         return -1;
@@ -343,7 +405,18 @@ static int processTo(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes the RLP_DATA field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processData(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_DATA\n");
         return -1;
@@ -365,7 +438,18 @@ static int processData(txContext_t *context) {
     return 0;
 }
 
+/**
+ * @brief Processes a discarded field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processAndDiscard(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for Discarded field\n");
         return -1;
@@ -385,6 +469,13 @@ static int processAndDiscard(txContext_t *context) {
                                                         // Mainnet, Alfajores, Baklava,
 static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
 
+/**
+ * @brief Checks if the given chain ID is authorized.
+ *
+ * @param[in] chainID The chain ID to check.
+ *
+ * @return 1 if authorized, 0 otherwise.
+ */
 static int isChainIDAuthorized(uint8_t chainID[4]) {
     if(chainID == NULL) {
         return 0;
@@ -396,10 +487,20 @@ static int isChainIDAuthorized(uint8_t chainID[4]) {
         }
     }
     return 0;
-
 }
 
+/**
+ * @brief Processes the RLP_V field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return 0 if successful, -1 if an error occurs.
+ */
 static int processV(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_V\n");
         return -1;
@@ -430,10 +531,23 @@ static int processV(txContext_t *context) {
     return 0;
 }
 
-static bool processCIP64Tx(txContext_t *context){
+/**
+ * @brief Processes a CIP64 transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if the transaction is processed successfully, true otherwise.
+ */
+static bool processCIP64Tx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     switch (context->currentField) {
         case CIP64_RLP_CONTENT: {
-            processContent(context);
+            if(processContent(context)) {
+                return true;
+            }
             if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
                 context->currentField++;
             }
@@ -441,47 +555,69 @@ static bool processCIP64Tx(txContext_t *context){
         }
         // This gets hit only by Wanchain
         case CIP64_RLP_TYPE: {
-            processType(context);
+            if(processType(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_CHAINID: {
-            processV(context);
+            if(processV(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_NONCE: {
-            processNonce(context);
+            if(processNonce(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_MAX_PRIORITY_FEE_PER_GAS: {
-            processAndDiscard(context);
+            if(processAndDiscard(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_MAX_FEE_PER_GAS: {
-            processGasprice(context);
+            if(processGasprice(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_GASLIMIT: {
-            processStartGas(context);
+            if(processStartGas(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_TO: {
-            processTo(context);
+            if(processTo(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_VALUE: {
-            processValue(context);
+            if(processValue(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_DATA: {
-            processData(context);
+            if(processData(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_ACCESS_LIST: {
-            processAccessList(context);
+            if(processAccessList(context)) {
+                return true;
+            }
             break;
         }
         case CIP64_RLP_FEECURRENCY: {
-            processFeeCurrency(context);
+            if(processFeeCurrency(context)) {
+                return true;
+            }
             break;
         }
         default:
@@ -489,57 +625,88 @@ static bool processCIP64Tx(txContext_t *context){
             return true;
     }
     return false;
-
 }
 
+/**
+ * @brief Processes an EIP1559 transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if the transaction is processed successfully, true otherwise.
+ */
 static bool processEIP1559Tx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     switch (context->currentField) {
         case EIP1559_RLP_CONTENT: {
-            processContent(context);
+            if(processContent(context)) {
+                return true;
+            }
             if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
                 context->currentField++;
             }
             break;
         }
-        // This gets hit only by Wanchain
         case EIP1559_RLP_TYPE: {
-            processType(context);
+            if(processType(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_CHAINID: {
-            processV(context);
+            if(processV(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_NONCE: {
-            processNonce(context);
+            if(processNonce(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_MAX_FEE_PER_GAS: {
-            processGasprice(context);
+            if(processGasprice(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_GASLIMIT: {
-            processStartGas(context);
+            if(processStartGas(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_TO: {
-            processTo(context);
+            if(processTo(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_VALUE: {
-            processValue(context);
+            if(processValue(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_DATA: {
-            processData(context);
+            if(processData(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_ACCESS_LIST: {
-            processAccessList(context);
+            if(processAccessList(context)) {
+                return true;
+            }
             break;
         }
         case EIP1559_RLP_MAX_PRIORITY_FEE_PER_GAS:
-            processAndDiscard(context);
+            if(processAndDiscard(context)) {
+                return true;
+            }
             break;
         default:
             PRINTF("Invalid RLP decoder context\n");
@@ -548,79 +715,18 @@ static bool processEIP1559Tx(txContext_t *context) {
     return false;
 }
 
-static bool processCeloLegacyTx(txContext_t *context) {
-    switch (context->currentField) {
-        case CELO_LEGACY_RLP_CONTENT:
-            if (processContent(context)) {
-                return USTREAM_FAULT;
-            }
-            context->currentField++;
-            break;
-        case CELO_LEGACY_RLP_TYPE:
-            if (processType(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_NONCE:
-            if (processNonce(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_GASPRICE:
-            if (processGasprice(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_STARTGAS:
-            if (processStartGas(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_VALUE:
-            if (processValue(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_TO:
-            if (processTo(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_FEECURRENCY:
-            if (processFeeCurrency(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_GATEWAYTO:
-            if (processGatewayTo(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_GATEWAYFEE:
-            if (processGatewayFee(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_DATA:
-        case CELO_LEGACY_RLP_R:
-        case CELO_LEGACY_RLP_S:
-            if (processData(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        case CELO_LEGACY_RLP_V:
-            if (processV(context)) {
-                return USTREAM_FAULT;
-            }
-            break;
-        default:
-            PRINTF("Invalid RLP decoder context\n");
-            return USTREAM_FAULT;
-    }
-    return 0;
-}
-
+/**
+ * @brief Parses the RLP buffer and decodes the current field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_PROCESSING if the RLP buffer is being processed, USTREAM_FAULT if there is an error, USTREAM_PROCESSING if more data is needed.
+ */
 static parserStatus_e parseRLP(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     bool canDecode = false;
     uint32_t offset;
     while (context->commandLength != 0) {
@@ -631,8 +737,7 @@ static parserStatus_e parseRLP(txContext_t *context) {
             return USTREAM_FAULT;
         }
         context->rlpBuffer[context->rlpBufferPos++] = byte;
-        if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos,
-                            &valid)) {
+        if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos, &valid)) {
             // Can decode now, if valid
             if (!valid) {
                 PRINTF("RLP pre-decode error\n");
@@ -672,10 +777,21 @@ static parserStatus_e parseRLP(txContext_t *context) {
     return USTREAM_PROCESSING;
 }
 
+/**
+ * @brief Processes the transaction fields based on the transaction type.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 static parserStatus_e processTxInternal(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     for (;;) {
         customStatus_e customStatus = CUSTOM_NOT_HANDLED;
-        // EIP 155 style transasction
+        // EIP 155 style transaction
         if (PARSING_IS_DONE(context)) {
             PRINTF("Parsing done\n");
             return USTREAM_FINISHED;
@@ -719,11 +835,6 @@ static parserStatus_e processTxInternal(txContext_t *context) {
                         return USTREAM_FAULT;
                     }
                     break;
-                case CELO_LEGACY:
-                    if (processCeloLegacyTx(context)) {
-                        return USTREAM_FAULT;
-                    }
-                    break;
                 case CIP64:
                     if (processCIP64Tx(context)) {
                         return USTREAM_FAULT;
@@ -733,22 +844,54 @@ static parserStatus_e processTxInternal(txContext_t *context) {
                     PRINTF("Transaction type %d not supported\n", context->txType);
                     return USTREAM_FAULT;
             }
+        }
     }
 }
-}
 
+/**
+ * @brief Processes the transaction.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[in] buffer The input buffer containing the transaction data.
+ * @param[in] length The length of the input buffer.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     context->workBuffer = buffer;
     context->commandLength = length;
     return processTxInternal(context);
 }
 
+/**
+ * @brief Continues processing the transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 parserStatus_e continueTx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     return processTxInternal(context);
 }
 
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra) {
+/**
+ * @brief Initializes the transaction context.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[in] sha3 The SHA3 context.
+ * @param[in] content The transaction content.
+ * @param[in] customProcessor The custom processor function.
+ * @param[in] extra Additional data for the custom processor.
+ */
+void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustreamProcess_t customProcessor, void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;

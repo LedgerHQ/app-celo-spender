@@ -20,14 +20,14 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
     case USTREAM_FINISHED:
         break;
     case USTREAM_PROCESSING:
-        io_seproxyhal_send_status(0x9000);
+        io_seproxyhal_send_status(SW_OK);
 #ifdef HAVE_BAGL
         ui_idle();
 #endif // HAVE_BAGL
         break;
     case USTREAM_FAULT:
         reset_app_context();
-        io_seproxyhal_send_status(0x6A80);
+        io_seproxyhal_send_status(SW_ERROR_IN_DATA);
 #ifdef HAVE_BAGL
         ui_idle();
 #endif // HAVE_BAGL
@@ -35,7 +35,7 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
     default:
         PRINTF("Unexpected parser status\n");
         reset_app_context();
-        io_seproxyhal_send_status(0x6A80);
+        io_seproxyhal_send_status(SW_ERROR_IN_DATA);
 #ifdef HAVE_BAGL
         ui_idle();
 #endif // HAVE_BAGL
@@ -50,7 +50,7 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
 
 unsigned int io_seproxyhal_touch_data_cancel(void) {
     reset_app_context();
-    io_seproxyhal_send_status(0x6985);
+    io_seproxyhal_send_status(SW_INITIALIZATION_ERROR);
 #ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
