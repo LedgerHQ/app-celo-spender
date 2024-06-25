@@ -33,17 +33,19 @@
 #include "utils.h"
 #include "ui_common.h"
 
+// Global variables
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 bolos_ux_params_t G_ux_params;
 ux_state_t G_ux;
 
-
-
+// App flags
 #define APP_FLAG_DATA_ALLOWED 0x01
 #define APP_FLAG_EXTERNAL_TOKEN_NEEDED 0x02
 
+// App type
 #define APP_TYPE 0x02
 
+// APDU instructions
 #define CLA 0xE0
 #define INS_GET_PUBLIC_KEY 0x02
 #define INS_SIGN 0x04
@@ -58,9 +60,11 @@ ux_state_t G_ux;
 #define P1_FIRST 0x00
 #define P1_MORE 0x80
 
+// Common instructions
 #define COMMON_CLA 0xB0
 #define COMMON_INS_GET_WALLET_ID 0x04
 
+// APDU offsets
 #define OFFSET_CLA 0
 #define OFFSET_INS 1
 #define OFFSET_P1 2
@@ -68,6 +72,7 @@ ux_state_t G_ux;
 #define OFFSET_LC 4
 #define OFFSET_CDATA 5
 
+// Token signature public key
 static const uint8_t TOKEN_SIGNATURE_PUBLIC_KEY[] = {
   // cLabs production key (created: May 30, 2024, 17:18:49 GMT+2)
   // akeyless URL: https://ui.gateway.akeyless.celo-networks-dev.org/items?id=281699245&name=%2Fstatic-secrets%2Fdev-tooling-circle%2Fledger-key
@@ -88,34 +93,42 @@ static const uint8_t TOKEN_SIGNATURE_PUBLIC_KEY[] = {
   0xc2,0x2b,0xe3,0xd4,0xd1,0xa5,0x32,0x2d
 };
 
+// Contexts
 dataContext_t dataContext;
-
 tmpCtx_t tmpCtx;
-
 txContext_t txContext;
-
 tmpContent_t tmpContent;
-
 cx_sha3_t sha3;
 
+// Volatile variables
 volatile uint8_t dataAllowed;
 volatile uint8_t contractDetails;
 volatile bool dataPresent;
 volatile provision_type_t provisionType;
 
+// Strings
 strings_t strings;
 
+// Internal storage
 const internalStorage_t N_storage_real;
 
 static const char SIGN_MAGIC[] = "\x19"
                                  "Ethereum Signed Message:\n";
 
+
+/**
+ * IO exchange function
+ *
+ * @param channel The communication channel
+ * @param tx_len The length of the data to be transmitted
+ * @return The received data length or 0 if nothing received
+ */
 unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
     switch (channel & ~(IO_FLAGS)) {
     case CHANNEL_KEYBOARD:
         break;
 
-    // multiplexed io exchange over a SPI channel and TLV encapsulated protocol
+    // Multiplexed IO exchange over a SPI channel and TLV encapsulated protocol
     case CHANNEL_SPI:
         if (tx_len) {
             io_seproxyhal_spi_send(G_io_apdu_buffer, tx_len);
@@ -123,11 +136,9 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
             if (channel & IO_RESET_AFTER_REPLIED) {
                 reset();
             }
-            return 0; // nothing received from the master so far (it's a tx
-                      // transaction)
+            return 0; // Nothing received from the master so far (it's a tx transaction)
         } else {
-            return io_seproxyhal_spi_recv(G_io_apdu_buffer,
-                                          sizeof(G_io_apdu_buffer), 0);
+            return io_seproxyhal_spi_recv(G_io_apdu_buffer, sizeof(G_io_apdu_buffer), 0);
         }
 
     default:
@@ -138,6 +149,14 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len) {
 
 #define MAX_BIP32_PATH 10
 
+/**
+ * Parse BIP32 path
+ *
+ * @param derivationPath The BIP32 path structure to be filled
+ * @param input The input data buffer
+ * @param len The length of the input data buffer
+ * @return 0 if successful, -1 if failed
+ */
 static int parse_bip32_path(bip32Path_t *derivationPath, const uint8_t *input, size_t len) {
   uint8_t path_length;
 
@@ -168,6 +187,11 @@ unsigned int const U_os_perso_seed_cookie[] = {
   0xc1a551c5,
 };
 
+/**
+ * Handle Get Wallet ID command
+ *
+ * @param tx The transaction buffer
+ */
 void handleGetWalletId(volatile unsigned int *tx) {
   unsigned char t[64];
   cx_ecfp_256_private_key_t priv;
@@ -187,6 +211,16 @@ void handleGetWalletId(volatile unsigned int *tx) {
 
 #endif // HAVE_WALLET_ID_SDK
 
+/**
+ * Handle Get Public Key command
+ *
+ * @param p1 The first parameter
+ * @param p2 The second parameter
+ * @param dataBuffer The data buffer
+ * @param dataLength The length of the data buffer
+ * @param flags The flags
+ * @param tx The transaction buffer
+ */
 void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(dataLength);
   uint8_t privateKeyData[64];
@@ -239,6 +273,16 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
 #endif // NO_CONSENT
 }
 
+/**
+ * Handle Provide ERC20 Token Information command
+ *
+ * @param p1 The first parameter
+ * @param p2 The second parameter
+ * @param workBuffer The work buffer
+ * @param dataLength The length of the data buffer
+ * @param flags The flags
+ * @param tx The transaction buffer
+ */
 void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(p1);
   UNUSED(p2);
@@ -292,6 +336,16 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   THROW(SW_OK);
 }
 
+/**
+ * Handles the signing of a transaction.
+ *
+ * @param p1 The first parameter of the APDU command.
+ * @param p2 The second parameter of the APDU command.
+ * @param workBuffer The buffer containing the transaction data.
+ * @param dataLength The length of the transaction data.
+ * @param flags The flags variable.
+ * @param tx The transaction variable.
+ */
 void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(tx);
   parserStatus_e txResult;
@@ -324,8 +378,6 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
     else {
       THROW(SW_TX_TYPE_NOT_SUPPORTED);
     }
-
-
   }
   else if (p1 != P1_MORE) {
     THROW(SW_WRONG_P1_OR_P2);
@@ -363,6 +415,16 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
   }
 }
 
+/**
+ * Handles the retrieval of the application configuration.
+ *
+ * @param p1 The first parameter of the APDU command.
+ * @param p2 The second parameter of the APDU command.
+ * @param workBuffer The buffer containing the command data.
+ * @param dataLength The length of the command data.
+ * @param flags The flags variable.
+ * @param tx The transaction variable.
+ */
 void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(p1);
   UNUSED(p2);
@@ -380,6 +442,16 @@ void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
   THROW(SW_OK);
 }
 
+/**
+ * Handles the retrieval of the application type.
+ *
+ * @param p1 The first parameter of the APDU command.
+ * @param p2 The second parameter of the APDU command.
+ * @param workBuffer The buffer containing the command data.
+ * @param dataLength The length of the command data.
+ * @param flags The flags variable.
+ * @param tx The transaction variable.
+ */
 void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(p1);
   UNUSED(p2);
@@ -390,8 +462,17 @@ void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t data
   *tx = 1;
   THROW(SW_OK);
 }
-			
 
+/**
+ * Handles the signing of a personal message.
+ *
+ * @param p1 The first parameter of the APDU command.
+ * @param p2 The second parameter of the APDU command.
+ * @param workBuffer The buffer containing the command data.
+ * @param dataLength The length of the command data.
+ * @param flags The flags variable.
+ * @param tx The transaction variable.
+ */
 void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
   UNUSED(tx);
 
@@ -488,7 +569,12 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     THROW(SW_OK);
   }
 }
-
+/**
+ * Handles the APDU command.
+ *
+ * @param flags The flags variable.
+ * @param tx The tx variable.
+ */
 void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
   unsigned short sw = 0;
 
@@ -497,6 +583,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 
 #ifndef HAVE_WALLET_ID_SDK
 
+      // Handle the GET_WALLET_ID command
       if ((G_io_apdu_buffer[OFFSET_CLA] == COMMON_CLA) && (G_io_apdu_buffer[OFFSET_INS] == COMMON_INS_GET_WALLET_ID)) {
         handleGetWalletId(tx);
         return;
@@ -504,10 +591,12 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
 
 #endif
 
+      // Check the CLA byte
       if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
         THROW(SW_CLA_NOT_SUPPORTED);
       }
 
+      // Handle different INS commands
       switch (G_io_apdu_buffer[OFFSET_INS]) {
         case INS_GET_PUBLIC_KEY:
           memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
@@ -531,9 +620,9 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
           handleSignPersonalMessage(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
           break;
 
-	case INS_GET_APP_TYPE:
-	  handleGetAppType(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
-	  break;
+        case INS_GET_APP_TYPE:
+          handleGetAppType(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
+          break;
 
 #if 0
         case 0xFF: // return to dashboard
@@ -563,162 +652,175 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
           sw = 0x6800 | (e & 0x7FF);
           reset_app_context();
           break;
-        }
-        if (e != SW_OK) {
-          *flags &= ~IO_ASYNCH_REPLY;
-        }
-        // Unexpected exception => report
-        G_io_apdu_buffer[*tx] = sw >> 8;
-        G_io_apdu_buffer[*tx + 1] = sw;
-        *tx += 2;
       }
-      FINALLY {
+      if (e != SW_OK) {
+        *flags &= ~IO_ASYNCH_REPLY;
       }
+      // Unexpected exception => report
+      G_io_apdu_buffer[*tx] = sw >> 8;
+      G_io_apdu_buffer[*tx + 1] = sw;
+      *tx += 2;
+    }
+    FINALLY {
+    }
   }
   END_TRY;
 }
-
+/**
+ * Main function for the application.
+ */
 void sample_main(void) {
-    volatile unsigned int tx = 0;
-    volatile unsigned int flags = 0;
+  volatile unsigned int tx = 0;
+  volatile unsigned int flags = 0;
 
-    // DESIGN NOTE: the bootloader ignores the way APDU are fetched. The only
-    // goal is to retrieve APDU.
-    // When APDU are to be fetched from multiple IOs, like NFC+USB+BLE, make
-    // sure the io_event is called with a
-    // switch event, before the apdu is replied to the bootloader. This avoid
-    // APDU injection faults.
-    for (;;) {
-        volatile unsigned int rx = 0;
-        volatile unsigned short sw = 0;
+  // DESIGN NOTE: the bootloader ignores the way APDU are fetched. The only
+  // goal is to retrieve APDU.
+  // When APDU are to be fetched from multiple IOs, like NFC+USB+BLE, make
+  // sure the io_event is called with a
+  // switch event, before the apdu is replied to the bootloader. This avoid
+  // APDU injection faults.
+  for (;;) {
+    volatile unsigned int rx = 0;
+    volatile unsigned short sw = 0;
 
-        BEGIN_TRY {
-            TRY {
-                rx = tx;
-                tx = 0; // ensure no race in catch_other if io_exchange throws
-                        // an error
-                rx = io_exchange(CHANNEL_APDU | flags, rx);
-                flags = 0;
+    BEGIN_TRY {
+      TRY {
+        rx = tx;
+        tx = 0; // ensure no race in catch_other if io_exchange throws
+            // an error
+        rx = io_exchange(CHANNEL_APDU | flags, rx);
+        flags = 0;
 
-                // no apdu received, well, reset the session, and reset the
-                // bootloader configuration
-                if (rx == 0) {
-                    THROW(SW_NO_APDU_RECEIVED);
-                }
-
-                PRINTF("New APDU received:\n%.*H\n", rx, G_io_apdu_buffer);
-
-                handleApdu(&flags, &tx);
-            }
-            CATCH(EXCEPTION_IO_RESET) {
-              THROW(EXCEPTION_IO_RESET);
-            }
-            CATCH_OTHER(e) {
-                switch (e & 0xF000) {
-                case 0x6000:
-                    // Wipe the transaction context and report the exception
-                    sw = e;
-                    reset_app_context();
-                    break;
-                case SW_OK:
-                    // All is well
-                    sw = e;
-                    break;
-                default:
-                    // Internal error
-                    sw = 0x6800 | (e & 0x7FF);
-                    reset_app_context();
-                    break;
-                }
-                if (e != SW_OK) {
-                    flags &= ~IO_ASYNCH_REPLY;
-                }
-                // Unexpected exception => report
-                G_io_apdu_buffer[tx] = sw >> 8;
-                G_io_apdu_buffer[tx + 1] = sw;
-                tx += 2;
-            }
-            FINALLY {
-            }
+        // no apdu received, well, reset the session, and reset the
+        // bootloader configuration
+        if (rx == 0) {
+          THROW(SW_NO_APDU_RECEIVED);
         }
-        END_TRY;
-    }
 
-//return_to_dashboard:
-    return;
+        PRINTF("New APDU received:\n%.*H\n", rx, G_io_apdu_buffer);
+
+        handleApdu(&flags, &tx);
+      }
+      CATCH(EXCEPTION_IO_RESET) {
+        THROW(EXCEPTION_IO_RESET);
+      }
+      CATCH_OTHER(e) {
+        switch (e & 0xF000) {
+        case 0x6000:
+          // Wipe the transaction context and report the exception
+          sw = e;
+          reset_app_context();
+          break;
+        case SW_OK:
+          // All is well
+          sw = e;
+          break;
+        default:
+          // Internal error
+          sw = 0x6800 | (e & 0x7FF);
+          reset_app_context();
+          break;
+        }
+        if (e != SW_OK) {
+          flags &= ~IO_ASYNCH_REPLY;
+        }
+        // Unexpected exception => report
+        G_io_apdu_buffer[tx] = sw >> 8;
+        G_io_apdu_buffer[tx + 1] = sw;
+        tx += 2;
+      }
+      FINALLY {
+      }
+    }
+    END_TRY;
+  }
+
+  //return_to_dashboard:
+  return;
 }
 
-// override point, but nothing more to do
 #ifdef HAVE_BAGL
+/**
+ * Display function for the SEPROXYHAL.
+ * @param element The element to display.
+ */
 void io_seproxyhal_display(const bagl_element_t *element) {
   io_seproxyhal_display_default((bagl_element_t *)element);
 }
 #endif // HAVE_BAGL
 
+/**
+ * Event handler for the SEPROXYHAL.
+ * @param channel The channel of the event.
+ * @return 1 if the event was processed successfully, 0 otherwise.
+ */
 unsigned char io_event(unsigned char channel) {
-    UNUSED(channel);
+  UNUSED(channel);
 
-    // nothing done with the event, throw an error on the transport layer if
-    // needed
+  // nothing done with the event, throw an error on the transport layer if
+  // needed
 
-    // can't have more than one tag in the reply, not supported yet.
-    switch (G_io_seproxyhal_spi_buffer[0]) {
+  // can't have more than one tag in the reply, not supported yet.
+  switch (G_io_seproxyhal_spi_buffer[0]) {
 #ifdef HAVE_NBGL
-    case SEPROXYHAL_TAG_FINGER_EVENT:
-    		UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
-    		break;
+  case SEPROXYHAL_TAG_FINGER_EVENT:
+    UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
+    break;
 #endif // HAVE_NBGL
 
-    case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
+  case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
 #ifdef HAVE_BAGL
-        UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
+    UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
 #endif // HAVE_BAGL
-        break;
+    break;
 
-    case SEPROXYHAL_TAG_STATUS_EVENT:
-        if (G_io_apdu_media == IO_APDU_MEDIA_USB_HID && !(U4BE(G_io_seproxyhal_spi_buffer, 3) & SEPROXYHAL_TAG_STATUS_EVENT_FLAG_USB_POWERED)) {
-         THROW(EXCEPTION_IO_RESET);
-        }
-        // no break is intentional
-        __attribute__((fallthrough)); // ignore fall-through warning
+  case SEPROXYHAL_TAG_STATUS_EVENT:
+    if (G_io_apdu_media == IO_APDU_MEDIA_USB_HID && !(U4BE(G_io_seproxyhal_spi_buffer, 3) & SEPROXYHAL_TAG_STATUS_EVENT_FLAG_USB_POWERED)) {
+     THROW(EXCEPTION_IO_RESET);
+    }
+    // no break is intentional
+    __attribute__((fallthrough)); // ignore fall-through warning
 
-    default:
-        UX_DEFAULT_EVENT();
-        break;
-    case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
+  default:
+    UX_DEFAULT_EVENT();
+    break;
+  case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
 #ifdef HAVE_BAGL
-        UX_DISPLAYED_EVENT({});
+    UX_DISPLAYED_EVENT({});
 #endif // HAVE_BAGL
 #ifdef HAVE_NBGL
-        UX_DEFAULT_EVENT();
+    UX_DEFAULT_EVENT();
 #endif // HAVE_NBGL
-        break;
+    break;
 
-    case SEPROXYHAL_TAG_TICKER_EVENT:
-        UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
-        break;
-    }
+  case SEPROXYHAL_TAG_TICKER_EVENT:
+    UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
+    break;
+  }
 
-    // close the event if not done previously (by a display or whatever)
-    if (!io_seproxyhal_spi_is_status_sent()) {
-        io_seproxyhal_general_status();
-    }
+  // close the event if not done previously (by a display or whatever)
+  if (!io_seproxyhal_spi_is_status_sent()) {
+    io_seproxyhal_general_status();
+  }
 
-    // command has been processed, DO NOT reset the current APDU transport
-    return 1;
+  // command has been processed, DO NOT reset the current APDU transport
+  return 1;
 }
 
+/**
+ * Function to exit the application.
+ */
 void app_exit(void) {
 
-    BEGIN_TRY_L(exit) {
-        TRY_L(exit) {
-            os_sched_exit(-1);
-        }
-        FINALLY_L(exit) {
-
-        }
+  BEGIN_TRY_L(exit) {
+    TRY_L(exit) {
+      os_sched_exit(-1);
     }
-    END_TRY_L(exit);
+    FINALLY_L(exit) {
+
+    }
+  }
+  END_TRY_L(exit);
 }
 
 __attribute__((section(".boot"))) int main(void) {
