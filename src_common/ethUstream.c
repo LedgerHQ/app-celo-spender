@@ -73,6 +73,10 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
 }
 
 static int processContent(txContext_t *context) {
+if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     // Keep the full length for sanity checks, move to the next field
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_CONTENT\n");
@@ -85,6 +89,10 @@ static int processContent(txContext_t *context) {
 }
 
 static int processAccessList(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_ACCESS_LIST\n");
         return -1;
@@ -102,6 +110,10 @@ static int processAccessList(txContext_t *context) {
 }
 
 static int processType(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TYPE\n");
         return -1;
@@ -128,6 +140,10 @@ static int processType(txContext_t *context) {
 }
 
 static int processNonce(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_NONCE\n");
         return -1;
@@ -154,6 +170,10 @@ static int processNonce(txContext_t *context) {
 }
 
 static int processStartGas(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_STARTGAS\n");
         return -1;
@@ -182,6 +202,10 @@ static int processStartGas(txContext_t *context) {
 }
 
 static int processGasprice(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GASPRICE\n");
         return -1;
@@ -209,6 +233,10 @@ static int processGasprice(txContext_t *context) {
 }
 
 static int processFeeCurrency(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_FEECURRENCY\n");
         return -1;
@@ -236,6 +264,10 @@ static int processFeeCurrency(txContext_t *context) {
 }
 
 static int processValue(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_VALUE\n");
         return -1;
@@ -263,6 +295,10 @@ static int processValue(txContext_t *context) {
 }
 
 static int processTo(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TO\n");
         return -1;
@@ -290,6 +326,10 @@ static int processTo(txContext_t *context) {
 }
 
 static int processData(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_DATA\n");
         return -1;
@@ -312,6 +352,10 @@ static int processData(txContext_t *context) {
 }
 
 static int processAndDiscard(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for Discarded field\n");
         return -1;
@@ -346,6 +390,10 @@ static int isChainIDAuthorized(uint8_t chainID[4]) {
 }
 
 static int processV(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return -1;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_V\n");
         return -1;
@@ -376,7 +424,11 @@ static int processV(txContext_t *context) {
     return 0;
 }
 
-static bool processCIP64Tx(txContext_t *context){
+static bool processCIP64Tx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     switch (context->currentField) {
         case CIP64_RLP_CONTENT: {
             if(processContent(context)) {
@@ -463,6 +515,10 @@ static bool processCIP64Tx(txContext_t *context){
 }
 
 static bool processEIP1559Tx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     switch (context->currentField) {
         case EIP1559_RLP_CONTENT: {
             if(processContent(context)) {
@@ -541,6 +597,10 @@ static bool processEIP1559Tx(txContext_t *context) {
 }
 
 static parserStatus_e parseRLP(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     bool canDecode = false;
     uint32_t offset;
     while (context->commandLength != 0) {
@@ -593,6 +653,10 @@ static parserStatus_e parseRLP(txContext_t *context) {
 }
 
 static parserStatus_e processTxInternal(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     for (;;) {
         customStatus_e customStatus = CUSTOM_NOT_HANDLED;
         // EIP 155 style transasction
@@ -653,12 +717,20 @@ static parserStatus_e processTxInternal(txContext_t *context) {
 }
 
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     context->workBuffer = buffer;
     context->commandLength = length;
     return processTxInternal(context);
 }
 
 parserStatus_e continueTx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     return processTxInternal(context);
 }
 
