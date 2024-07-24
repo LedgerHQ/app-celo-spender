@@ -21,8 +21,8 @@ def test_celo_derive_address(test_name, backend, firmware, show, chaincode, navi
         instructions = get_nano_review_instructions(2)
     else:
         instructions = [
-            NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM),
-            NavIns(NavInsID.TOUCH, (200, 335)),
+            NavIns(NavInsID.SWIPE_CENTER_TO_LEFT),
+            NavIns(NavInsID.TOUCH, (64, 521)),
             NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR),
             NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM),
             NavIns(NavInsID.USE_CASE_STATUS_DISMISS)

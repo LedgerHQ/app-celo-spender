@@ -12,7 +12,7 @@ def get_nano_review_instructions(num_screen_skip):
 
 
 def get_stax_review_instructions(num_screen_skip):
-    instructions = [NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)]
+    instructions = [NavIns(NavInsID.SWIPE_CENTER_TO_LEFT)]
 
     for i in range(num_screen_skip):
         instructions.append(NavIns(NavInsID.USE_CASE_REVIEW_TAP))
@@ -23,8 +23,8 @@ def get_stax_review_instructions(num_screen_skip):
 
 
 def get_stax_review_instructions_with_warning(num_screen_skip):
-    instructions = [NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)]
-    instructions.append(NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM))
+    instructions = [NavIns(NavInsID.SWIPE_CENTER_TO_LEFT)]
+    instructions.append(NavIns(NavInsID.SWIPE_CENTER_TO_LEFT))
 
     for i in range(num_screen_skip):
         instructions.append(NavIns(NavInsID.USE_CASE_REVIEW_TAP))
