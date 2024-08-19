@@ -206,3 +206,4 @@ It outputs 3 artifacts:
 - `compiled_app_binaries` within binary files of the build process for each device
 - `code-coverage` within HTML details of code coverage
 - `documentation` within HTML auto-generated documentation
+
