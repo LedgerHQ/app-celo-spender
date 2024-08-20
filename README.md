@@ -2,7 +2,7 @@
 
 # Celo app for Ledger Wallet
 
-This app adds support for the Celo native token for the Ledger Nano S/X/SP and Stax.
+This app adds support for the Celo native token for the Ledger Nano S/X/SP/Stax and Flex.
 
 ## Quick start guide
 
@@ -80,6 +80,7 @@ You can choose which device to compile and load for by setting the `BOLOS_SDK` e
 - `BOLOS_SDK=$NANOX_SDK`
 - `BOLOS_SDK=$NANOSP_SDK`
 - `BOLOS_SDK=$STAX_SDK`
+- `BOLOS_SDK=$FLEX_SDK`
 
 By default this variable is set to build/load for Nano S.
 
