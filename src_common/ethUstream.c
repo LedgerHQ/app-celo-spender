@@ -15,16 +15,26 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "ethUstream.h"
-#include "rlp.h"
 
 #include <stdint.h>
 #include <string.h>
+
+#include "ethUstream.h"
+#include "rlp.h"
+
 
 #ifdef TESTING
 #define PRINTF(...)
 #endif
 
+/**
+ * @brief Reads a byte from the transaction buffer.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[out] byte The byte read from the buffer.
+ *
+ * @return 0 if successful, -1 if underflow occurs.
+ */
 static int readTxByte(txContext_t *context, uint8_t *byte) {
     uint8_t data;
 
@@ -40,7 +50,7 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        cx_hash((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0);
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0));
     }
 #endif
     if (byte) {
@@ -49,6 +59,15 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     return 0;
 }
 
+/**
+ * @brief Copies data from the transaction buffer to the output buffer.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[out] out The output buffer.
+ * @param[in] length The length of data to be copied.
+ *
+ * @return 0 if successful, -1 if underflow occurs.
+ */
 int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     if (context->commandLength < length) {
         PRINTF("copyTxData Underflow\n");
@@ -59,7 +78,7 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        cx_hash((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0);
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0));
     }
 #endif
     context->workBuffer += length;
@@ -70,27 +89,76 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     return 0;
 }
 
-static int processContent(txContext_t *context) {
+/**
+ * @brief Processes the RLP_CONTENT field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processContent(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     // Keep the full length for sanity checks, move to the next field
     if (!context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_CONTENT\n");
-        return -1;
+        return true;
     }
     context->dataLength = context->currentFieldLength;
     context->currentField++;
     context->processingField = false;
-    return 0;
+    return false;
 }
 
+/**
+ * @brief Processes the RLP_ACCESS_LIST field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processAccessList(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
+    if (!context->currentFieldIsList) {
+        PRINTF("Invalid type for RLP_ACCESS_LIST\n");
+        return true;
+    }
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t copySize =
+            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
+        copyTxData(context, NULL, copySize);
+    }
+    if (context->currentFieldPos == context->currentFieldLength) {
+        context->currentField++;
+        context->processingField = false;
+    }
+    return false;
+}
 
-static int processType(txContext_t *context) {
+/**
+ * @brief Processes the RLP_TYPE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processType(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TYPE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_TYPE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -99,24 +167,35 @@ static int processType(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, NULL, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processNonce(txContext_t *context) {
+/**
+ * @brief Processes the RLP_NONCE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processNonce(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_NONCE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_NONCE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -125,25 +204,36 @@ static int processNonce(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, NULL, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processStartGas(txContext_t *context) {
+/**
+ * @brief Processes the RLP_STARTGAS field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processStartGas(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_STARTGAS\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_STARTGAS %d\n",
                       context->currentFieldLength);
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -152,7 +242,7 @@ static int processStartGas(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->startgas.value + context->currentFieldPos, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -160,17 +250,28 @@ static int processStartGas(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processGasprice(txContext_t *context) {
+/**
+ * @brief Processes the RLP_GASPRICE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processGasprice(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GASPRICE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_GASPRICE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -179,7 +280,7 @@ static int processGasprice(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->gasprice.value + context->currentFieldPos, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -187,44 +288,28 @@ static int processGasprice(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processGatewayFee(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_GATEWAYFEE\n");
-        return -1;
+/**
+ * @brief Processes the RLP_FEECURRENCY field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processFeeCurrency(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
     }
-    if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_GATEWAYFEE\n");
-        return -1;
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                 ? context->commandLength
-                 : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gatewayFee.value + context->currentFieldPos, copySize)) {
-            return -1;
-        }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->gatewayFee.length = context->currentFieldLength;
-        context->currentField++;
-        context->processingField = false;
-    }
-    return 0;
-}
-
-static int processFeeCurrency(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_FEECURRENCY\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_FEECURRENCY\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -233,7 +318,7 @@ static int processFeeCurrency(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->feeCurrency + context->currentFieldPos, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -241,44 +326,28 @@ static int processFeeCurrency(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processGatewayTo(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_GATEWAYTO\n");
-        return -1;
+/**
+ * @brief Processes the RLP_VALUE field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processValue(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
     }
-    if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
-        PRINTF("Invalid length for RLP_GATEWAYTO\n");
-        return -1;
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                 ? context->commandLength
-                 : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gatewayDestination + context->currentFieldPos, copySize)) {
-            return -1;
-        }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->gatewayDestinationLength = context->currentFieldLength;
-        context->currentField++;
-        context->processingField = false;
-    }
-    return 0;
-}
-
-static int processValue(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_VALUE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_INT256) {
         PRINTF("Invalid length for RLP_VALUE\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -287,7 +356,7 @@ static int processValue(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->value.value + context->currentFieldPos, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -295,17 +364,28 @@ static int processValue(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processTo(txContext_t *context) {
+/**
+ * @brief Processes the RLP_TO field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processTo(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TO\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength != 0 && context->currentFieldLength != MAX_ADDRESS) {
         PRINTF("Invalid length for RLP_TO\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -314,7 +394,7 @@ static int processTo(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->destination + context->currentFieldPos, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -322,13 +402,24 @@ static int processTo(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
-static int processData(txContext_t *context) {
+/**
+ * @brief Processes the RLP_DATA field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processData(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_DATA\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -337,24 +428,86 @@ static int processData(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, NULL, copySize)) {
-            return -1;
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
         context->currentField++;
         context->processingField = false;
     }
+    return false;
+}
+
+/**
+ * @brief Processes a discarded field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processAndDiscard(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
+    if (context->currentFieldIsList) {
+        PRINTF("Invalid type for Discarded field\n");
+        return true;
+    }
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t copySize =
+            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
+        copyTxData(context, NULL, copySize);
+    }
+    if (context->currentFieldPos == context->currentFieldLength) {
+        context->currentField++;
+        context->processingField = false;
+    }
+    return false;
+}
+#define NUM_CHAIN_IDS 3
+                                                        // Mainnet, Alfajores, Baklava,
+static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
+
+/**
+ * @brief Checks if the given chain ID is authorized.
+ *
+ * @param[in] chainID The chain ID to check.
+ *
+ * @return 1 if authorized, 0 otherwise.
+ */
+static int isChainIDAuthorized(uint8_t chainID[4]) {
+    if(chainID == NULL) {
+        return 0;
+    }
+    uint16_t chainIDInt = (chainID[0] << 8) | chainID[1];
+    for (int i = 0; i < NUM_CHAIN_IDS; i++) {
+        if (chainIDInt == AUTHORIZED_CHAIN_IDS[i]) {
+            return 1;
+        }
+    }
     return 0;
 }
 
-static int processV(txContext_t *context) {
+/**
+ * @brief Processes the RLP_V field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if successful, true if an error occurs.
+ */
+static bool processV(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_V\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldLength > MAX_V) {
         PRINTF("Invalid length for RLP_V\n");
-        return -1;
+        return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
@@ -363,7 +516,11 @@ static int processV(txContext_t *context) {
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->v + context->currentFieldPos, copySize)) {
-            return -1;
+            return true;
+        }
+        if (!isChainIDAuthorized(context->content->v)) {
+            PRINTF("ChainID not authorized\n");
+            return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -371,19 +528,212 @@ static int processV(txContext_t *context) {
         context->currentField++;
         context->processingField = false;
     }
-    return 0;
+    return false;
 }
 
+/**
+ * @brief Processes a CIP64 transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if the transaction is processed successfully, true otherwise.
+ */
+static bool processCIP64Tx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
+    switch (context->currentField) {
+        case CIP64_RLP_CONTENT: {
+            if(processContent(context)) {
+                return true;
+            }
+            if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
+                context->currentField++;
+            }
+            return false;
+        }
+        // This gets hit only by Wanchain
+        case CIP64_RLP_TYPE: {
+            return processType(context);
+        }
+        case CIP64_RLP_CHAINID: {
+            return processV(context);
+        }
+        case CIP64_RLP_NONCE: {
+            return processNonce(context);
+        }
+        case CIP64_RLP_MAX_PRIORITY_FEE_PER_GAS: {
+            return processAndDiscard(context);
+        }
+        case CIP64_RLP_MAX_FEE_PER_GAS: {
+            return processGasprice(context);
+        }
+        case CIP64_RLP_GASLIMIT: {
+            return processStartGas(context);
+        }
+        case CIP64_RLP_TO: {
+            return processTo(context);
+        }
+        case CIP64_RLP_VALUE: {
+            return processValue(context);
+        }
+        case CIP64_RLP_DATA: {
+            return processData(context);
+        }
+        case CIP64_RLP_ACCESS_LIST: {
+            return processAccessList(context);
+        }
+        case CIP64_RLP_FEECURRENCY: {
+            return processFeeCurrency(context);
+        }
+        default:
+            PRINTF("Invalid RLP decoder context\n");
+            return true;
+    }
+}
 
+/**
+ * @brief Processes an EIP1559 transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return false if the transaction is processed successfully, true otherwise.
+ */
+static bool processEIP1559Tx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return true;
+    }
+    switch (context->currentField) {
+        case EIP1559_RLP_CONTENT: {
+            if(processContent(context)) {
+                return true;
+            }
+            if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
+                context->currentField++;
+            }
+            return false;
+        }
+        case EIP1559_RLP_TYPE: {
+            return processType(context);
+        }
+        case EIP1559_RLP_CHAINID: {
+            return processV(context);
+        }
+        case EIP1559_RLP_NONCE: {
+            return processNonce(context);
+        }
+        case EIP1559_RLP_MAX_FEE_PER_GAS: {
+            return processGasprice(context);
+        }
+        case EIP1559_RLP_GASLIMIT: {
+            return processStartGas(context);
+        }
+        case EIP1559_RLP_TO: {
+            return processTo(context);
+        }
+        case EIP1559_RLP_VALUE: {
+            return processValue(context);
+        }
+        case EIP1559_RLP_DATA: {
+            return processData(context);
+        }
+        case EIP1559_RLP_ACCESS_LIST: {
+            return processAccessList(context);
+        }
+        case EIP1559_RLP_MAX_PRIORITY_FEE_PER_GAS: {
+            return processAndDiscard(context);
+        }
+        default:
+            PRINTF("Invalid RLP decoder context\n");
+            return true;
+    }
+}
+
+/**
+ * @brief Parses the RLP buffer and decodes the current field.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_PROCESSING if the RLP buffer is being processed, USTREAM_FAULT if there is an error, USTREAM_PROCESSING if more data is needed.
+ */
+static parserStatus_e parseRLP(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
+    bool canDecode = false;
+    uint32_t offset;
+    while (context->commandLength != 0) {
+        bool valid;
+        // Feed the RLP buffer until the length can be decoded
+        uint8_t byte;
+        if (readTxByte(context, &byte)) {
+            return USTREAM_FAULT;
+        }
+        context->rlpBuffer[context->rlpBufferPos++] = byte;
+        if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos, &valid)) {
+            // Can decode now, if valid
+            if (!valid) {
+                PRINTF("RLP pre-decode error\n");
+                return USTREAM_FAULT;
+            }
+            canDecode = true;
+            break;
+        }
+        // Cannot decode yet
+        // Sanity check
+        if (context->rlpBufferPos == sizeof(context->rlpBuffer)) {
+            PRINTF("RLP pre-decode logic error\n");
+            return USTREAM_FAULT;
+        }
+    }
+    if (!canDecode) {
+        return USTREAM_PROCESSING;
+    }
+    // Ready to process this field
+    if (!rlpDecodeLength(context->rlpBuffer, context->rlpBufferPos,
+                            &context->currentFieldLength, &offset,
+                            &context->currentFieldIsList)) {
+        PRINTF("RLP decode error\n");
+        return USTREAM_FAULT;
+    }
+    if (offset == 0) {
+        // Hack for single byte, self encoded
+        context->workBuffer--;
+        context->commandLength++;
+        context->fieldSingleByte = true;
+    } else {
+        context->fieldSingleByte = false;
+    }
+    context->currentFieldPos = 0;
+    context->rlpBufferPos = 0;
+    context->processingField = true;
+    return USTREAM_PROCESSING;
+}
+
+/**
+ * @brief Processes the transaction fields based on the transaction type.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 static parserStatus_e processTxInternal(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     for (;;) {
         customStatus_e customStatus = CUSTOM_NOT_HANDLED;
-        // EIP 155 style transasction
-        if (context->currentField == TX_RLP_DONE) {
+        // EIP 155 style transaction
+        if (PARSING_IS_DONE(context)) {
+            PRINTF("Parsing done\n");
             return USTREAM_FINISHED;
         }
         // Old style transaction
-        if ((context->currentField == TX_RLP_V) && (context->commandLength == 0)) {
+        if ((context->txType == CELO_LEGACY && context->currentField == CELO_LEGACY_RLP_V) && (context->commandLength == 0)) {
             context->content->vLength = 0;
             // We don't want to support old style transactions. We treat an empty V as a false positive
             // - data ended exactly on the APDU boundary, and so we tell the processing to continue.
@@ -393,54 +743,10 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             return USTREAM_PROCESSING;
         }
         if (!context->processingField) {
-            bool canDecode = false;
-            uint32_t offset;
-            while (context->commandLength != 0) {
-                bool valid;
-                // Feed the RLP buffer until the length can be decoded
-                uint8_t byte;
-                if (readTxByte(context, &byte)) {
-                    return USTREAM_FAULT;
-                }
-                context->rlpBuffer[context->rlpBufferPos++] = byte;
-                if (rlpCanDecode(context->rlpBuffer, context->rlpBufferPos,
-                                 &valid)) {
-                    // Can decode now, if valid
-                    if (!valid) {
-                        PRINTF("RLP pre-decode error\n");
-                        return USTREAM_FAULT;
-                    }
-                    canDecode = true;
-                    break;
-                }
-                // Cannot decode yet
-                // Sanity check
-                if (context->rlpBufferPos == sizeof(context->rlpBuffer)) {
-                    PRINTF("RLP pre-decode logic error\n");
-                    return USTREAM_FAULT;
-                }
+            parserStatus_e status = parseRLP(context);
+            if(status != USTREAM_PROCESSING) {
+                return status;
             }
-            if (!canDecode) {
-                return USTREAM_PROCESSING;
-            }
-            // Ready to process this field
-            if (!rlpDecodeLength(context->rlpBuffer, context->rlpBufferPos,
-                                 &context->currentFieldLength, &offset,
-                                 &context->currentFieldIsList)) {
-                PRINTF("RLP decode error\n");
-                return USTREAM_FAULT;
-            }
-            if (offset == 0) {
-                // Hack for single byte, self encoded
-                context->workBuffer--;
-                context->commandLength++;
-                context->fieldSingleByte = true;
-            } else {
-                context->fieldSingleByte = false;
-            }
-            context->currentFieldPos = 0;
-            context->rlpBufferPos = 0;
-            context->processingField = true;
         }
         if (context->customProcessor != NULL) {
             customStatus = context->customProcessor(context);
@@ -459,97 +765,76 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             }
         }
         if (customStatus == CUSTOM_NOT_HANDLED) {
-            switch (context->currentField) {
-            case TX_RLP_CONTENT:
-                if (processContent(context)) {
+            switch(context->txType) {
+                case EIP1559:
+                    if (processEIP1559Tx(context)) {
+                        return USTREAM_FAULT;
+                    }
+                    break;
+                case CIP64:
+                    if (processCIP64Tx(context)) {
+                        return USTREAM_FAULT;
+                    }
+                    break;
+                default:
+                    PRINTF("Transaction type %d not supported\n", context->txType);
                     return USTREAM_FAULT;
-                }
-                context->currentField++;
-                break;
-            case TX_RLP_TYPE:
-                if (processType(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_NONCE:
-                if (processNonce(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_GASPRICE:
-                if (processGasprice(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_STARTGAS:
-                if (processStartGas(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_VALUE:
-                if (processValue(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_TO:
-                if (processTo(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_FEECURRENCY:
-                if (processFeeCurrency(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_GATEWAYTO:
-                if (processGatewayTo(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_GATEWAYFEE:
-                if (processGatewayFee(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_DATA:
-            case TX_RLP_R:
-            case TX_RLP_S:
-                if (processData(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            case TX_RLP_V:
-                if (processV(context)) {
-                    return USTREAM_FAULT;
-                }
-                break;
-            default:
-                PRINTF("Invalid RLP decoder context\n");
-                return USTREAM_FAULT;
             }
         }
     }
 }
 
+/**
+ * @brief Processes the transaction.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[in] buffer The input buffer containing the transaction data.
+ * @param[in] length The length of the input buffer.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     context->workBuffer = buffer;
     context->commandLength = length;
     return processTxInternal(context);
 }
 
+/**
+ * @brief Continues processing the transaction.
+ *
+ * @param[in,out] context The transaction context.
+ *
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ */
 parserStatus_e continueTx(txContext_t *context) {
+    if (context == NULL) {
+        PRINTF("Context pointer is NULL\n");
+        return USTREAM_FAULT;
+    }
     return processTxInternal(context);
 }
 
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra) {
+/**
+ * @brief Initializes the transaction context.
+ *
+ * @param[in,out] context The transaction context.
+ * @param[in] sha3 The SHA3 context.
+ * @param[in] content The transaction content.
+ * @param[in] customProcessor The custom processor function.
+ * @param[in] extra Additional data for the custom processor.
+ */
+void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustreamProcess_t customProcessor, void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
     context->customProcessor = customProcessor;
     context->extra = extra;
-    context->currentField = TX_RLP_CONTENT;
+    context->currentField = CELO_LEGACY_RLP_CONTENT;
 #ifndef TESTING
-    cx_keccak_init(context->sha3, 256);
+    CX_THROW(cx_keccak_init_no_throw(context->sha3, 256));
 #endif
 }

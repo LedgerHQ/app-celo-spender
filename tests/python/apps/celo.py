@@ -23,6 +23,7 @@ MAX_CHUNK_SIZE = 255
 
 class StatusCode(IntEnum):
     STATUS_OK = 0x9000
+    STATUS_DEPRECATED = 0x6501
 
 
 class Param(IntEnum):
@@ -86,6 +87,15 @@ class CeloClient:
     def sign_transaction_async(self, derivation_path : bytes, arg_list : List[str]) -> Generator[None, None, None]:
         encoded = rlp.encode(arg_list)
 
+        payload: bytes = derivation_path
+        payload += encoded
+
+        with self.send_in_chunk_async(INS.INS_SIGN, payload):
+            yield
+
+    @contextmanager
+    def sign_transaction_with_rawTx_async(self, derivation_path : bytes, rawTx: str) -> Generator[None, None, None]:
+        encoded = bytes.fromhex(rawTx)
         payload: bytes = derivation_path
         payload += encoded
 

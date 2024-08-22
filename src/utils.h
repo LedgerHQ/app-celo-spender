@@ -22,10 +22,29 @@
 
 #include "uint256.h"
 
+/**
+ * Converts a binary array to a hexadecimal string representation.
+ *
+ * @param strbuf [out] The buffer to store the hexadecimal string.
+ * @param bin [in] The binary array to convert.
+ * @param len [in] The length of the binary array.
+ */
 void array_hexstr(char *strbuf, const void *bin, size_t len);
 
+/**
+ * Converts a big-endian byte array to a uint256_t target.
+ *
+ * @param data [in] The big-endian byte array to convert.
+ * @param length [in] The length of the byte array.
+ * @param target [out] The target uint256_t to store the converted value.
+ */
 void convertUint256BE(const uint8_t *data, uint32_t length, uint256_t *target);
 
+/**
+ * Retrieves the V value from the transaction content.
+ *
+ * @param txContent [in] The transaction content.
+ * @return The V value.
+ */
 uint32_t getV(txContent_t *txContent);
-
 #endif /* _UTILS_H_ */

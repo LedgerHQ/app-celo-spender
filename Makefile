@@ -23,12 +23,15 @@ include $(BOLOS_SDK)/Makefile.defines
 APP_LOAD_PARAMS= --curve secp256k1 $(COMMON_LOAD_PARAMS)
 
 APPVERSION_M=1
-APPVERSION_N=1
-APPVERSION_P=10
+APPVERSION_N=2
+APPVERSION_P=3
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
 # Celo
 APP_LOAD_PARAMS += --path "44'/52752'"
+# Ethereum path
+APP_LOAD_PARAMS += --path "44'/60'/0'/0/0" --path "44'/60'/0'" --path "44'/60'/0'/0"
+
 APPNAME = "Celo"
 APP_LOAD_FLAGS=--appFlags 0
 ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
@@ -133,7 +136,7 @@ endif
 
 CC       := $(CLANGPATH)clang
 
-#CFLAGS   += -O0
+# CFLAGS   += -O0
 CFLAGS   += -O3 -Os
 
 AS     := $(GCCPATH)arm-none-eabi-gcc
