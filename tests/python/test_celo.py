@@ -19,10 +19,18 @@ def test_celo_derive_address(test_name, backend, firmware, show, chaincode, navi
         instructions = get_nano_review_instructions(4)
     elif firmware.device.startswith("nano"):
         instructions = get_nano_review_instructions(2)
-    else:
+    elif firmware.device == "stax":
         instructions = [
             NavIns(NavInsID.SWIPE_CENTER_TO_LEFT),
             NavIns(NavInsID.TOUCH, (64, 521)),
+            NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR),
+            NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM),
+            NavIns(NavInsID.USE_CASE_STATUS_DISMISS)
+        ]
+    else:
+        instructions = [
+            NavIns(NavInsID.SWIPE_CENTER_TO_LEFT),
+            NavIns(NavInsID.TOUCH, (76, 463)),
             NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR),
             NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM),
             NavIns(NavInsID.USE_CASE_STATUS_DISMISS)

@@ -24,7 +24,7 @@ APP_LOAD_PARAMS= --curve secp256k1 $(COMMON_LOAD_PARAMS)
 
 APPVERSION_M=1
 APPVERSION_N=2
-APPVERSION_P=3
+APPVERSION_P=4
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
 # Celo
@@ -34,7 +34,7 @@ APP_LOAD_PARAMS += --path "44'/60'/0'/0/0" --path "44'/60'/0'" --path "44'/60'/0
 
 APPNAME = "Celo"
 APP_LOAD_FLAGS=--appFlags 0
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX TARGET_FLEX))
 APP_LOAD_FLAGS=--appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
 endif
 APP_LOAD_PARAMS += $(APP_LOAD_FLAGS)
@@ -42,8 +42,10 @@ APP_LOAD_PARAMS += $(APP_LOAD_FLAGS)
 #prepare hsm generation
 ifeq ($(TARGET_NAME), TARGET_NANOS)
 ICONNAME=nanos_app_celo.gif
-else ifeq ($(TARGET_NAME),TARGET_STAX)
+else ifeq ($(TARGET_NAME), TARGET_STAX)
 ICONNAME=stax_app_celo.gif
+else ifeq ($(TARGET_NAME), TARGET_FLEX)
+ICONNAME=flex_app_celo.gif
 else
 ICONNAME=nanox_app_celo.gif
 endif
@@ -75,7 +77,7 @@ DEFINES   += APPVERSION=\"$(APPVERSION)\"
 
 DEFINES   += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
 
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX TARGET_FLEX))
 DEFINES   += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
 DEFINES   += HAVE_BLE_APDU # basic ledger apdu transport over BLE
 endif
@@ -86,7 +88,7 @@ else
 DEFINES   += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 endif
 
-ifeq ($(TARGET_NAME),TARGET_STAX)
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_FLEX TARGET_STAX))
     DEFINES += NBGL_QRCODE
     SDK_SOURCE_PATH += qrcode
 else
@@ -152,11 +154,11 @@ include $(BOLOS_SDK)/Makefile.glyphs
 APP_SOURCE_PATH  += src_common src
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
 
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX TARGET_FLEX))
 SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 endif
 
-ifneq ($(TARGET_NAME),TARGET_STAX)
+ifneq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_FLEX TARGET_STAX))
 SDK_SOURCE_PATH += lib_ux
 endif
 
