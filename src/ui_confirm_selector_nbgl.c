@@ -14,44 +14,35 @@ static void approveCallback(void) {
 
 static void confirmationCallback(bool confirm) {
     if (confirm) {
-        nbgl_useCaseStatus("SELECTOR\nAPPROVED", true, ui_idle);
+        nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_SIGNED, ui_idle);
         approveCallback();
     }
     else {
-        nbgl_useCaseStatus("Selector rejected", false, ui_idle);
+        nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_idle);
         rejectCallback();
     }
-}
-
-static void continueCallback(void) {
-    tagValueList.pairs = tagValuePair;
-    tagValueList.smallCaseForValue = false;
-
-    infoLongPress.text = "Approve selector";
-    infoLongPress.icon = &C_celo_64px;
-    infoLongPress.longPressText = "Hold to sign";
-    infoLongPress.longPressToken = 0;
-    infoLongPress.tuneId = TUNE_TAP_CASUAL;
-
-    nbgl_useCaseStaticReview(&tagValueList, &infoLongPress, "Cancel", confirmationCallback);
 }
 
 void ui_confirm_selector_flow(void) {
     tagValuePair[0].item = "Selector";
     tagValuePair[0].value = (char*)strings.tmp.tmp;
 
+    tagValueList.nbMaxLinesForValue = 0;
     tagValueList.nbPairs = 1;
+    tagValueList.pairs = tagValuePair;
 
-    nbgl_useCaseReviewStart(&C_celo_64px, "Verify selector", "", "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &C_celo_64px, "Verify selector", NULL, "Confirm selector", confirmationCallback);
 }
 
 void ui_confirm_parameter_flow(void) {
     tagValuePair[0].item = "Parameter";
     tagValuePair[0].value = (char*)strings.tmp.tmp;
 
+    tagValueList.nbMaxLinesForValue = 0;
     tagValueList.nbPairs = 1;
+    tagValueList.pairs = tagValuePair;
 
-    nbgl_useCaseReviewStart(&C_celo_64px, "Verify", strings.tmp.tmp2, "Cancel", continueCallback, rejectCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &C_celo_64px, "Verify", NULL, "Confirm", confirmationCallback);
 }
 
 #endif // HAVE_NBGL
