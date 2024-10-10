@@ -24,7 +24,7 @@ MAX_CHUNK_SIZE = 255
 class StatusCode(IntEnum):
     STATUS_OK = 0x9000
     STATUS_DEPRECATED = 0x6501
-
+    STATUS_ERROR_IN_DATA = 0x6A80
 
 class Param(IntEnum):
     P1_DirectlyFetchAddress     = 0x00 # Return address directly from the wallet

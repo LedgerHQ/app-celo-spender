@@ -849,7 +849,7 @@ __attribute__((section(".boot"))) int main(void) {
 
                 if (N_storage.initialized != 0x01) {
                   internalStorage_t storage;
-                  storage.dataAllowed = 0x01;
+                  storage.dataAllowed = 0x00;
                   storage.contractDetails = 0x00;
                   storage.initialized = 0x01;
                   nvm_write(&N_storage, (void*)&storage, sizeof(internalStorage_t));
