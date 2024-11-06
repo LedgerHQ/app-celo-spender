@@ -106,21 +106,17 @@ unsigned int io_seproxyhal_touch_tx_ok(void) {
                   sizeof(tmpCtx.transactionContext.hash), signature, &sig_len, &info));
     explicit_bzero(&privateKey, sizeof(privateKey));
     // Parity is present in the sequence tag in the legacy API
-    if (tmpContent.txContent.vLength == 0) {
-      // Legacy API
-      G_io_apdu_buffer[0] = 27;
-    }
-    else {
-      // New API
-      // Note that this is wrong for a large v, but the client can always recover
-      G_io_apdu_buffer[0] = (v * 2) + 35;
-    }
+    
+    // Note: For EIP1559 and CIP64 transactions, the client expects v to be
+    // the parity: 0 | 1
+    G_io_apdu_buffer[0] = 0;
     if (info & CX_ECCINFO_PARITY_ODD) {
       G_io_apdu_buffer[0]++;
     }
-    if (info & CX_ECCINFO_xGTn) {
-      G_io_apdu_buffer[0] += 2;
-    }
+    // Unsure what this does
+    // if (info & CX_ECCINFO_xGTn) {
+    //   G_io_apdu_buffer[0] += 2;
+    // }
     format_signature_out(signature);
     tx = 65;
     G_io_apdu_buffer[tx++] = 0x90;
