@@ -22,7 +22,6 @@ def sign_transaction_with_rawTx(test_name, backend, navigator, instructions, raw
         navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
 
     response: bytes = get_async_response(backend)
-    print('km-response:',response.data)
     return response
 
 def test_sign_transaction_eip1559_no_data(test_name, backend, firmware, navigator):
