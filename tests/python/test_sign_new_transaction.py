@@ -22,7 +22,7 @@ def sign_transaction_with_rawTx(test_name, backend, navigator, instructions, raw
         navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
 
     response: bytes = get_async_response(backend)
-    return response.status
+    return response
 
 def test_sign_transaction_eip1559_no_data(test_name, backend, firmware, navigator):
     if firmware.device == "nanos":
@@ -33,9 +33,10 @@ def test_sign_transaction_eip1559_no_data(test_name, backend, firmware, navigato
         instructions = get_stax_review_instructions(1)
 
     rawTx = "02f86c82aef380830f42408506fc35fb8082520894da52c9ffebd4d54c94a072776126069d43e74f9e8080c080a099059ce0f1fe1f4fe27a583a6fd6a12274780d358f332d6e5901953900b8fb22a046ce6d625369fdc8a521c22793d188afbf61500cd3095fc09b761b518560f101"
-    status = sign_transaction_with_rawTx(test_name, backend, navigator, instructions, rawTx)
+    response = sign_transaction_with_rawTx(test_name, backend, navigator, instructions, rawTx)
 
-    assert(status == StatusCode.STATUS_OK)
+    assert(response.data[0] == 0x01 or response.data[0] == 0x00)
+    assert(response.status == StatusCode.STATUS_OK)
 
 def test_sign_transaction_eip1559_with_data(test_name, backend, firmware):
     rawTx = "02f8d482a4ec820808839b34b4850fbc63d144830204e094004626a008b1acdc4c74ab51644093b155e59a2380b864ba0876520000000000000000000000000000000000000000000000009458660c5b865f23000000000000000000000000e3b72489968f11c15282514f33df24634440393f000000000000000000000000e3b72489968f11c15282514f33df24634440393fc001a0b0799073a2aa771c5e32b88933ff19982dc30f9e4523fde47137ae504793b880a07014a6e3c32a3b34d4118beb298f2200e858599b5e97766dfaa6fea192cde993"
@@ -71,5 +72,6 @@ def test_sign_transaction_cip64(test_name, backend, firmware, navigator):
         instructions = get_stax_review_instructions(1)
 
     rawTx =  "7bf84382a4ec8084773594008503a11f9db58301688c94da52c9ffebd4d54c94a072776126069d43e74f9e8080c094765DE816845861E75A25FCA122BB6898B8B1282A018080"
-    status = sign_transaction_with_rawTx(test_name, backend, navigator, instructions, rawTx)
-    assert(status == StatusCode.STATUS_OK)
+    response = sign_transaction_with_rawTx(test_name, backend, navigator, instructions, rawTx)
+    assert(response.data[0] == 0x01 or response.data[0] == 0x00)
+    assert(response.status == StatusCode.STATUS_OK)

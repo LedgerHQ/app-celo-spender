@@ -90,7 +90,6 @@ unsigned int io_seproxyhal_touch_tx_ok(void) {
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
-    uint32_t v = getV(&tmpContent.txContent);
     io_seproxyhal_io_heartbeat();
     CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
                                tmpCtx.transactionContext.derivationPath.len,
@@ -105,22 +104,14 @@ unsigned int io_seproxyhal_touch_tx_ok(void) {
                   tmpCtx.transactionContext.hash,
                   sizeof(tmpCtx.transactionContext.hash), signature, &sig_len, &info));
     explicit_bzero(&privateKey, sizeof(privateKey));
-    // Parity is present in the sequence tag in the legacy API
-    if (tmpContent.txContent.vLength == 0) {
-      // Legacy API
-      G_io_apdu_buffer[0] = 27;
-    }
-    else {
-      // New API
-      // Note that this is wrong for a large v, but the client can always recover
-      G_io_apdu_buffer[0] = (v * 2) + 35;
-    }
+
+    // For EIP1559 and CIP64 transactions, the Ledger SDK expects v to be
+    // the parity: 0 | 1
+    G_io_apdu_buffer[0] = 0;
     if (info & CX_ECCINFO_PARITY_ODD) {
       G_io_apdu_buffer[0]++;
     }
-    if (info & CX_ECCINFO_xGTn) {
-      G_io_apdu_buffer[0] += 2;
-    }
+
     format_signature_out(signature);
     tx = 65;
     G_io_apdu_buffer[tx++] = 0x90;
