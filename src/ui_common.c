@@ -20,14 +20,14 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
     case USTREAM_FINISHED:
         break;
     case USTREAM_PROCESSING:
-        io_seproxyhal_send_status(0x9000);
+        io_seproxyhal_send_status(SW_OK);
 #ifdef HAVE_BAGL
         ui_idle();
 #endif // HAVE_BAGL
         break;
     case USTREAM_FAULT:
         reset_app_context();
-        io_seproxyhal_send_status(0x6A80);
+        io_seproxyhal_send_status(SW_ERROR_IN_DATA);
 #ifdef HAVE_BAGL
         ui_idle();
 #endif // HAVE_BAGL
@@ -35,7 +35,7 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
     default:
         PRINTF("Unexpected parser status\n");
         reset_app_context();
-        io_seproxyhal_send_status(0x6A80);
+        io_seproxyhal_send_status(SW_ERROR_IN_DATA);
 #ifdef HAVE_BAGL
         ui_idle();
 #endif // HAVE_BAGL
@@ -50,7 +50,7 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
 
 unsigned int io_seproxyhal_touch_data_cancel(void) {
     reset_app_context();
-    io_seproxyhal_send_status(0x6985);
+    io_seproxyhal_send_status(SW_INITIALIZATION_ERROR);
 #ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
@@ -86,40 +86,32 @@ unsigned int io_seproxyhal_touch_address_cancel(void) {
 }
 
 unsigned int io_seproxyhal_touch_tx_ok(void) {
-    uint8_t privateKeyData[32];
+    uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
-    uint32_t v = getV(&tmpContent.txContent);
     io_seproxyhal_io_heartbeat();
-    os_perso_derive_node_bip32(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
+    CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
                                tmpCtx.transactionContext.derivationPath.len,
-                               privateKeyData, NULL);
-    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32,
-                                 &privateKey);
+                               privateKeyData, NULL));
+    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32,
+                                 &privateKey));
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
+    size_t sig_len = sizeof(signature);
     io_seproxyhal_io_heartbeat();
-    cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+    CX_THROW(cx_ecdsa_sign_no_throw(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
                   tmpCtx.transactionContext.hash,
-                  sizeof(tmpCtx.transactionContext.hash), signature, sizeof(signature), &info);
+                  sizeof(tmpCtx.transactionContext.hash), signature, &sig_len, &info));
     explicit_bzero(&privateKey, sizeof(privateKey));
-    // Parity is present in the sequence tag in the legacy API
-    if (tmpContent.txContent.vLength == 0) {
-      // Legacy API
-      G_io_apdu_buffer[0] = 27;
-    }
-    else {
-      // New API
-      // Note that this is wrong for a large v, but the client can always recover
-      G_io_apdu_buffer[0] = (v * 2) + 35;
-    }
+
+    // For EIP1559 and CIP64 transactions, the Ledger SDK expects v to be
+    // the parity: 0 | 1
+    G_io_apdu_buffer[0] = 0;
     if (info & CX_ECCINFO_PARITY_ODD) {
       G_io_apdu_buffer[0]++;
     }
-    if (info & CX_ECCINFO_xGTn) {
-      G_io_apdu_buffer[0] += 2;
-    }
+
     format_signature_out(signature);
     tx = 65;
     G_io_apdu_buffer[tx++] = 0x90;
@@ -148,22 +140,24 @@ unsigned int io_seproxyhal_touch_tx_cancel(void) {
 }
 
 unsigned int io_seproxyhal_touch_signMessage_ok(void) {
-    uint8_t privateKeyData[32];
+    uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
     io_seproxyhal_io_heartbeat();
-    os_perso_derive_node_bip32(
-        CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
-        tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL);
+    CX_THROW(os_derive_bip32_no_throw(
+                                CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
+                                tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL));
+
     io_seproxyhal_io_heartbeat();
-    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32, &privateKey));
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
+    size_t sig_len = sizeof(signature);
     io_seproxyhal_io_heartbeat();
-    cx_ecdsa_sign(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+    CX_THROW(cx_ecdsa_sign_no_throw(&privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
                   tmpCtx.messageSigningContext.hash,
-                  sizeof(tmpCtx.messageSigningContext.hash), signature, sizeof(signature), &info);
+                  sizeof(tmpCtx.messageSigningContext.hash), signature, &sig_len, &info));
     explicit_bzero(&privateKey, sizeof(privateKey));
     G_io_apdu_buffer[0] = 27;
     if (info & CX_ECCINFO_PARITY_ODD) {
