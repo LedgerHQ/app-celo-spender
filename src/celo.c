@@ -48,29 +48,19 @@ void format_signature_out(const uint8_t* signature) {
   memmove(G_io_apdu_buffer+offset+32-xlength, signature+xoffset, xlength);
 }
 
-uint32_t set_result_get_publicKey() {
-    uint32_t tx = 0;
-    G_io_apdu_buffer[tx++] = 65;
-    memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.publicKey.W, 65);
-    tx += 65;
-    G_io_apdu_buffer[tx++] = 40;
-    memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.address, 40);
-    tx += 40;
-    if (tmpCtx.publicKeyContext.getChaincode) {
-      memcpy(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.chainCode, 32);
-      tx += 32;
-    }
-    return tx;
-}
 
 volatile uint8_t appState;
 
 void reset_app_context() {
   appState = APP_STATE_IDLE;
   PRINTF("Resetting context\n");
-  memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
-  memset(&txContext, 0, sizeof(txContext));
-  memset(&tmpContent, 0, sizeof(tmpContent));
+  // // KM: decide which one to keep 
+  explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
+  explicit_bzero(&tmpContent, sizeof(tmpContent));
+  explicit_bzero(&txContext, sizeof(txContext));
+  // memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+  // memset(&txContext, 0, sizeof(txContext));
+  // memset(&tmpContent, 0, sizeof(tmpContent));
 }
 
 #include "uint256.h"

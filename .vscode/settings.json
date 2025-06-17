@@ -1,0 +1,25 @@
+{
+  "ledgerDevTools.appSettings": {
+    "selectedUseCase": "release",
+    "selectedVariant": "celo",
+    "testsList": [
+      "test_celo_derive_address",
+      "test_celo_get_version",
+      "test_sign_data",
+      "test_sign_transaction_eip1559_no_data",
+      "test_sign_transaction_eip1559_with_data",
+      "test_sign_transaction_cip64",
+      "test_add_cUSD_as_fee_currency"
+    ],
+    "selectedDevice": "Flex"
+  },
+  "files.associations": {
+    "sign_personal_message.h": "c",
+    "get_app_info.h": "c",
+    "get_public_key.h": "c",
+    "get_wallet_id.h": "c",
+    "constants.h": "c",
+    "sw.h": "c",
+    "send_response.h": "c"
+  }
+}

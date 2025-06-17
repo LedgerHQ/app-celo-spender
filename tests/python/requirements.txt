@@ -1,4 +1,5 @@
+pytest
 base58
 bip32
-ragger[tests,speculos]
+ragger[tests,speculos,ledgerwallet]>=1.11.4
 rlp

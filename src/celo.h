@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include "ethUstream.h"
-#include "tokens.h"
+#include "types.h"
 
 /**
  * @brief Sends the status code to the SE proxy hardware abstraction layer.
@@ -23,12 +23,6 @@ void io_seproxyhal_send_status(uint32_t sw);
  */
 void format_signature_out(const uint8_t* signature);
 
-/**
- * @brief Sets the result and retrieves the public key.
- *
- * @return The status code for the operation.
- */
-uint32_t set_result_get_publicKey();
 
 /**
  * @brief Resets the application context.
@@ -69,14 +63,5 @@ void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustream
  */
 void finalizeParsing(bool direct);
 
-// TODO: this should not be exposed
-/**
- * @brief Enumeration representing the application state.
- */
-typedef enum {
-  APP_STATE_IDLE,
-  APP_STATE_SIGNING_TX,
-  APP_STATE_SIGNING_MESSAGE
-} app_state_t;
 
 extern volatile uint8_t appState; /**< The application state. */
