@@ -1,0 +1,204 @@
+[INFO] ragger.configuration - Running Ragger with the following conf:
+[INFO] ragger.configuration -   APP_NAME = ''
+[INFO] ragger.configuration -   MAIN_APP_DIR = 'None'
+[INFO] ragger.configuration -   SIDELOADED_APPS = '{}'
+[INFO] ragger.configuration -   SIDELOADED_APPS_DIR = ''
+[INFO] ragger.configuration -   BACKEND_SCOPE = 'class'
+[INFO] ragger.configuration -   CUSTOM_SEED = ''
+[INFO] ragger.configuration -   ALLOWED_SETUPS = '['default']'
+=============================================================================== test session starts ===============================================================================
+platform linux -- Python 3.11.2, pytest-8.4.0, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /app
+plugins: cov-6.2.1
+collected 4 items                                                                                                                                                                 
+
+tests/python/test_celo.py::test_celo_derive_address[flex-flex-False-False] 
+    [INFO] ragger.logger - Speculos binary: '/app/build/flex/bin/app.elf'
+    [INFO] ragger.logger - SDK Library: 'nbgl'
+    [INFO] ragger.logger - Speculos options: '--display qt --model flex --api-port 5000 --apdu-port 5001'
+    [INFO] ragger.logger - Starting SpeculosBackend stream
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    speculos: Api level detected from metadata: 22
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    [*] speculos launcher revision: 
+    [*] using API_LEVEL version 22 on flex
+    [*] loading CXLIB from "/usr/local/lib/python3.11/dist-packages/speculos/cxlib/flex-api-level-cx-22.elf"
+    [*] Seed initialized from environment
+    QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-'
+    * Serving Flask app 'speculos.api.api'
+    * Debug mode: off
+    [*] Env app name: 'Celo'
+    [*] Env app version: '1.4.0'
+    [*] loading fonts from "/usr/local/lib/python3.11/dist-packages/speculos/fonts/flex-fonts-22.bin" (45056)
+    [INFO] ragger.apdu_logger - => e00200000d038000002c8000ce1080003039
+    [INFO] ragger.apdu_logger - <= 9000
+PASSED
+
+tests/python/test_celo.py::test_celo_derive_address[flex-flex-False-True] 
+    [INFO] ragger.logger - Speculos binary: '/app/build/flex/bin/app.elf'
+    [INFO] ragger.logger - SDK Library: 'nbgl'
+    [INFO] ragger.logger - Speculos options: '--display qt --model flex --api-port 5000 --apdu-port 5001'
+    [INFO] ragger.logger - Starting SpeculosBackend stream
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    speculos: Api level detected from metadata: 22
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    [*] speculos launcher revision: 
+    [*] using API_LEVEL version 22 on flex
+    [*] loading CXLIB from "/usr/local/lib/python3.11/dist-packages/speculos/cxlib/flex-api-level-cx-22.elf"
+    [*] Seed initialized from environment
+    QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-'
+    * Serving Flask app 'speculos.api.api'
+    * Debug mode: off
+    [*] Env app name: 'Celo'
+    [*] Env app version: '1.4.0'
+    [*] loading fonts from "/usr/local/lib/python3.11/dist-packages/speculos/fonts/flex-fonts-22.bin" (45056)
+    [INFO] ragger.apdu_logger - => e00201000d038000002c8000ce1080003039
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00000.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00000.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00002.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00002.png'
+FAILED
+
+tests/python/test_celo.py::test_celo_derive_address[flex-flex-True-False] 
+    [INFO] ragger.logger - Speculos binary: '/app/build/flex/bin/app.elf'
+    [INFO] ragger.logger - SDK Library: 'nbgl'
+    [INFO] ragger.logger - Speculos options: '--display qt --model flex --api-port 5000 --apdu-port 5001'
+    [INFO] ragger.logger - Starting SpeculosBackend stream
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    speculos: Api level detected from metadata: 22
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    [*] speculos launcher revision: 
+    [*] using API_LEVEL version 22 on flex
+    [*] loading CXLIB from "/usr/local/lib/python3.11/dist-packages/speculos/cxlib/flex-api-level-cx-22.elf"
+    [*] Seed initialized from environment
+    QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-'
+    * Serving Flask app 'speculos.api.api'
+    * Debug mode: off
+    [*] Env app name: 'Celo'
+    [*] Env app version: '1.4.0'
+    [*] loading fonts from "/usr/local/lib/python3.11/dist-packages/speculos/fonts/flex-fonts-22.bin" (45056)
+    [INFO] ragger.apdu_logger - => e00200000d038000002c8000ce1080003039
+    [INFO] ragger.apdu_logger - <= 9000
+PASSED
+
+tests/python/test_celo.py::test_celo_derive_address[flex-flex-True-True] 
+    [INFO] ragger.logger - Speculos binary: '/app/build/flex/bin/app.elf'
+    [INFO] ragger.logger - SDK Library: 'nbgl'
+    [INFO] ragger.logger - Speculos options: '--display qt --model flex --api-port 5000 --apdu-port 5001'
+    [INFO] ragger.logger - Starting SpeculosBackend stream
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    speculos: Api level detected from metadata: 22
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    root: Parsing binary '/app/build/flex/bin/app.elf'
+    [*] speculos launcher revision: 
+    [*] using API_LEVEL version 22 on flex
+    [*] loading CXLIB from "/usr/local/lib/python3.11/dist-packages/speculos/cxlib/flex-api-level-cx-22.elf"
+    [*] Seed initialized from environment
+    QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-'
+    * Serving Flask app 'speculos.api.api'
+    * Debug mode: off
+    [*] Env app name: 'Celo'
+    [*] Env app version: '1.4.0'
+    [*] loading fonts from "/usr/local/lib/python3.11/dist-packages/speculos/fonts/flex-fonts-22.bin" (45056)
+    [INFO] ragger.apdu_logger - => e00201000d038000002c8000ce1080003039
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00000.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00000.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00002.png'
+    [INFO] ragger.logger - Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00002.png'
+FAILED
+
+==================================================================================== FAILURES =====================================================================================
+_________________________________________________________________ test_celo_derive_address[flex-flex-False-True] __________________________________________________________________
+tests/python/test_celo.py:43: in test_celo_derive_address
+    scenario_navigator.address_review_approve()
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigation_scenario.py:188: in address_review_approve
+    self._navigate_with_scenario(scenario, path, test_name, custom_screen_text, do_comparison)
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigation_scenario.py:105: in _navigate_with_scenario
+    self.navigator.navigate_until_text_and_compare(
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigator.py:532: in navigate_until_text_and_compare
+    self.navigate_and_compare(
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigator.py:274: in navigate_and_compare
+    self._run_instruction(instruction,
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigator.py:201: in _run_instruction
+    self._backend.wait_for_screen_change(timeout)
+/usr/local/lib/python3.11/dist-packages/ragger/backend/speculos.py:311: in wait_for_screen_change
+    raise TimeoutError("Timeout waiting for screen change")
+E   TimeoutError: Timeout waiting for screen change
+------------------------------------------------------------------------------- Captured log setup --------------------------------------------------------------------------------
+INFO     ragger.logger:speculos.py:115 Speculos binary: '/app/build/flex/bin/app.elf'
+INFO     ragger.logger:speculos.py:116 SDK Library: 'nbgl'
+INFO     ragger.logger:speculos.py:117 Speculos options: '--display qt --model flex --api-port 5000 --apdu-port 5001'
+INFO     ragger.logger:speculos.py:159 Starting SpeculosBackend stream
+INFO     speculos-client:client.py:219 starting speculos with command: /usr/bin/python3 -m speculos --display qt --model flex --api-port 5000 --apdu-port 5001 /app/build/flex/bin/app.elf
+-------------------------------------------------------------------------------- Captured log call --------------------------------------------------------------------------------
+INFO     ragger.apdu_logger:speculos.py:205 => e00201000d038000002c8000ce1080003039
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00000.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00000.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00002.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00002.png'
+------------------------------------------------------------------------------ Captured log teardown ------------------------------------------------------------------------------
+INFO     speculos-client:client.py:224 stopping speculos
+__________________________________________________________________ test_celo_derive_address[flex-flex-True-True] __________________________________________________________________
+tests/python/test_celo.py:43: in test_celo_derive_address
+    scenario_navigator.address_review_approve()
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigation_scenario.py:188: in address_review_approve
+    self._navigate_with_scenario(scenario, path, test_name, custom_screen_text, do_comparison)
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigation_scenario.py:105: in _navigate_with_scenario
+    self.navigator.navigate_until_text_and_compare(
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigator.py:532: in navigate_until_text_and_compare
+    self.navigate_and_compare(
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigator.py:274: in navigate_and_compare
+    self._run_instruction(instruction,
+/usr/local/lib/python3.11/dist-packages/ragger/navigator/navigator.py:201: in _run_instruction
+    self._backend.wait_for_screen_change(timeout)
+/usr/local/lib/python3.11/dist-packages/ragger/backend/speculos.py:311: in wait_for_screen_change
+    raise TimeoutError("Timeout waiting for screen change")
+E   TimeoutError: Timeout waiting for screen change
+------------------------------------------------------------------------------- Captured log setup --------------------------------------------------------------------------------
+INFO     ragger.logger:speculos.py:115 Speculos binary: '/app/build/flex/bin/app.elf'
+INFO     ragger.logger:speculos.py:116 SDK Library: 'nbgl'
+INFO     ragger.logger:speculos.py:117 Speculos options: '--display qt --model flex --api-port 5000 --apdu-port 5001'
+INFO     ragger.logger:speculos.py:159 Starting SpeculosBackend stream
+INFO     speculos-client:client.py:219 starting speculos with command: /usr/bin/python3 -m speculos --display qt --model flex --api-port 5000 --apdu-port 5001 /app/build/flex/bin/app.elf
+-------------------------------------------------------------------------------- Captured log call --------------------------------------------------------------------------------
+INFO     ragger.apdu_logger:speculos.py:205 => e00201000d038000002c8000ce1080003039
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00000.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00000.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00001.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots-tmp/flex/test_celo_derive_address/00002.png'
+INFO     ragger.logger:speculos.py:234 Saving screenshot to image '/app/snapshots/flex/test_celo_derive_address/00002.png'
+------------------------------------------------------------------------------ Captured log teardown ------------------------------------------------------------------------------
+INFO     speculos-client:client.py:224 stopping speculos
+================================================================================ warnings summary =================================================================================
+../usr/local/lib/python3.11/dist-packages/ragger/firmware/structs.py:34
+  /usr/local/lib/python3.11/dist-packages/ragger/firmware/structs.py:34: UserWarning: `ragger.firmware.Firmware` is deprecated, use `ledgered.devices.Devices` or `ledgered.devices.DeviceType` instead
+    warn(DEPRECATION_MESSAGE)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================================================================= short test summary info =============================================================================
+FAILED tests/python/test_celo.py::test_celo_derive_address[flex-flex-False-True] - TimeoutError: Timeout waiting for screen change
+FAILED tests/python/test_celo.py::test_celo_derive_address[flex-flex-True-True] - TimeoutError: Timeout waiting for screen change
+=============================================================== 2 failed, 2 passed, 1 warning in 107.56s (0:01:47) ================================================================
+
+What's next:
+    Try Docker Debug for seamless, persistent debugging tools in any container or image → docker debug app-celo-spender-container
+    Learn more at https://docs.docker.com/go/debug-cli/
