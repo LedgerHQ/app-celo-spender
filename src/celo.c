@@ -8,17 +8,17 @@
 
 #include <string.h>
 
-static const uint8_t TOKEN_TRANSFER_ID[] = { 0xa9, 0x05, 0x9c, 0xbb };
-static const uint8_t TOKEN_TRANSFER_WITH_COMMENT_ID[] = { 0xe1, 0xd6, 0xac, 0xeb };
-static const uint8_t LOCK_METHOD_ID[] = { 0xf8, 0x3d, 0x08, 0xba };
-static const uint8_t VOTE_METHOD_ID[] = { 0x58, 0x0d, 0x74, 0x7a };
-static const uint8_t ACTIVATE_METHOD_ID[] = { 0x1c, 0x5a, 0x9d, 0x9c };
-static const uint8_t REVOKE_PENDING_METHOD_ID[] = { 0x9d, 0xfb, 0x60, 0x81 };
-static const uint8_t REVOKE_ACTIVE_METHOD_ID[] = { 0x6e, 0x19, 0x84, 0x75 };
-static const uint8_t UNLOCK_METHOD_ID[] = { 0x61, 0x98, 0xe3, 0x39 };
-static const uint8_t WITHDRAW_METHOD_ID[] = { 0x2e, 0x1a, 0x7d, 0x4d };
-static const uint8_t RELOCK_METHOD_ID[] = { 0xb2, 0xfb, 0x30, 0xcb };
-static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = { 0x9d, 0xca, 0x36, 0x2f };
+static const uint8_t TOKEN_TRANSFER_ID[] = {0xa9, 0x05, 0x9c, 0xbb};
+static const uint8_t TOKEN_TRANSFER_WITH_COMMENT_ID[] = {0xe1, 0xd6, 0xac, 0xeb};
+static const uint8_t LOCK_METHOD_ID[] = {0xf8, 0x3d, 0x08, 0xba};
+static const uint8_t VOTE_METHOD_ID[] = {0x58, 0x0d, 0x74, 0x7a};
+static const uint8_t ACTIVATE_METHOD_ID[] = {0x1c, 0x5a, 0x9d, 0x9c};
+static const uint8_t REVOKE_PENDING_METHOD_ID[] = {0x9d, 0xfb, 0x60, 0x81};
+static const uint8_t REVOKE_ACTIVE_METHOD_ID[] = {0x6e, 0x19, 0x84, 0x75};
+static const uint8_t UNLOCK_METHOD_ID[] = {0x61, 0x98, 0xe3, 0x39};
+static const uint8_t WITHDRAW_METHOD_ID[] = {0x2e, 0x1a, 0x7d, 0x4d};
+static const uint8_t RELOCK_METHOD_ID[] = {0xb2, 0xfb, 0x30, 0xcb};
+static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = {0x9d, 0xca, 0x36, 0x2f};
 
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
@@ -26,56 +26,56 @@ void io_seproxyhal_send_status(uint32_t sw) {
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
 }
 
-void format_signature_out(const uint8_t* signature) {
-  memset(G_io_apdu_buffer + 1, 0x00, 64);
-  uint8_t offset = 1;
-  uint8_t xoffset = 4; //point to r value
-  //copy r
-  uint8_t xlength = signature[xoffset-1];
-  if (xlength == 33) {
-    xlength = 32;
-    xoffset ++;
-  }
-  memmove(G_io_apdu_buffer+offset+32-xlength,  signature+xoffset, xlength);
-  offset += 32;
-  xoffset += xlength +2; //move over rvalue and TagLEn
-  //copy s value
-  xlength = signature[xoffset-1];
-  if (xlength == 33) {
-    xlength = 32;
-    xoffset ++;
-  }
-  memmove(G_io_apdu_buffer+offset+32-xlength, signature+xoffset, xlength);
-}
-
+// void format_signature_out(const uint8_t *signature, uint8_t *out) {
+//     memset(out, 0x00, 64);
+//     uint8_t offset = 0;
+//     uint8_t xoffset = 4;  // point to r value
+//     // copy r
+//     uint8_t xlength = signature[xoffset - 1];
+//     if (xlength == 33) {
+//         xlength = 32;
+//         xoffset++;
+//     }
+//     memmove(out + offset + 32 - xlength, signature + xoffset, xlength);
+//     offset += 32;
+//     xoffset += xlength + 2;  // move over rvalue and TagLEn
+//     // copy s value
+//     xlength = signature[xoffset - 1];
+//     if (xlength == 33) {
+//         xlength = 32;
+//         xoffset++;
+//     }
+//     memmove(out + offset + 32 - xlength, signature + xoffset, xlength);
+// }
 
 volatile uint8_t appState;
 
 void reset_app_context() {
-  appState = APP_STATE_IDLE;
-  PRINTF("Resetting context\n");
-  // // KM: decide which one to keep 
-  explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
-  explicit_bzero(&tmpContent, sizeof(tmpContent));
-  explicit_bzero(&txContext, sizeof(txContext));
-  // memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
-  // memset(&txContext, 0, sizeof(txContext));
-  // memset(&tmpContent, 0, sizeof(tmpContent));
+    appState = APP_STATE_IDLE;
+    PRINTF("Resetting context\n");
+    // // KM: decide which one to keep
+    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
+    explicit_bzero(&tmpContent, sizeof(tmpContent));
+    explicit_bzero(&txContext, sizeof(txContext));
+    // memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+    // memset(&txContext, 0, sizeof(txContext));
+    // memset(&tmpContent, 0, sizeof(tmpContent));
 }
 
 #include "uint256.h"
 
 #define WEI_TO_ETHER 18
 
-tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
+tokenDefinition_t *getKnownToken(uint8_t *tokenAddr) {
     tokenDefinition_t *currentToken = NULL;
 
-    for(int i=0; i < MAX_TOKEN; i++) {
-      currentToken = &tmpCtx.transactionContext.tokens[i];
-      if (tmpCtx.transactionContext.tokenSet[i] && (memcmp(currentToken->address, tokenAddr, 20) == 0)) {
-        PRINTF("Token found at index %d\n", i);
-        return currentToken;
-      }
+    for (int i = 0; i < MAX_TOKEN; i++) {
+        currentToken = &tmpCtx.transactionContext.tokens[i];
+        if (tmpCtx.transactionContext.tokenSet[i] &&
+            (memcmp(currentToken->address, tokenAddr, 20) == 0)) {
+            PRINTF("Token found at index %d\n", i);
+            return currentToken;
+        }
     }
 
     return NULL;
@@ -83,7 +83,7 @@ tokenDefinition_t* getKnownToken(uint8_t *tokenAddr) {
 
 static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
     uint32_t i;
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
         if (parameter[i] != 0x00) {
             break;
         }
@@ -93,8 +93,7 @@ static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
         result[1] = '0';
         result[2] = '\0';
         return 2;
-    }
-    else {
+    } else {
         array_hexstr(result, parameter + i, 8 - i);
         return ((8 - i) * 2);
     }
@@ -111,132 +110,117 @@ customStatus_e customProcessor(txContext_t *context) {
             return CUSTOM_NOT_HANDLED;
         }
         if (context->currentFieldPos == 0) {
-            // If handling the beginning of the data field, assume that the function selector is present
+            // If handling the beginning of the data field, assume that the function selector is
+            // present
             if (context->commandLength < 4) {
                 PRINTF("Missing function selector\n");
                 return CUSTOM_FAULT;
             }
             // Initial check to see if the token content can be processed
-            if (
-                (
-                  (
-                    (context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
-                    (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0)
-                  ) ||
-                  (
-                    (context->currentFieldLength >= sizeof(dataContext.tokenContext.data)) &&
-                    (memcmp(context->workBuffer, TOKEN_TRANSFER_WITH_COMMENT_ID, 4) == 0)
-                  )
-                ) &&
-                (getKnownToken(tmpContent.txContent.destination) != NULL)
-              ) {
-                  provisionType = PROVISION_TOKEN;
-                }
+            if ((((context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
+                  (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0)) ||
+                 ((context->currentFieldLength >= sizeof(dataContext.tokenContext.data)) &&
+                  (memcmp(context->workBuffer, TOKEN_TRANSFER_WITH_COMMENT_ID, 4) == 0))) &&
+                (getKnownToken(tmpContent.txContent.destination) != NULL)) {
+                provisionType = PROVISION_TOKEN;
+            }
             // Initial check to see if the lock content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.lockContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.lockContext.data)) &&
                 (memcmp(context->workBuffer, LOCK_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_LOCK;
-                }
+                provisionType = PROVISION_LOCK;
+            }
             // Initial check to see if the vote content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.voteContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.voteContext.data)) &&
                 (memcmp(context->workBuffer, VOTE_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_VOTE;
-                }
+                provisionType = PROVISION_VOTE;
+            }
             // Initial check to see if the activate content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.activateContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.activateContext.data)) &&
                 (memcmp(context->workBuffer, ACTIVATE_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_ACTIVATE;
-                }
+                provisionType = PROVISION_ACTIVATE;
+            }
             // Initial check to see if the revoke content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.revokeContext.data)) &&
-                ((memcmp(context->workBuffer, REVOKE_PENDING_METHOD_ID, 4) == 0) || (memcmp(context->workBuffer, REVOKE_ACTIVE_METHOD_ID, 4) == 0))) {
-                  provisionType = PROVISION_REVOKE;
-                }
+            if ((context->currentFieldLength == sizeof(dataContext.revokeContext.data)) &&
+                ((memcmp(context->workBuffer, REVOKE_PENDING_METHOD_ID, 4) == 0) ||
+                 (memcmp(context->workBuffer, REVOKE_ACTIVE_METHOD_ID, 4) == 0))) {
+                provisionType = PROVISION_REVOKE;
+            }
             // Initial check to see if the unlock content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.unlockContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.unlockContext.data)) &&
                 (memcmp(context->workBuffer, UNLOCK_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_UNLOCK;
-                }
+                provisionType = PROVISION_UNLOCK;
+            }
             // Initial check to see if the withdraw content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.withdrawContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.withdrawContext.data)) &&
                 (memcmp(context->workBuffer, WITHDRAW_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_WITHDRAW;
-                }
+                provisionType = PROVISION_WITHDRAW;
+            }
             // Initial check to see if the relock content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.relockContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.relockContext.data)) &&
                 (memcmp(context->workBuffer, RELOCK_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_RELOCK;
-                }
+                provisionType = PROVISION_RELOCK;
+            }
             // Initial check to see if the create account content can be processed
-            if (
-                (context->currentFieldLength == sizeof(dataContext.createAccountContext.data)) &&
+            if ((context->currentFieldLength == sizeof(dataContext.createAccountContext.data)) &&
                 (memcmp(context->workBuffer, CREATE_ACCOUNT_METHOD_ID, 4) == 0)) {
-                  provisionType = PROVISION_CREATE_ACCOUNT;
-                }
+                provisionType = PROVISION_CREATE_ACCOUNT;
+            }
         }
         if (provisionType != PROVISION_NONE) {
             if (context->currentFieldPos < context->currentFieldLength) {
-                uint32_t copySize = (context->commandLength <
-                                        ((context->currentFieldLength -
-                                                   context->currentFieldPos))
-                                        ? context->commandLength
-                                            : context->currentFieldLength -
-                                                   context->currentFieldPos);
+                uint32_t copySize =
+                    (context->commandLength <
+                             ((context->currentFieldLength - context->currentFieldPos))
+                         ? context->commandLength
+                         : context->currentFieldLength - context->currentFieldPos);
                 switch (provisionType) {
-                  case PROVISION_TOKEN:
-                    copyTxData(context,
-                        dataContext.tokenContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_LOCK:
-                    copyTxData(context,
-                        dataContext.lockContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_VOTE:
-                    copyTxData(context,
-                        dataContext.voteContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_ACTIVATE:
-                    copyTxData(context,
-                        dataContext.activateContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_REVOKE:
-                    copyTxData(context,
-                        dataContext.revokeContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_UNLOCK:
-                    copyTxData(context,
-                        dataContext.unlockContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_WITHDRAW:
-                    copyTxData(context,
-                        dataContext.withdrawContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_RELOCK:
-                    copyTxData(context,
-                        dataContext.relockContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  case PROVISION_CREATE_ACCOUNT:
-                    copyTxData(context,
-                        dataContext.createAccountContext.data + context->currentFieldPos,
-                        copySize);
-                    break;
-                  default:
-                    break;
+                    case PROVISION_TOKEN:
+                        copyTxData(context,
+                                   dataContext.tokenContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_LOCK:
+                        copyTxData(context,
+                                   dataContext.lockContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_VOTE:
+                        copyTxData(context,
+                                   dataContext.voteContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_ACTIVATE:
+                        copyTxData(context,
+                                   dataContext.activateContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_REVOKE:
+                        copyTxData(context,
+                                   dataContext.revokeContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_UNLOCK:
+                        copyTxData(context,
+                                   dataContext.unlockContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_WITHDRAW:
+                        copyTxData(context,
+                                   dataContext.withdrawContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_RELOCK:
+                        copyTxData(context,
+                                   dataContext.relockContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    case PROVISION_CREATE_ACCOUNT:
+                        copyTxData(context,
+                                   dataContext.createAccountContext.data + context->currentFieldPos,
+                                   copySize);
+                        break;
+                    default:
+                        break;
                 }
             }
             if (context->currentFieldPos == context->currentFieldLength) {
@@ -244,26 +228,24 @@ customStatus_e customProcessor(txContext_t *context) {
                 context->processingField = false;
             }
             return CUSTOM_HANDLED;
-        }
-        else {
+        } else {
             uint32_t blockSize;
             uint32_t copySize;
             uint32_t fieldPos = context->currentFieldPos;
             if (fieldPos == 0) {
                 if (!N_storage.dataAllowed) {
-                  PRINTF("Data field forbidden\n");
-                  return CUSTOM_FAULT;
+                    PRINTF("Data field forbidden\n");
+                    return CUSTOM_FAULT;
                 }
                 if (!N_storage.contractDetails) {
-                  return CUSTOM_NOT_HANDLED;
+                    return CUSTOM_NOT_HANDLED;
                 }
                 dataContext.rawDataContext.fieldIndex = 0;
                 dataContext.rawDataContext.fieldOffset = 0;
                 blockSize = 4;
-            }
-            else {
+            } else {
                 if (!N_storage.contractDetails) {
-                  return CUSTOM_NOT_HANDLED;
+                    return CUSTOM_NOT_HANDLED;
                 }
                 blockSize = 32 - (dataContext.rawDataContext.fieldOffset % 32);
             }
@@ -276,8 +258,8 @@ customStatus_e customProcessor(txContext_t *context) {
 
             copySize = (context->commandLength < blockSize ? context->commandLength : blockSize);
             copyTxData(context,
-                        dataContext.rawDataContext.data + dataContext.rawDataContext.fieldOffset,
-                        copySize);
+                       dataContext.rawDataContext.data + dataContext.rawDataContext.fieldOffset,
+                       copySize);
 
             if (context->currentFieldPos == context->currentFieldLength) {
                 context->currentField++;
@@ -295,21 +277,23 @@ customStatus_e customProcessor(txContext_t *context) {
                 if (fieldPos == 0) {
                     array_hexstr(strings.tmp.tmp, dataContext.rawDataContext.data, 4);
                     ui_confirm_selector_flow();
-                }
-                else {
+                } else {
                     uint32_t offset = 0;
                     uint32_t i;
-                    snprintf(strings.tmp.tmp2, sizeof(strings.tmp.tmp2), "Field %d", dataContext.rawDataContext.fieldIndex);
-                    for (i=0; i<4; i++) {
-                        offset += splitBinaryParameterPart(strings.tmp.tmp + offset, dataContext.rawDataContext.data + 8 * i);
+                    snprintf(strings.tmp.tmp2,
+                             sizeof(strings.tmp.tmp2),
+                             "Field %d",
+                             dataContext.rawDataContext.fieldIndex);
+                    for (i = 0; i < 4; i++) {
+                        offset += splitBinaryParameterPart(strings.tmp.tmp + offset,
+                                                           dataContext.rawDataContext.data + 8 * i);
                         if (i != 3) {
                             strings.tmp.tmp[offset++] = ':';
                         }
                     }
                     ui_confirm_parameter_flow();
                 }
-            }
-            else {
+            } else {
                 return CUSTOM_HANDLED;
             }
 
@@ -320,41 +304,40 @@ customStatus_e customProcessor(txContext_t *context) {
 }
 
 void finalizeParsing(bool direct) {
-  uint256_t gasPrice, startGas, uint256;
-  uint32_t i;
-  uint8_t decimals = WEI_TO_ETHER;
-  uint8_t feeDecimals = WEI_TO_ETHER;
-  const char *ticker = CHAINID_COINNAME " ";
-  const char *feeTicker = CHAINID_COINNAME " ";
-  uint8_t tickerOffset = 0;
+    uint256_t gasPrice, startGas, uint256;
+    uint32_t i;
+    uint8_t decimals = WEI_TO_ETHER;
+    uint8_t feeDecimals = WEI_TO_ETHER;
+    const char *ticker = CHAINID_COINNAME " ";
+    const char *feeTicker = CHAINID_COINNAME " ";
+    uint8_t tickerOffset = 0;
 
-  // Display correct currency if fee currency field sent
-  if (tmpContent.txContent.feeCurrencyLength != 0) {
-    tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
-    if (feeCurrencyToken == NULL) {
-      reset_app_context();
-      PRINTF("Invalid fee currency");
-      if (direct) {
-          THROW(SW_ERROR_IN_DATA);
-      }
-      else {
-          io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-          ui_idle();
-          return;
-      }
-    } else {
-      feeTicker = feeCurrencyToken->ticker;
-      feeDecimals = feeCurrencyToken->decimals;
+    // Display correct currency if fee currency field sent
+    if (tmpContent.txContent.feeCurrencyLength != 0) {
+        tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
+        if (feeCurrencyToken == NULL) {
+            reset_app_context();
+            PRINTF("Invalid fee currency");
+            if (direct) {
+                THROW(SW_ERROR_IN_DATA);
+            } else {
+                io_seproxyhal_send_status(SW_ERROR_IN_DATA);
+                ui_idle();
+                return;
+            }
+        } else {
+            feeTicker = feeCurrencyToken->ticker;
+            feeDecimals = feeCurrencyToken->decimals;
+        }
     }
-  }
 
-  // Store the hash
-  CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
-                        CX_LAST,
-                        tmpCtx.transactionContext.hash,
-                        0,
-                        tmpCtx.transactionContext.hash,
-                        32));
+    // Store the hash
+    CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
+                              CX_LAST,
+                              tmpCtx.transactionContext.hash,
+                              0,
+                              tmpCtx.transactionContext.hash,
+                              32));
     // If there is a token to process, check if it is well known
     if (provisionType == PROVISION_TOKEN) {
         tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
@@ -368,69 +351,69 @@ void finalizeParsing(bool direct) {
             tmpContent.txContent.value.length = 32;
         }
     } else if (provisionType == PROVISION_VOTE) {
-      tmpContent.txContent.destinationLength = 20;
-      memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
-      memcpy(tmpContent.txContent.value.value, dataContext.voteContext.data + 4 + 32, 32);
-      tmpContent.txContent.value.length = 32;
+        tmpContent.txContent.destinationLength = 20;
+        memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
+        memcpy(tmpContent.txContent.value.value, dataContext.voteContext.data + 4 + 32, 32);
+        tmpContent.txContent.value.length = 32;
     } else if (provisionType == PROVISION_ACTIVATE) {
-      tmpContent.txContent.destinationLength = 20;
-      memcpy(tmpContent.txContent.destination, dataContext.activateContext.data + 4 + 12, 20);
+        tmpContent.txContent.destinationLength = 20;
+        memcpy(tmpContent.txContent.destination, dataContext.activateContext.data + 4 + 12, 20);
     } else if (provisionType == PROVISION_REVOKE) {
-      tmpContent.txContent.destinationLength = 20;
-      memcpy(tmpContent.txContent.destination, dataContext.revokeContext.data + 4 + 12, 20);
-      memcpy(tmpContent.txContent.value.value, dataContext.revokeContext.data + 4 + 32, 32);
-      tmpContent.txContent.value.length = 32;
+        tmpContent.txContent.destinationLength = 20;
+        memcpy(tmpContent.txContent.destination, dataContext.revokeContext.data + 4 + 12, 20);
+        memcpy(tmpContent.txContent.value.value, dataContext.revokeContext.data + 4 + 32, 32);
+        tmpContent.txContent.value.length = 32;
     } else if (provisionType == PROVISION_UNLOCK) {
-      memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
-      tmpContent.txContent.value.length = 32;
+        memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
+        tmpContent.txContent.value.length = 32;
     } else if (provisionType == PROVISION_RELOCK) {
-      memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
-      tmpContent.txContent.value.length = 32;
+        memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
+        tmpContent.txContent.value.length = 32;
     } else {
-      if (dataPresent && !N_storage.dataAllowed) {
-          reset_app_context();
-          PRINTF("Data field forbidden\n");
-          if (direct) {
-            THROW(SW_ERROR_IN_DATA);
-          }
-          else {
-            io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-            ui_idle();
-            return;
-          }
-      }
+        if (dataPresent && !N_storage.dataAllowed) {
+            reset_app_context();
+            PRINTF("Data field forbidden\n");
+            if (direct) {
+                THROW(SW_ERROR_IN_DATA);
+            } else {
+                io_seproxyhal_send_status(SW_ERROR_IN_DATA);
+                ui_idle();
+                return;
+            }
+        }
     }
-  // Add address
-  if (tmpContent.txContent.destinationLength != 0) {
-    char address[41];
-    getEthAddressStringFromBinary(tmpContent.txContent.destination, address, CHAIN_ID, &sha3);
-    strings.common.fullAddress[0] = '0';
-    strings.common.fullAddress[1] = 'x';
-    memcpy(strings.common.fullAddress+2, address, 40);
-    strings.common.fullAddress[42] = '\0';
-  }
-  else
-  {
-    strcpy(strings.common.fullAddress, "New Contract");
-  }
-  // Add gateway fee recipient address
-  if (tmpContent.txContent.gatewayDestinationLength != 0) {
-    char gatewayAddress[41];
-    getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination, gatewayAddress, CHAIN_ID, &sha3);
-    strings.common.fullGatewayAddress[0] = '0';
-    strings.common.fullGatewayAddress[1] = 'x';
-    memcpy(strings.common.fullGatewayAddress+2, gatewayAddress, 40);
-    strings.common.fullGatewayAddress[42] = '\0';
-  }
-  // Add amount in ethers or tokens
-  convertUint256BE(tmpContent.txContent.value.value, tmpContent.txContent.value.length, &uint256);
-  tostring256(&uint256, 10, (char *)(G_io_apdu_buffer + 100), 100);
-  i = 0;
-  while (G_io_apdu_buffer[100 + i]) {
-    i++;
-  }
-  adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, decimals);
-  i = 0;
+    // Add address
+    if (tmpContent.txContent.destinationLength != 0) {
+        char address[41];
+        getEthAddressStringFromBinary(tmpContent.txContent.destination, address, CHAIN_ID, &sha3);
+        strings.common.fullAddress[0] = '0';
+        strings.common.fullAddress[1] = 'x';
+        memcpy(strings.common.fullAddress + 2, address, 40);
+        strings.common.fullAddress[42] = '\0';
+    } else {
+        strcpy(strings.common.fullAddress, "New Contract");
+    }
+    // Add gateway fee recipient address
+    if (tmpContent.txContent.gatewayDestinationLength != 0) {
+        char gatewayAddress[41];
+        getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination,
+                                      gatewayAddress,
+                                      CHAIN_ID,
+                                      &sha3);
+        strings.common.fullGatewayAddress[0] = '0';
+        strings.common.fullGatewayAddress[1] = 'x';
+        memcpy(strings.common.fullGatewayAddress + 2, gatewayAddress, 40);
+        strings.common.fullGatewayAddress[42] = '\0';
+    }
+    // Add amount in ethers or tokens
+    convertUint256BE(tmpContent.txContent.value.value, tmpContent.txContent.value.length, &uint256);
+    tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
+    i = 0;
+    while (G_io_apdu_buffer[100 + i]) {
+        i++;
+    }
+    adjustDecimals((char *) (G_io_apdu_buffer + 100), i, (char *) G_io_apdu_buffer, 100, decimals);
+    i = 0;
     tickerOffset = 0;
     while (ticker[tickerOffset]) {
         strings.common.fullAmount[tickerOffset] = ticker[tickerOffset];
@@ -440,16 +423,22 @@ void finalizeParsing(bool direct) {
         strings.common.fullAmount[tickerOffset + i] = G_io_apdu_buffer[i];
         i++;
     }
-  strings.common.fullAmount[tickerOffset + i] = '\0';
-  // Add gateway fee
-  convertUint256BE(tmpContent.txContent.gatewayFee.value, tmpContent.txContent.gatewayFee.length, &uint256);
-  tostring256(&uint256, 10, (char *)(G_io_apdu_buffer + 100), 100);
-  i = 0;
-  while (G_io_apdu_buffer[100 + i]) {
-    i++;
-  }
-  adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
-  i = 0;
+    strings.common.fullAmount[tickerOffset + i] = '\0';
+    // Add gateway fee
+    convertUint256BE(tmpContent.txContent.gatewayFee.value,
+                     tmpContent.txContent.gatewayFee.length,
+                     &uint256);
+    tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
+    i = 0;
+    while (G_io_apdu_buffer[100 + i]) {
+        i++;
+    }
+    adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                   i,
+                   (char *) G_io_apdu_buffer,
+                   100,
+                   feeDecimals);
+    i = 0;
     tickerOffset = 0;
     while (feeTicker[tickerOffset]) {
         strings.common.gatewayFee[tickerOffset] = feeTicker[tickerOffset];
@@ -459,98 +448,104 @@ void finalizeParsing(bool direct) {
         strings.common.gatewayFee[tickerOffset + i] = G_io_apdu_buffer[i];
         i++;
     }
-  strings.common.gatewayFee[tickerOffset + i] = '\0';
-  // Compute maximum fee
-  convertUint256BE(tmpContent.txContent.gasprice.value, tmpContent.txContent.gasprice.length, &gasPrice);
-  convertUint256BE(tmpContent.txContent.startgas.value, tmpContent.txContent.startgas.length, &startGas);
-  mul256(&gasPrice, &startGas, &uint256);
-  tostring256(&uint256, 10, (char *)(G_io_apdu_buffer + 100), 100);
-  i = 0;
-  while (G_io_apdu_buffer[100 + i]) {
-    i++;
-  }
-  adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
-  i = 0;
-  tickerOffset=0;
-  while (feeTicker[tickerOffset]) {
-      strings.common.maxFee[tickerOffset] = feeTicker[tickerOffset];
-      tickerOffset++;
-  }
-  while (G_io_apdu_buffer[i]) {
-    strings.common.maxFee[tickerOffset + i] = G_io_apdu_buffer[i];
-    i++;
-  }
-  strings.common.maxFee[tickerOffset + i] = '\0';
+    strings.common.gatewayFee[tickerOffset + i] = '\0';
+    // Compute maximum fee
+    convertUint256BE(tmpContent.txContent.gasprice.value,
+                     tmpContent.txContent.gasprice.length,
+                     &gasPrice);
+    convertUint256BE(tmpContent.txContent.startgas.value,
+                     tmpContent.txContent.startgas.length,
+                     &startGas);
+    mul256(&gasPrice, &startGas, &uint256);
+    tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
+    i = 0;
+    while (G_io_apdu_buffer[100 + i]) {
+        i++;
+    }
+    adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                   i,
+                   (char *) G_io_apdu_buffer,
+                   100,
+                   feeDecimals);
+    i = 0;
+    tickerOffset = 0;
+    while (feeTicker[tickerOffset]) {
+        strings.common.maxFee[tickerOffset] = feeTicker[tickerOffset];
+        tickerOffset++;
+    }
+    while (G_io_apdu_buffer[i]) {
+        strings.common.maxFee[tickerOffset + i] = G_io_apdu_buffer[i];
+        i++;
+    }
+    strings.common.maxFee[tickerOffset + i] = '\0';
 
-  switch (provisionType) {
-    case PROVISION_LOCK:
-      strcpy(strings.common.stakingType, "Lock");
-      break;
-    case PROVISION_VOTE:
-      strcpy(strings.common.stakingType, "Vote");
-      break;
-    case PROVISION_ACTIVATE:
-      strcpy(strings.common.stakingType, "Activate");
-      break;
-    case PROVISION_REVOKE:
-      strcpy(strings.common.stakingType, "Revoke");
-      break;
-    case PROVISION_UNLOCK:
-      strcpy(strings.common.stakingType, "Unlock");
-      break;
-    case PROVISION_WITHDRAW:
-      strcpy(strings.common.stakingType, "Withdraw");
-      break;
-    case PROVISION_RELOCK:
-      strcpy(strings.common.stakingType, "Relock");
-      break;
-    case PROVISION_CREATE_ACCOUNT:
-      strcpy(strings.common.stakingType, "Create Account");
-      break;
-    default:
-      break;
-  }
+    switch (provisionType) {
+        case PROVISION_LOCK:
+            strcpy(strings.common.stakingType, "Lock");
+            break;
+        case PROVISION_VOTE:
+            strcpy(strings.common.stakingType, "Vote");
+            break;
+        case PROVISION_ACTIVATE:
+            strcpy(strings.common.stakingType, "Activate");
+            break;
+        case PROVISION_REVOKE:
+            strcpy(strings.common.stakingType, "Revoke");
+            break;
+        case PROVISION_UNLOCK:
+            strcpy(strings.common.stakingType, "Unlock");
+            break;
+        case PROVISION_WITHDRAW:
+            strcpy(strings.common.stakingType, "Withdraw");
+            break;
+        case PROVISION_RELOCK:
+            strcpy(strings.common.stakingType, "Relock");
+            break;
+        case PROVISION_CREATE_ACCOUNT:
+            strcpy(strings.common.stakingType, "Create Account");
+            break;
+        default:
+            break;
+    }
 
 #ifdef NO_CONSENT
-  io_seproxyhal_touch_tx_ok(NULL);
-#else // NO_CONSENT
-  switch(provisionType) {
-    case PROVISION_LOCK:
-    case PROVISION_UNLOCK:
-        ui_approval_celo_lock_unlock_flow();
-      break;
-    case PROVISION_WITHDRAW:
-      ui_approval_celo_withdraw_flow();
-      break;
-    case PROVISION_VOTE:
-    case PROVISION_REVOKE:
-      ui_approval_celo_vote_revoke_flow();
-      break;
-    case PROVISION_ACTIVATE:
-      ui_approval_celo_activate_flow();
-      break;
-    case PROVISION_RELOCK:
-      ui_approval_celo_relock_flow();
-      break;
-    case PROVISION_CREATE_ACCOUNT:
-      ui_approval_celo_create_account_flow();
-      break;
-    default:
-      if (tmpContent.txContent.gatewayDestinationLength != 0) {
-          if (dataPresent && !N_storage.contractDetails) {
-              ui_approval_celo_data_warning_gateway_tx_flow();
-          }
-          else {
-              ui_approval_celo_gateway_tx_flow();
-          }
-      } else {
-          if (dataPresent && !N_storage.contractDetails) {
-              ui_approval_celo_data_warning_tx_flow();
-          }
-          else {
-              ui_approval_celo_tx_flow();
-          }
-      }
-  }
-#endif // NO_CONSENT
+    io_seproxyhal_touch_tx_ok(NULL);
+#else   // NO_CONSENT
+    switch (provisionType) {
+        case PROVISION_LOCK:
+        case PROVISION_UNLOCK:
+            ui_approval_celo_lock_unlock_flow();
+            break;
+        case PROVISION_WITHDRAW:
+            ui_approval_celo_withdraw_flow();
+            break;
+        case PROVISION_VOTE:
+        case PROVISION_REVOKE:
+            ui_approval_celo_vote_revoke_flow();
+            break;
+        case PROVISION_ACTIVATE:
+            ui_approval_celo_activate_flow();
+            break;
+        case PROVISION_RELOCK:
+            ui_approval_celo_relock_flow();
+            break;
+        case PROVISION_CREATE_ACCOUNT:
+            ui_approval_celo_create_account_flow();
+            break;
+        default:
+            if (tmpContent.txContent.gatewayDestinationLength != 0) {
+                if (dataPresent && !N_storage.contractDetails) {
+                    ui_approval_celo_data_warning_gateway_tx_flow();
+                } else {
+                    ui_approval_celo_gateway_tx_flow();
+                }
+            } else {
+                if (dataPresent && !N_storage.contractDetails) {
+                    ui_approval_celo_data_warning_tx_flow();
+                } else {
+                    ui_approval_celo_tx_flow();
+                }
+            }
+    }
+#endif  // NO_CONSENT
 }

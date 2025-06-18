@@ -10,3 +10,12 @@
  *
  */
 void validate_pubkey(bool choice);
+
+/**
+ * Action for signing a message.
+ *
+ * @param[in] confirm
+ *   User confirmation (either approved or rejected).
+ *
+ */
+int crypto_sign_message(bool confirm);

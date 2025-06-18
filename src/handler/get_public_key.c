@@ -28,15 +28,15 @@ int handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dat
 
   reset_app_context();
   if ((p1 != P1_CONFIRM) && (p1 != P1_NON_CONFIRM)) {
-    io_send_sw(SW_WRONG_P1_OR_P2);
+    return io_send_sw(SW_WRONG_P1_OR_P2);
   }
   if ((p2 != P2_CHAINCODE) && (p2 != P2_NO_CHAINCODE)) {
-    io_send_sw(SW_WRONG_P1_OR_P2);
+    return io_send_sw(SW_WRONG_P1_OR_P2);
   }
 
   if (parse_bip32_path(&derivationPath, dataBuffer, dataLength)) {
       PRINTF("Invalid path\n");
-      io_send_sw(SW_ERROR_IN_DATA);
+      return io_send_sw(SW_ERROR_IN_DATA);
   }
 
   tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
