@@ -17,11 +17,11 @@ int helper_send_response_pubkey(void);
  * Helper to send APDU response with signature and v (parity of
  * y-coordinate of R).
  *
- * response = signature_len (1) ||
- *            signature (signature_len) ||
- *            v (1)
+ * response = v (1) ||
+ *            r (32) ||
+ *            s (32)
  *
  * @return zero or positive integer if success, -1 otherwise.
  *
  */
-int helper_send_response_sig(void);
+int helper_send_response_signature(const uint8_t *signature, unsigned int info);

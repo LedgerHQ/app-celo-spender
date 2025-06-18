@@ -10,11 +10,11 @@
 extern nbgl_contentTagValue_t tagValuePair[5];
 extern nbgl_contentTagValueList_t tagValueList;
 extern nbgl_contentInfoLongPress_t infoLongPress;
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL
 
 void ui_idle(void);  // must be implemented by each ui handler
-void ui_display_address(void); 
-void ui_display_sign_flow(void); 
+void ui_display_address(void);
+void ui_display_sign_flow(void);
 void ui_confirm_selector_flow(void);
 void ui_confirm_parameter_flow(void);
 void ui_approval_celo_lock_unlock_flow(void);
@@ -38,4 +38,4 @@ unsigned int io_seproxyhal_touch_tx_ok(void);
 unsigned int io_seproxyhal_touch_tx_cancel(void);
 
 unsigned int io_seproxyhal_touch_signMessage_ok(void);
-unsigned int io_seproxyhal_touch_signMessage_cancel(void);
+// unsigned int io_seproxyhal_touch_signMessage_cancel(void);
