@@ -24,4 +24,4 @@ int helper_send_response_pubkey(void);
  * @return zero or positive integer if success, -1 otherwise.
  *
  */
-int helper_send_response_signature(const uint8_t *signature, unsigned int info);
+int helper_send_response_signature(const uint8_t *signature, unsigned int info, bool sign_message);

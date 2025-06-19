@@ -19,3 +19,12 @@ void validate_pubkey(bool choice);
  *
  */
 int crypto_sign_message(bool confirm);
+
+/**
+ * Action for signing a transaction.
+ *
+ * @param[in] confirm
+ *   User confirmation (either approved or rejected).
+ *
+ */
+int validate_transaction(bool confirm);

@@ -3,6 +3,8 @@
 #include "globals.h"
 #include "os.h"
 #include "utils.h"
+#include "cx.h"
+#include "io.h"
 
 #include "ui_common.h"
 
@@ -319,9 +321,9 @@ void finalizeParsing(bool direct) {
             reset_app_context();
             PRINTF("Invalid fee currency");
             if (direct) {
-                THROW(SW_ERROR_IN_DATA);
+                io_send_sw(SW_ERROR_IN_DATA);
             } else {
-                io_seproxyhal_send_status(SW_ERROR_IN_DATA);
+                io_send_sw(SW_ERROR_IN_DATA);
                 ui_idle();
                 return;
             }
@@ -374,9 +376,9 @@ void finalizeParsing(bool direct) {
             reset_app_context();
             PRINTF("Data field forbidden\n");
             if (direct) {
-                THROW(SW_ERROR_IN_DATA);
+                io_send_sw(SW_ERROR_IN_DATA);
             } else {
-                io_seproxyhal_send_status(SW_ERROR_IN_DATA);
+                io_send_sw(SW_ERROR_IN_DATA);
                 ui_idle();
                 return;
             }

@@ -63,15 +63,14 @@ int handler_provide_erc20_token_information(const command_t *cmd) {
 
 int handler_sign(const command_t *cmd) {
     volatile unsigned int flags = 0;
-    volatile unsigned int tx = 0;
 
     BEGIN_TRY {
         TRY {
-            handleSign(cmd->p1, cmd->p2, cmd->data, cmd->lc, &flags, &tx);
+            return handleSign(cmd->p1, cmd->p2, cmd->data, cmd->lc, &flags);
 
-            if (!(flags & IO_ASYNCH_REPLY)) {
-                return io_send_response_pointer(G_io_apdu_buffer, tx, SW_OK);
-            }
+            // if (!(flags & IO_ASYNCH_REPLY)) {
+            //     return io_send_response_pointer(G_io_apdu_buffer, tx, SW_OK);
+            // }
         }
         CATCH_OTHER(e) {
             reset_app_context();
