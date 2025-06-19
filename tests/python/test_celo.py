@@ -31,6 +31,10 @@ def test_celo_derive_address(
     response: bytes = get_async_response(backend)
 
     assert response.status == StatusCode.STATUS_OK
+    assert (
+        response.data.hex()
+        == "4104f3c5b892381bdc277026f0675634fe6b8f339a58e689faede9be2ba5701fd215599bae802930025fc0bd270136d9081266741d8bf562e5ca70da9ff95a1942bc2846343935466332624331383238314533353244626632383039393432366330343237363236374463"
+    )
 
 
 # @pytest.mark.active_test_scope
@@ -52,3 +56,7 @@ def test_sign_data(test_name, backend, firmware, scenario_navigator):
 
     assert response.status == StatusCode.STATUS_OK
     assert len(response.data) == 65
+    assert (
+        response.data.hex()
+        == "1c76536c41e8830a322517f921333237a616726ac151807558aeaa10f9efb8d1937299f8ad544f412264fb6467732bedc5215231f3dfe44444e2bc3a9597ee0eae"
+    )
