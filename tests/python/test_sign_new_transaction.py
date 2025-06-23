@@ -19,22 +19,37 @@ TX_TYPE_CIP64 = 123
 
 
 # @pytest.mark.active_test_scope
-def sign_transaction_with_rawTx(test_name, backend, scenario_navigator, rawTx):
+def sign_transaction_with_rawTx(
+    test_name, backend, scenario_navigator, navigator, rawTx, instruction=[]
+):
     celo = CeloClient(backend)
-    # transaction_params.append("") # ADD DONE PARAMETER
-    with celo.sign_transaction_with_rawTx_async(ETH_PACKED_DERIVATION_PATH, rawTx):
-        scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name)
+    # For nano devices, we need to navigate and compare the instructions
+    if instruction != []:
+        with celo.sign_transaction_with_rawTx_async(ETH_PACKED_DERIVATION_PATH, rawTx):
+            navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instruction)
+    else:
+        with celo.sign_transaction_with_rawTx_async(ETH_PACKED_DERIVATION_PATH, rawTx):
+            scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name)
 
     response: bytes = get_async_response(backend)
     return response
 
 
 # @pytest.mark.active_test_scope
-def test_sign_transaction_eip1559_no_data(test_name, backend, scenario_navigator):
+def test_sign_transaction_eip1559_no_data(
+    test_name, backend, scenario_navigator, navigator, firmware
+):
 
     rawTx = "02f86c82aef380830f42408506fc35fb8082520894da52c9ffebd4d54c94a072776126069d43e74f9e8080c080a099059ce0f1fe1f4fe27a583a6fd6a12274780d358f332d6e5901953900b8fb22a046ce6d625369fdc8a521c22793d188afbf61500cd3095fc09b761b518560f101"
+    print("KM -- firmware: ", firmware)
+    instruction = get_nano_review_instructions(4) if firmware.is_nano else []
     response = sign_transaction_with_rawTx(
-        test_name, backend, scenario_navigator, rawTx
+        test_name,
+        backend,
+        scenario_navigator,
+        navigator,
+        rawTx,
+        instruction,
     )
 
     assert response.status == StatusCode.STATUS_OK
