@@ -50,7 +50,9 @@ int handler_provide_erc20_token_information(const command_t *cmd) {
             return io_send_sw(SW_OK);
         }
         CATCH_OTHER(e) {
-            reset_app_context();
+            if (e != SW_OK) {
+                reset_app_context();
+            }
             return io_send_sw(e);
         }
         FINALLY {
