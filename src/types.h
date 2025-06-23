@@ -1,21 +1,21 @@
 /*******************************************************************************
-*   Ledger Ethereum App
-*   (c) 2016-2019 Ledger
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-********************************************************************************/
+ *   Ledger Ethereum App
+ *   (c) 2016-2019 Ledger
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ ********************************************************************************/
 
-#pragma once 
+#pragma once
 
 #include <stdint.h>
 #include "constants.h"
@@ -25,7 +25,6 @@ typedef struct tokenDefinition_t {
     char ticker[10];
     uint8_t decimals;
 } tokenDefinition_t;
-
 
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
@@ -83,8 +82,8 @@ typedef union {
 } dataContext_t;
 
 typedef union {
-  txContent_t txContent;
-  cx_sha256_t sha2;
+    txContent_t txContent;
+    cx_sha256_t sha2;
 } tmpContent_t;
 
 typedef struct bip32Path_t {
@@ -139,30 +138,26 @@ typedef union {
 } strings_t;
 
 typedef struct internalStorage_t {
-  unsigned char dataAllowed;
-  unsigned char contractDetails;
-  uint8_t initialized;
+    unsigned char dataAllowed;
+    unsigned char contractDetails;
+    uint8_t initialized;
 } internalStorage_t;
 
 typedef enum {
-  PROVISION_NONE,
-  PROVISION_TOKEN,
-  PROVISION_LOCK,
-  PROVISION_VOTE,
-  PROVISION_ACTIVATE,
-  PROVISION_REVOKE,
-  PROVISION_UNLOCK,
-  PROVISION_WITHDRAW,
-  PROVISION_RELOCK,
-  PROVISION_CREATE_ACCOUNT
+    PROVISION_NONE,
+    PROVISION_TOKEN,
+    PROVISION_LOCK,
+    PROVISION_VOTE,
+    PROVISION_ACTIVATE,
+    PROVISION_REVOKE,
+    PROVISION_UNLOCK,
+    PROVISION_WITHDRAW,
+    PROVISION_RELOCK,
+    PROVISION_CREATE_ACCOUNT
 } provision_type_t;
 
 // TODO: this should not be exposed
 /**
  * @brief Enumeration representing the application state.
  */
-typedef enum {
-  APP_STATE_IDLE,
-  APP_STATE_SIGNING_TX,
-  APP_STATE_SIGNING_MESSAGE
-} app_state_t;
+typedef enum { APP_STATE_IDLE, APP_STATE_SIGNING_TX, APP_STATE_SIGNING_MESSAGE } app_state_t;
