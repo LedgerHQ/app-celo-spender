@@ -59,8 +59,7 @@ VARIANT_VALUES = celo
 DEBUG = 1
 
 # Disable optimizations and enable debugging
-CFLAGS += -O0 -g -ggdb
-LDFLAGS += -O0 -g -ggdb
+# CFLAGS   += -g
 
 ########################################
 #     Application custom permissions   #
