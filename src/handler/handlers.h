@@ -11,4 +11,4 @@ int handler_get_app_type(const command_t *cmd);
 
 #ifndef HAVE_WALLET_ID_SDK
 int handler_get_wallet_id(const command_t *cmd);
-#endif 
+#endif

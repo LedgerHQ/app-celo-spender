@@ -1,19 +1,19 @@
 /*******************************************************************************
-*   Ledger Ethereum App
-*   (c) 2016-2019 Ledger
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-********************************************************************************/
+ *   Ledger Ethereum App
+ *   (c) 2016-2019 Ledger
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ ********************************************************************************/
 
 #ifndef _ETHUSTREAM_H_
 #define _ETHUSTREAM_H_
@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 #ifdef TESTING
-typedef void * cx_sha3_t;
+typedef void *cx_sha3_t;
 #ifndef MIN
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #endif
@@ -32,18 +32,18 @@ typedef void * cx_sha3_t;
 #include "cx.h"
 #endif
 
-#define MAX_INT256 32
+#define MAX_INT256  32
 #define MAX_ADDRESS 20
-#define MAX_V 4
+#define MAX_V       4
 
 #define TX_FLAG_TYPE 0x01
 
 // First variant of every Tx enum.
 #define RLP_NONE 0
 
-#define PARSING_IS_DONE(ctx)                                              \
+#define PARSING_IS_DONE(ctx)                                                      \
     ((ctx->txType == CELO_LEGACY && ctx->currentField == CELO_LEGACY_RLP_DONE) || \
-     (ctx->txType == CIP64 && ctx->currentField == CIP64_RLP_DONE) || \
+     (ctx->txType == CIP64 && ctx->currentField == CIP64_RLP_DONE) ||             \
      (ctx->txType == EIP1559 && ctx->currentField == EIP1559_RLP_DONE))
 
 typedef enum rlpCeloLegacyTxField_e {
@@ -98,14 +98,13 @@ typedef enum rlpEIP1559TxField_e {
     EIP1559_RLP_DONE
 } rlpEIP1559TxField_e;
 
-
 struct txContext_t;
 
 // Valid transaction types
 typedef enum txType_e {
     CELO_LEGACY = 0x01,
     EIP1559 = 0x02,
-    CIP64 = 0x7b, // 123
+    CIP64 = 0x7b,  // 123
 } txType_e;
 
 typedef enum customStatus_e {
@@ -116,7 +115,6 @@ typedef enum customStatus_e {
 } customStatus_e;
 
 typedef customStatus_e (*ustreamProcess_t)(struct txContext_t *context);
-
 
 typedef enum parserStatus_e {
     USTREAM_PROCESSING,
@@ -166,8 +164,11 @@ typedef struct txContext_t {
     uint8_t txType;
 } txContext_t;
 
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content,
-            ustreamProcess_t customProcessor, void *extra);
+void initTx(txContext_t *context,
+            cx_sha3_t *sha3,
+            txContent_t *content,
+            ustreamProcess_t customProcessor,
+            void *extra);
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length);
 parserStatus_e continueTx(txContext_t *context);
 int copyTxData(txContext_t *context, uint8_t *out, size_t length);
