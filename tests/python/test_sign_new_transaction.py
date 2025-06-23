@@ -85,12 +85,15 @@ def test_add_cUSD_as_fee_currency(backend):
 
 
 # @pytest.mark.active_test_scope
-def test_sign_transaction_cip64(test_name, backend, scenario_navigator):
+def test_sign_transaction_cip64(
+    test_name, backend, scenario_navigator, navigator, firmware
+):
     test_add_cUSD_as_fee_currency(backend)
 
     rawTx = "7bf84382a4ec8084773594008503a11f9db58301688c94da52c9ffebd4d54c94a072776126069d43e74f9e8080c094765DE816845861E75A25FCA122BB6898B8B1282A018080"
+    instruction = get_nano_review_instructions(4) if firmware.is_nano else []
     response = sign_transaction_with_rawTx(
-        test_name, backend, scenario_navigator, rawTx
+        test_name, backend, scenario_navigator, navigator, rawTx, instruction
     )
     assert response.status == StatusCode.STATUS_OK
     assert response.data[0] == 0x01 or response.data[0] == 0x00
