@@ -12,6 +12,6 @@ services:
       - "5000:5000" # api
       - "40000:40000" # apdu
     environment:
-      - GDB_DIRECTORY_LIST="/speculos/sources/:/speculos/lib/:/speculos/sources/src/ui/:/speculos/sources/src/handlers/:/speculos/sources/src/apdu/"
+      - GDB_DIRECTORY_LIST="/speculos/sources:/speculos/lib:/speculos/sources/src/ui:/speculos/sources/src/handlers:/speculos/sources/src/apdu/"
     command: "-d --model ${DEVICE:-nanox} /speculos/build/${BUILD_DEVICE:-nanox}/bin/app.elf --display headless --apdu-port 40000 --debug"
     # Add `--vnc-password "<password>"` for macos users to use built-in vnc client.
