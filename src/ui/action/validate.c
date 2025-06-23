@@ -61,7 +61,6 @@ int validate_transaction(bool confirm) {
     uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
-    uint32_t tx = 0;
     // io_seproxyhal_io_heartbeat();
     cx_err_t err = os_derive_bip32_no_throw(CX_CURVE_256K1,
                                             tmpCtx.transactionContext.derivationPath.path,

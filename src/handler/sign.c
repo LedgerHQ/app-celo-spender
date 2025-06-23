@@ -27,7 +27,6 @@ int handleSign(uint8_t p1,
                uint16_t dataLength,
                volatile unsigned int *flags) {
     parserStatus_e txResult;
-    cx_err_t err;
     if (p1 == P1_FIRST) {
         if (appState != APP_STATE_IDLE) {
             reset_app_context();
@@ -90,4 +89,5 @@ int handleSign(uint8_t p1,
     if (txResult == USTREAM_FINISHED) {
         finalizeParsing(true);
     }
+    return 0;
 }
