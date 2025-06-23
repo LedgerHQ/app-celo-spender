@@ -51,6 +51,8 @@ CURVE_APP_LOAD_PARAMS = secp256k1
 # Celo primary path and Ethereum compatibility paths
 PATH_APP_LOAD_PARAMS = "44'/52752'" "44'/60'/0'/0/0" "44'/60'/0'" "44'/60'/0'/0"
 
+APP_LOAD_FLAGS=--appFlags 0x200
+
 # Setting to allow building variant applications
 VARIANT_PARAM = CHAIN
 VARIANT_VALUES = celo
