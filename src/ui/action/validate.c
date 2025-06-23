@@ -67,6 +67,9 @@ int validate_transaction(bool confirm) {
                                             tmpCtx.transactionContext.derivationPath.len,
                                             privateKeyData,
                                             NULL);
+    if (err != CX_OK) {
+        return io_send_sw(err);
+    }
     err = cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
     if (err != CX_OK) {
         return io_send_sw(err);
