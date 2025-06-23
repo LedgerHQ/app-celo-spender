@@ -35,4 +35,5 @@
 
 // Public key length
 #define PUBKEY_LEN    65
+#define ADDRESS_LEN   40
 #define CHAINCODE_LEN 32

@@ -7,14 +7,14 @@
 #include "io.h"
 
 int helper_send_response_pubkey() {
-    uint8_t resp[1 + PUBKEY_LEN + 1 + CHAINCODE_LEN] = {0};
+    uint8_t resp[1 + PUBKEY_LEN + 1 + ADDRESS_LEN + 1 + CHAINCODE_LEN] = {0};
     size_t offset = 0;
     resp[offset++] = PUBKEY_LEN;
     memcpy(resp + offset, tmpCtx.publicKeyContext.publicKey.W, PUBKEY_LEN);
     offset += PUBKEY_LEN;
-    resp[offset++] = CHAINCODE_LEN;
-    memcpy(resp + offset, tmpCtx.publicKeyContext.address, CHAINCODE_LEN);
-    offset += 40;
+    resp[offset++] = ADDRESS_LEN;
+    memcpy(resp + offset, tmpCtx.publicKeyContext.address, ADDRESS_LEN);
+    offset += ADDRESS_LEN;
     if (tmpCtx.publicKeyContext.getChaincode) {
         memcpy(resp + offset, tmpCtx.publicKeyContext.chainCode, CHAINCODE_LEN);
         offset += CHAINCODE_LEN;
