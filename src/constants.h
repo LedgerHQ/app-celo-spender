@@ -32,7 +32,7 @@
 #define MAX_BIP32_PATH 10
 #define MAX_TOKEN      2
 #define SIGNATURE_LEN  65
-
+#define HASH_LENGTH    32
 // Public key length
 #define PUBKEY_LEN    65
 #define ADDRESS_LEN   40
