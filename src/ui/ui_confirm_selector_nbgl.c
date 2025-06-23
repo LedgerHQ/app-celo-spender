@@ -17,8 +17,7 @@ static void confirmationCallback(bool confirm) {
     if (confirm) {
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_SIGNED, ui_idle);
         approveCallback();
-    }
-    else {
+    } else {
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_idle);
         rejectCallback();
     }
@@ -26,24 +25,38 @@ static void confirmationCallback(bool confirm) {
 
 void ui_confirm_selector_flow(void) {
     tagValuePair[0].item = "Selector";
-    tagValuePair[0].value = (char*)strings.tmp.tmp;
+    tagValuePair[0].value = (char *) strings.tmp.tmp;
 
     tagValueList.nbMaxLinesForValue = 0;
     tagValueList.nbPairs = 1;
     tagValueList.pairs = tagValuePair;
 
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Verify selector", NULL, "Confirm selector", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION,
+                       &tagValueList,
+                       &ICON_APP_CELO,
+                       "Verify selector",
+                       NULL,
+                       "Confirm selector",
+                       confirmationCallback);
 }
 
 void ui_confirm_parameter_flow(void) {
     tagValuePair[0].item = "Parameter";
-    tagValuePair[0].value = (char*)strings.tmp.tmp;
+    tagValuePair[0].value = (char *) strings.tmp.tmp;
 
     tagValueList.nbMaxLinesForValue = 0;
     tagValueList.nbPairs = 1;
     tagValueList.pairs = tagValuePair;
 
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Verify", NULL, "Confirm", confirmationCallback);
+    char verifyText[64];
+    snprintf(verifyText, sizeof(verifyText), "Verify %s", strings.tmp.tmp2);
+    nbgl_useCaseReview(TYPE_TRANSACTION,
+                       &tagValueList,
+                       &ICON_APP_CELO,
+                       verifyText,
+                       NULL,
+                       "Confirm parameter",
+                       confirmationCallback);
 }
 
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL

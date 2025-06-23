@@ -1,19 +1,19 @@
 /*******************************************************************************
-*   Ledger Ethereum App
-*   (c) 2016-2019 Ledger
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-********************************************************************************/
+ *   Ledger Ethereum App
+ *   (c) 2016-2019 Ledger
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ ********************************************************************************/
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -38,7 +38,7 @@
 #include "sw.h"
 #include "dispatcher.h"
 
-// Latest includes 
+// Latest includes
 #include "constants.h"
 
 // Contexts
@@ -70,7 +70,6 @@ void app_main() {
     // Structured APDU command
     command_t cmd;
 
-
     io_init();
 
     ui_idle();
@@ -79,16 +78,15 @@ void app_main() {
     reset_app_context();
     tmpCtx.transactionContext.currentTokenIndex = 0;
 
-
     // Initialize the NVM data if required
     if (N_storage.initialized != 0x01) {
         internalStorage_t storage;
         storage.dataAllowed = 0x00;
         storage.contractDetails = 0x00;
         storage.initialized = 0x01;
-        nvm_write(&N_storage, (void*)&storage, sizeof(internalStorage_t));
+        nvm_write(&N_storage, (void *) &storage, sizeof(internalStorage_t));
     }
-    
+
     dataAllowed = N_storage.dataAllowed;
     contractDetails = N_storage.contractDetails;
 
