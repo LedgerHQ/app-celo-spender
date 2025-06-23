@@ -112,7 +112,7 @@ void ui_approval_celo_tx_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -126,7 +126,7 @@ void ui_approval_celo_data_warning_tx_flow(void) {
                        &ICON_APP_WARNING,
                        "WARNING",
                        "Data present in transaction",
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -137,7 +137,7 @@ void ui_approval_celo_gateway_tx_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -150,7 +150,7 @@ void ui_approval_celo_data_warning_gateway_tx_flow(void) {
                        &ICON_APP_WARNING,
                        "WARNING",
                        "Data present in transaction",
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -161,7 +161,7 @@ void ui_approval_celo_lock_unlock_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -172,7 +172,7 @@ void ui_approval_celo_relock_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -183,7 +183,7 @@ void ui_approval_celo_withdraw_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -194,7 +194,7 @@ void ui_approval_celo_create_account_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -205,7 +205,7 @@ void ui_approval_celo_activate_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
@@ -216,7 +216,7 @@ void ui_approval_celo_vote_revoke_flow(void) {
                        &ICON_APP_CELO,
                        "Review transaction",
                        NULL,
-                       "Approve Transaction",
+                       "Sign Transaction",
                        confirmationCallback);
 }
 
