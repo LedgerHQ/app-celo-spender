@@ -321,7 +321,7 @@ void finalizeParsing(bool direct) {
             reset_app_context();
             PRINTF("Invalid fee currency");
             if (direct) {
-                io_send_sw(SW_ERROR_IN_DATA);
+                THROW(SW_ERROR_IN_DATA);
             } else {
                 io_send_sw(SW_ERROR_IN_DATA);
                 ui_idle();
@@ -376,7 +376,7 @@ void finalizeParsing(bool direct) {
             reset_app_context();
             PRINTF("Data field forbidden\n");
             if (direct) {
-                io_send_sw(SW_ERROR_IN_DATA);
+                THROW(SW_ERROR_IN_DATA);
             } else {
                 io_send_sw(SW_ERROR_IN_DATA);
                 ui_idle();
