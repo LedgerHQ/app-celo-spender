@@ -51,17 +51,13 @@ CURVE_APP_LOAD_PARAMS = secp256k1
 # Celo primary path and Ethereum compatibility paths
 PATH_APP_LOAD_PARAMS = "44'/52752'" "44'/60'/0'/0/0" "44'/60'/0'" "44'/60'/0'/0"
 
-APP_LOAD_FLAGS=--appFlags 0x200
-
 # Setting to allow building variant applications
 VARIANT_PARAM = CHAIN
 VARIANT_VALUES = celo
 
 # Enabling DEBUG flag will enable PRINTF and disable optimizations
-DEBUG = 1
+DEBUG = 0
 
-# Disable optimizations and enable debugging
-# CFLAGS   += -g
 
 ########################################
 #     Application custom permissions   #
@@ -69,7 +65,7 @@ DEBUG = 1
 # See SDK `include/appflags.h` for the purpose of each permission
 #HAVE_APPLICATION_FLAG_DERIVE_MASTER = 1
 #HAVE_APPLICATION_FLAG_GLOBAL_PIN = 1
-HAVE_APPLICATION_FLAG_BOLOS_SETTINGS = 1
+#HAVE_APPLICATION_FLAG_BOLOS_SETTINGS = 1
 #HAVE_APPLICATION_FLAG_LIBRARY = 1
 
 ########################################
