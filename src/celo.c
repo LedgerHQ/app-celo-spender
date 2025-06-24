@@ -76,8 +76,7 @@ static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
 }
 
 customStatus_e customProcessor(txContext_t *context) {
-    if (((context->txType == CELO_LEGACY && context->currentField == CELO_LEGACY_RLP_DATA) ||
-         (context->txType == CIP64 && context->currentField == CIP64_RLP_DATA) ||
+    if (((context->txType == CIP64 && context->currentField == CIP64_RLP_DATA) ||
          (context->txType == EIP1559 && context->currentField == EIP1559_RLP_DATA)) &&
         (context->currentFieldLength != 0)) {
         dataPresent = true;

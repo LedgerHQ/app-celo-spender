@@ -41,29 +41,9 @@ typedef void *cx_sha3_t;
 // First variant of every Tx enum.
 #define RLP_NONE 0
 
-#define PARSING_IS_DONE(ctx)                                                      \
-    ((ctx->txType == CELO_LEGACY && ctx->currentField == CELO_LEGACY_RLP_DONE) || \
-     (ctx->txType == CIP64 && ctx->currentField == CIP64_RLP_DONE) ||             \
+#define PARSING_IS_DONE(ctx)                                          \
+    ((ctx->txType == CIP64 && ctx->currentField == CIP64_RLP_DONE) || \
      (ctx->txType == EIP1559 && ctx->currentField == EIP1559_RLP_DONE))
-
-typedef enum rlpCeloLegacyTxField_e {
-    CELO_LEGACY_RLP_NONE = RLP_NONE,
-    CELO_LEGACY_RLP_CONTENT,
-    CELO_LEGACY_RLP_TYPE,
-    CELO_LEGACY_RLP_NONCE,
-    CELO_LEGACY_RLP_GASPRICE,
-    CELO_LEGACY_RLP_STARTGAS,
-    CELO_LEGACY_RLP_FEECURRENCY,
-    CELO_LEGACY_RLP_GATEWAYTO,
-    CELO_LEGACY_RLP_GATEWAYFEE,
-    CELO_LEGACY_RLP_TO,
-    CELO_LEGACY_RLP_VALUE,
-    CELO_LEGACY_RLP_DATA,
-    CELO_LEGACY_RLP_V,
-    CELO_LEGACY_RLP_R,
-    CELO_LEGACY_RLP_S,
-    CELO_LEGACY_RLP_DONE
-} rlpCeloLegacyTxField_e;
 
 typedef enum rlpCIP64TxField_e {
     CIP64_RLP_NONE = RLP_NONE,
@@ -102,7 +82,6 @@ struct txContext_t;
 
 // Valid transaction types
 typedef enum txType_e {
-    CELO_LEGACY = 0x01,
     EIP1559 = 0x02,
     CIP64 = 0x7b,  // 123
 } txType_e;
