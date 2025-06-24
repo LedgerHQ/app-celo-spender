@@ -9,13 +9,12 @@ import struct
 
 from ledgered.devices import DeviceType
 
-from client import keychain
-from client.client import EthAppClient, EIP712FieldType
-from client.client import PKIPubKeyUsage
-
+from apps import eth_keychain
+from apps.celo import CeloClient, PKIPubKeyUsage
+from apps.eip712 import EIP712FieldType
 
 # global variables
-app_client: EthAppClient = None
+app_client: CeloClient = None
 filtering_paths: dict = {}
 filtering_tokens: list[dict] = []
 current_path: list[str] = []
@@ -115,11 +114,9 @@ def send_struct_def_field(typename, keyname):
         type_enum = EIP712FieldType.CUSTOM
         typesize = None
 
-    with app_client.eip712_send_struct_def_struct_field(type_enum,
-                                                        typename,
-                                                        typesize,
-                                                        array_lvls,
-                                                        keyname):
+    with app_client.eip712_send_struct_def_struct_field(
+        type_enum, typename, typesize, array_lvls, keyname
+    ):
         pass
     return (typename, type_enum, typesize, array_lvls)
 
@@ -130,17 +127,19 @@ def encode_integer(value: Union[str, int], typesize: int) -> bytes:
         value = int(value, 0)
 
     if value == 0:
-        data = b'\x00'
+        data = b"\x00"
     else:
         # biggest uint type accepted by struct.pack
-        uint64_mask = 0xffffffffffffffff
-        data = struct.pack(">QQQQ",
-                           (value >> 192) & uint64_mask,
-                           (value >> 128) & uint64_mask,
-                           (value >> 64) & uint64_mask,
-                           value & uint64_mask)
-        data = data[len(data) - typesize:]
-        data = data.lstrip(b'\x00')
+        uint64_mask = 0xFFFFFFFFFFFFFFFF
+        data = struct.pack(
+            ">QQQQ",
+            (value >> 192) & uint64_mask,
+            (value >> 128) & uint64_mask,
+            (value >> 64) & uint64_mask,
+            value & uint64_mask,
+        )
+        data = data[len(data) - typesize :]
+        data = data.lstrip(b"\x00")
     return data
 
 
@@ -200,10 +199,12 @@ def send_filtering_token(token_idx: int):
     if len(filtering_tokens[token_idx]) > 0:
         token = filtering_tokens[token_idx]
         if not token["sent"]:
-            app_client.provide_token_metadata(token["ticker"],
-                                              bytes.fromhex(token["addr"][2:]),
-                                              token["decimals"],
-                                              token["chain_id"])
+            app_client.provide_token_metadata(
+                token["ticker"],
+                bytes.fromhex(token["addr"][2:]),
+                token["decimals"],
+                token["chain_id"],
+            )
             token["sent"] = True
 
 
@@ -217,22 +218,23 @@ def send_filter(path: str, discarded: bool):
         else:
             # Permit (ERC-2612)
             send_filtering_token(0)
-            token_idx = 0xff
+            token_idx = 0xFF
         if filtering_paths[path]["type"].endswith("_token"):
             send_filtering_amount_join_token(path, token_idx, discarded)
         elif filtering_paths[path]["type"].endswith("_value"):
-            send_filtering_amount_join_value(path,
-                                             token_idx,
-                                             filtering_paths[path]["name"],
-                                             discarded)
+            send_filtering_amount_join_value(
+                path, token_idx, filtering_paths[path]["name"], discarded
+            )
     elif filtering_paths[path]["type"] == "datetime":
         send_filtering_datetime(path, filtering_paths[path]["name"], discarded)
     elif filtering_paths[path]["type"] == "trusted_name":
-        send_filtering_trusted_name(path,
-                                    filtering_paths[path]["name"],
-                                    filtering_paths[path]["tn_type"],
-                                    filtering_paths[path]["tn_source"],
-                                    discarded)
+        send_filtering_trusted_name(
+            path,
+            filtering_paths[path]["name"],
+            filtering_paths[path]["tn_type"],
+            filtering_paths[path]["tn_source"],
+            discarded,
+        )
     elif filtering_paths[path]["type"] == "raw":
         send_filtering_raw(path, filtering_paths[path]["name"], discarded)
     else:
@@ -278,8 +280,10 @@ def evaluate_field(structs, data, field, lvls_left, new_level=True):
             idx += 1
         if array_lvls[lvls_left - 1] is not None:
             if array_lvls[lvls_left - 1] != idx:
-                print(f"Mismatch in array size! Got {idx}, expected {array_lvls[lvls_left - 1]}\n",
-                      file=sys.stderr)
+                print(
+                    f"Mismatch in array size! Got {idx}, expected {array_lvls[lvls_left - 1]}\n",
+                    file=sys.stderr,
+                )
                 return False
     else:
         if field["enum"] == EIP712FieldType.CUSTOM:
@@ -320,7 +324,7 @@ def send_filtering_message_info(display_name: str, filters_count: int):
     to_sign.append(filters_count)
     to_sign += display_name.encode()
 
-    sig = keychain.sign_data(keychain.Key.CAL, to_sign)
+    sig = eth_keychain.sign_data(eth_keychain.Key.CAL, to_sign)
     with app_client.eip712_filtering_message_info(display_name, filters_count, sig):
         enable_autonext()
     disable_autonext()
@@ -330,18 +334,22 @@ def send_filtering_amount_join_token(path: str, token_idx: int, discarded: bool)
     to_sign = start_signature_payload(sig_ctx, 11)
     to_sign += path.encode()
     to_sign.append(token_idx)
-    sig = keychain.sign_data(keychain.Key.CAL, to_sign)
+    sig = eth_keychain.sign_data(eth_keychain.Key.CAL, to_sign)
     with app_client.eip712_filtering_amount_join_token(token_idx, sig, discarded):
         pass
 
 
-def send_filtering_amount_join_value(path: str, token_idx: int, display_name: str, discarded: bool):
+def send_filtering_amount_join_value(
+    path: str, token_idx: int, display_name: str, discarded: bool
+):
     to_sign = start_signature_payload(sig_ctx, 22)
     to_sign += path.encode()
     to_sign += display_name.encode()
     to_sign.append(token_idx)
-    sig = keychain.sign_data(keychain.Key.CAL, to_sign)
-    with app_client.eip712_filtering_amount_join_value(token_idx, display_name, sig, discarded):
+    sig = eth_keychain.sign_data(eth_keychain.Key.CAL, to_sign)
+    with app_client.eip712_filtering_amount_join_value(
+        token_idx, display_name, sig, discarded
+    ):
         pass
 
 
@@ -349,16 +357,18 @@ def send_filtering_datetime(path: str, display_name: str, discarded: bool):
     to_sign = start_signature_payload(sig_ctx, 33)
     to_sign += path.encode()
     to_sign += display_name.encode()
-    sig = keychain.sign_data(keychain.Key.CAL, to_sign)
+    sig = eth_keychain.sign_data(eth_keychain.Key.CAL, to_sign)
     with app_client.eip712_filtering_datetime(display_name, sig, discarded):
         pass
 
 
-def send_filtering_trusted_name(path: str,
-                                display_name: str,
-                                name_type: list[int],
-                                name_source: list[int],
-                                discarded: bool):
+def send_filtering_trusted_name(
+    path: str,
+    display_name: str,
+    name_type: list[int],
+    name_source: list[int],
+    discarded: bool,
+):
     to_sign = start_signature_payload(sig_ctx, 44)
     to_sign += path.encode()
     to_sign += display_name.encode()
@@ -366,8 +376,10 @@ def send_filtering_trusted_name(path: str,
         to_sign.append(t)
     for s in name_source:
         to_sign.append(s)
-    sig = keychain.sign_data(keychain.Key.CAL, to_sign)
-    with app_client.eip712_filtering_trusted_name(display_name, name_type, name_source, sig, discarded):
+    sig = eth_keychain.sign_data(eth_keychain.Key.CAL, to_sign)
+    with app_client.eip712_filtering_trusted_name(
+        display_name, name_type, name_source, sig, discarded
+    ):
         pass
 
 
@@ -376,7 +388,7 @@ def send_filtering_raw(path: str, display_name: str, discarded: bool):
     to_sign = start_signature_payload(sig_ctx, 72)
     to_sign += path.encode()
     to_sign += display_name.encode()
-    sig = keychain.sign_data(keychain.Key.CAL, to_sign)
+    sig = eth_keychain.sign_data(eth_keychain.Key.CAL, to_sign)
     with app_client.eip712_filtering_raw(display_name, sig, discarded):
         pass
 
@@ -418,7 +430,7 @@ def init_signature_context(types, domain, filters):
     chainid = domain["chainId"]
     sig_ctx["chainid"] = bytearray()
     for i in range(8):
-        sig_ctx["chainid"].append(chainid & (0xff << (i * 8)))
+        sig_ctx["chainid"].append(chainid & (0xFF << (i * 8)))
     sig_ctx["chainid"].reverse()
     schema_str = json.dumps(types).replace(" ", "")
     schema_hash = hashlib.sha224(schema_str.encode())
@@ -430,7 +442,7 @@ def next_timeout(_signum: int, _frame):
 
 
 def enable_autonext():
-    delay = 1/4 if app_client.device.is_nano else 1/2
+    delay = 1 / 4 if app_client.device.is_nano else 1 / 2
 
     # golden run has to be slower to make sure we take good snapshots
     # and not processing/loading screens
@@ -444,11 +456,13 @@ def disable_autonext():
     signal.setitimer(signal.ITIMER_REAL, 0, 0)
 
 
-def process_data(aclient: EthAppClient,
-                 data_json: dict,
-                 filters: Optional[dict] = None,
-                 autonext: Optional[Callable] = None,
-                 golden_run: bool = False) -> bool:
+def process_data(
+    aclient: CeloClient,
+    data_json: dict,
+    filters: Optional[dict] = None,
+    autonext: Optional[Callable] = None,
+    golden_run: bool = False,
+) -> bool:
     global app_client
     global autonext_handler
     global is_golden_run
@@ -478,8 +492,9 @@ def process_data(aclient: EthAppClient,
         with app_client.eip712_send_struct_def_struct_name(key):
             pass
         for f in types[key]:
-            (f["type"], f["enum"], f["typesize"], f["array_lvls"]) = \
-             send_struct_def_field(f["type"], f["name"])
+            (f["type"], f["enum"], f["typesize"], f["array_lvls"]) = (
+                send_struct_def_field(f["type"], f["name"])
+            )
 
     if filters:
         with app_client.eip712_filtering_activate():
@@ -500,7 +515,9 @@ def process_data(aclient: EthAppClient,
         cert_apdu = ""
     # pylint: enable=line-too-long
     if cert_apdu:
-        app_client.pki_client.send_certificate(PKIPubKeyUsage.PUBKEY_USAGE_COIN_META, bytes.fromhex(cert_apdu))
+        app_client.pki_client.send_certificate(
+            PKIPubKeyUsage.PUBKEY_USAGE_COIN_META, bytes.fromhex(cert_apdu)
+        )
 
     # send domain implementation
     with app_client.eip712_send_struct_impl_root_struct(domain_typename):
