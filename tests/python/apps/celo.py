@@ -7,6 +7,9 @@ from ragger.backend.interface import BackendInterface, RAPDU
 from .celo_cmd_builder import *
 import rlp
 
+# ei712 imports
+from .eth_command_builder import CommandBuilder
+
 
 class INS(IntEnum):
     INS_GET_PUBLIC_KEY = 0x02
@@ -45,6 +48,8 @@ class CeloClient:
 
     def __init__(self, backend):
         self._client = backend
+        self.device = backend.device
+        self._cmd_builder = CommandBuilder()
 
     def get_version(self) -> bytes:
         version: RAPDU = self._client.exchange(
