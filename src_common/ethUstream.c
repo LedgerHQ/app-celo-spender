@@ -1,27 +1,25 @@
 /*******************************************************************************
-*   Ledger Ethereum App
-*   (c) 2016-2019 Ledger
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-********************************************************************************/
-
+ *   Ledger Ethereum App
+ *   (c) 2016-2019 Ledger
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ ********************************************************************************/
 
 #include <stdint.h>
 #include <string.h>
 
 #include "ethUstream.h"
 #include "rlp.h"
-
 
 #ifdef TESTING
 #define PRINTF(...)
@@ -50,7 +48,7 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        CX_THROW(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, &data, 1, NULL, 0));
+        CX_THROW(cx_hash_no_throw((cx_hash_t *) context->sha3, 0, &data, 1, NULL, 0));
     }
 #endif
     if (byte) {
@@ -68,7 +66,7 @@ static int readTxByte(txContext_t *context, uint8_t *byte) {
  *
  * @return 0 if successful, -1 if underflow occurs.
  */
-int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
+int copyTxData(txContext_t *context, uint8_t *out, size_t length) {
     if (context->commandLength < length) {
         PRINTF("copyTxData Underflow\n");
         return -1;
@@ -78,7 +76,8 @@ int copyTxData(txContext_t *context, uint8_t *out, size_t length)  {
     }
 #ifndef TESTING
     if (!(context->processingField && context->fieldSingleByte)) {
-        CX_THROW(cx_hash_no_throw((cx_hash_t*)context->sha3, 0, context->workBuffer, length, NULL, 0));
+        CX_THROW(
+            cx_hash_no_throw((cx_hash_t *) context->sha3, 0, context->workBuffer, length, NULL, 0));
     }
 #endif
     context->workBuffer += length;
@@ -162,8 +161,7 @@ static bool processType(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, NULL, copySize)) {
@@ -199,8 +197,7 @@ static bool processNonce(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, NULL, copySize)) {
@@ -231,17 +228,17 @@ static bool processStartGas(txContext_t *context) {
         return true;
     }
     if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_STARTGAS %d\n",
-                      context->currentFieldLength);
+        PRINTF("Invalid length for RLP_STARTGAS %d\n", context->currentFieldLength);
         return true;
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->startgas.value + context->currentFieldPos, copySize)) {
+        if (copyTxData(context,
+                       context->content->startgas.value + context->currentFieldPos,
+                       copySize)) {
             return true;
         }
     }
@@ -275,11 +272,12 @@ static bool processGasprice(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->gasprice.value + context->currentFieldPos, copySize)) {
+        if (copyTxData(context,
+                       context->content->gasprice.value + context->currentFieldPos,
+                       copySize)) {
             return true;
         }
     }
@@ -313,16 +311,17 @@ static bool processFeeCurrency(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->feeCurrency + context->currentFieldPos, copySize)) {
+        if (copyTxData(context,
+                       context->content->feeCurrency + context->currentFieldPos,
+                       copySize)) {
             return true;
         }
     }
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->feeCurrencyLength = context->currentFieldLength;    
+        context->content->feeCurrencyLength = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
@@ -351,11 +350,12 @@ static bool processValue(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->value.value + context->currentFieldPos, copySize)) {
+        if (copyTxData(context,
+                       context->content->value.value + context->currentFieldPos,
+                       copySize)) {
             return true;
         }
     }
@@ -389,11 +389,12 @@ static bool processTo(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
-        if (copyTxData(context, context->content->destination + context->currentFieldPos, copySize)) {
+        if (copyTxData(context,
+                       context->content->destination + context->currentFieldPos,
+                       copySize)) {
             return true;
         }
     }
@@ -423,8 +424,7 @@ static bool processData(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, NULL, copySize)) {
@@ -466,7 +466,7 @@ static bool processAndDiscard(txContext_t *context) {
     return false;
 }
 #define NUM_CHAIN_IDS 3
-                                                        // Mainnet, Alfajores, Baklava,
+// Mainnet, Alfajores, Baklava,
 static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
 
 /**
@@ -477,7 +477,7 @@ static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323
  * @return 1 if authorized, 0 otherwise.
  */
 static int isChainIDAuthorized(uint8_t chainID[4]) {
-    if(chainID == NULL) {
+    if (chainID == NULL) {
         return 0;
     }
     uint16_t chainIDInt = (chainID[0] << 8) | chainID[1];
@@ -511,8 +511,7 @@ static bool processV(txContext_t *context) {
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
+            (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
         if (copyTxData(context, context->content->v + context->currentFieldPos, copySize)) {
@@ -545,7 +544,7 @@ static bool processCIP64Tx(txContext_t *context) {
     }
     switch (context->currentField) {
         case CIP64_RLP_CONTENT: {
-            if(processContent(context)) {
+            if (processContent(context)) {
                 return true;
             }
             if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
@@ -607,7 +606,7 @@ static bool processEIP1559Tx(txContext_t *context) {
     }
     switch (context->currentField) {
         case EIP1559_RLP_CONTENT: {
-            if(processContent(context)) {
+            if (processContent(context)) {
                 return true;
             }
             if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
@@ -656,7 +655,8 @@ static bool processEIP1559Tx(txContext_t *context) {
  *
  * @param[in,out] context The transaction context.
  *
- * @return USTREAM_PROCESSING if the RLP buffer is being processed, USTREAM_FAULT if there is an error, USTREAM_PROCESSING if more data is needed.
+ * @return USTREAM_PROCESSING if the RLP buffer is being processed, USTREAM_FAULT if there is an
+ * error, USTREAM_PROCESSING if more data is needed.
  */
 static parserStatus_e parseRLP(txContext_t *context) {
     if (context == NULL) {
@@ -693,9 +693,11 @@ static parserStatus_e parseRLP(txContext_t *context) {
         return USTREAM_PROCESSING;
     }
     // Ready to process this field
-    if (!rlpDecodeLength(context->rlpBuffer, context->rlpBufferPos,
-                            &context->currentFieldLength, &offset,
-                            &context->currentFieldIsList)) {
+    if (!rlpDecodeLength(context->rlpBuffer,
+                         context->rlpBufferPos,
+                         &context->currentFieldLength,
+                         &offset,
+                         &context->currentFieldIsList)) {
         PRINTF("RLP decode error\n");
         return USTREAM_FAULT;
     }
@@ -718,7 +720,8 @@ static parserStatus_e parseRLP(txContext_t *context) {
  *
  * @param[in,out] context The transaction context.
  *
- * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more
+ * data is needed, USTREAM_FAULT if there is an error.
  */
 static parserStatus_e processTxInternal(txContext_t *context) {
     if (context == NULL) {
@@ -732,25 +735,18 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             PRINTF("Parsing done\n");
             return USTREAM_FINISHED;
         }
-        // Old style transaction
-        if ((context->txType == CELO_LEGACY && context->currentField == CELO_LEGACY_RLP_V) && (context->commandLength == 0)) {
-            context->content->vLength = 0;
-            // We don't want to support old style transactions. We treat an empty V as a false positive
-            // - data ended exactly on the APDU boundary, and so we tell the processing to continue.
-            return USTREAM_PROCESSING;
-        }
         if (context->commandLength == 0) {
             return USTREAM_PROCESSING;
         }
         if (!context->processingField) {
             parserStatus_e status = parseRLP(context);
-            if(status != USTREAM_PROCESSING) {
+            if (status != USTREAM_PROCESSING) {
                 return status;
             }
         }
         if (context->customProcessor != NULL) {
             customStatus = context->customProcessor(context);
-            switch(customStatus) {
+            switch (customStatus) {
                 case CUSTOM_NOT_HANDLED:
                 case CUSTOM_HANDLED:
                     break;
@@ -765,7 +761,7 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             }
         }
         if (customStatus == CUSTOM_NOT_HANDLED) {
-            switch(context->txType) {
+            switch (context->txType) {
                 case EIP1559:
                     if (processEIP1559Tx(context)) {
                         return USTREAM_FAULT;
@@ -791,7 +787,8 @@ static parserStatus_e processTxInternal(txContext_t *context) {
  * @param[in] buffer The input buffer containing the transaction data.
  * @param[in] length The length of the input buffer.
  *
- * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more
+ * data is needed, USTREAM_FAULT if there is an error.
  */
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length) {
     if (context == NULL) {
@@ -808,7 +805,8 @@ parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t len
  *
  * @param[in,out] context The transaction context.
  *
- * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more data is needed, USTREAM_FAULT if there is an error.
+ * @return USTREAM_FINISHED if the transaction processing is complete, USTREAM_PROCESSING if more
+ * data is needed, USTREAM_FAULT if there is an error.
  */
 parserStatus_e continueTx(txContext_t *context) {
     if (context == NULL) {
@@ -827,13 +825,17 @@ parserStatus_e continueTx(txContext_t *context) {
  * @param[in] customProcessor The custom processor function.
  * @param[in] extra Additional data for the custom processor.
  */
-void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustreamProcess_t customProcessor, void *extra) {
+void initTx(txContext_t *context,
+            cx_sha3_t *sha3,
+            txContent_t *content,
+            ustreamProcess_t customProcessor,
+            void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
     context->customProcessor = customProcessor;
     context->extra = extra;
-    context->currentField = CELO_LEGACY_RLP_CONTENT;
+    context->currentField = 1; // This represents the first field in the RLP (CIP64_RLP_CONTENT || EIP1559_RLP_CONTENT)
 #ifndef TESTING
     CX_THROW(cx_keccak_init_no_throw(context->sha3, 256));
 #endif
