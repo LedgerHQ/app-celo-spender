@@ -28,40 +28,14 @@ void io_seproxyhal_send_status(uint32_t sw) {
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
 }
 
-// void format_signature_out(const uint8_t *signature, uint8_t *out) {
-//     memset(out, 0x00, 64);
-//     uint8_t offset = 0;
-//     uint8_t xoffset = 4;  // point to r value
-//     // copy r
-//     uint8_t xlength = signature[xoffset - 1];
-//     if (xlength == 33) {
-//         xlength = 32;
-//         xoffset++;
-//     }
-//     memmove(out + offset + 32 - xlength, signature + xoffset, xlength);
-//     offset += 32;
-//     xoffset += xlength + 2;  // move over rvalue and TagLEn
-//     // copy s value
-//     xlength = signature[xoffset - 1];
-//     if (xlength == 33) {
-//         xlength = 32;
-//         xoffset++;
-//     }
-//     memmove(out + offset + 32 - xlength, signature + xoffset, xlength);
-// }
-
 volatile uint8_t appState;
 
 void reset_app_context() {
     appState = APP_STATE_IDLE;
     PRINTF("Resetting context\n");
-    // // KM: decide which one to keep
     explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
     explicit_bzero(&tmpContent, sizeof(tmpContent));
     explicit_bzero(&txContext, sizeof(txContext));
-    // memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
-    // memset(&txContext, 0, sizeof(txContext));
-    // memset(&tmpContent, 0, sizeof(tmpContent));
 }
 
 #include "uint256.h"

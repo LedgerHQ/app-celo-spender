@@ -8,11 +8,6 @@
 #ifdef HAVE_NBGL
 #include "nbgl_types.h"
 
-// is this isefull ?
-// #ifndef FIRST_USER_TOKEN
-// #define FIRST_USER_TOKEN 0
-// #endif
-
 #endif  // HAVE_NBGL
 
 #define CHAINID_UPCASE   "CELO"

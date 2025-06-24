@@ -6,10 +6,6 @@
 #include "icons.h"
 #include "validate.h"
 
-// static void sign_cancel(void) {
-//     io_seproxyhal_touch_signMessage_cancel();
-// }
-
 static void sign_msg_confirmation(bool confirm) {
     crypto_sign_message(confirm);
     if (confirm) {

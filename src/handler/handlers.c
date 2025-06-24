@@ -124,10 +124,6 @@ int handler_sign_personal_message(const command_t *cmd) {
                                              cmd->lc,
                                              &flags,
                                              &tx);
-
-            // if (!(flags & IO_ASYNCH_REPLY)) {
-            //     return io_send_response_pointer(G_io_apdu_buffer, tx, SW_OK);
-            // }
         }
         CATCH_OTHER(e) {
             reset_app_context();
