@@ -14,7 +14,7 @@
 #define INS_GET_APP_CONFIGURATION           0x06
 #define INS_SIGN_PERSONAL_MESSAGE           0x08
 #define INS_PROVIDE_ERC20_TOKEN_INFORMATION 0x0A
-#define INS_GET_APP_TYPE                    0x0C
+#define INS_GET_APP_TYPE                    0xFF
 
 // Common instructions
 #define COMMON_CLA               0xB0
