@@ -25,13 +25,13 @@ class InsType(IntEnum):
     EIP712_SEND_STRUCT_IMPL = 0x1C
     EIP712_SEND_FILTERING = 0x1E
     EIP712_SIGN = 0x0C
-    # GET_CHALLENGE = 0x20
-    # PROVIDE_TRUSTED_NAME = 0x22
+    GET_CHALLENGE = 0x20
+    PROVIDE_TRUSTED_NAME = 0x22
     # PROVIDE_ENUM_VALUE = 0x24
     # PROVIDE_TRANSACTION_INFO = 0x26
-    # PROVIDE_PROXY_INFO = 0x2A
+    PROVIDE_PROXY_INFO = 0x2A
     # PROVIDE_NETWORK_INFORMATION = 0x30
-    # PROVIDE_TX_SIMULATION = 0x32
+    PROVIDE_TX_SIMULATION = 0x32
     # SIGN_EIP7702_AUTHORIZATION = 0x34
 
 
@@ -325,21 +325,21 @@ class CommandBuilder:
     #         p1 = P1Type.SIGN_SUBSQT_CHUNK
     #     return apdus
 
-    # def get_challenge(self) -> bytes:
-    #     return self._serialize(InsType.GET_CHALLENGE, 0x00, 0x00)
+    def get_challenge(self) -> bytes:
+        return self._serialize(InsType.GET_CHALLENGE, 0x00, 0x00)
 
-    # def provide_trusted_name(self, tlv_payload: bytes) -> list[bytes]:
-    #     chunks = []
-    #     payload = struct.pack(">H", len(tlv_payload))
-    #     payload += tlv_payload
-    #     p1 = 1
-    #     while len(payload) > 0:
-    #         chunks.append(
-    #             self._serialize(InsType.PROVIDE_TRUSTED_NAME, p1, 0x00, payload[:0xFF])
-    #         )
-    #         payload = payload[0xFF:]
-    #         p1 = 0
-    #     return chunks
+    def provide_trusted_name(self, tlv_payload: bytes) -> list[bytes]:
+        chunks = []
+        payload = struct.pack(">H", len(tlv_payload))
+        payload += tlv_payload
+        p1 = 1
+        while len(payload) > 0:
+            chunks.append(
+                self._serialize(InsType.PROVIDE_TRUSTED_NAME, p1, 0x00, payload[:0xFF])
+            )
+            payload = payload[0xFF:]
+            p1 = 0
+        return chunks
 
     # def get_public_addr(
     #     self, display: bool, chaincode: bool, bip32_path: str, chain_id: Optional[int]
@@ -513,10 +513,10 @@ class CommandBuilder:
     #     # Serialize the payload
     #     return self._serialize(InsType.PROVIDE_TX_SIMULATION, P1Type.OPT_IN_W3C, 0x00)
 
-    # def provide_tx_simulation(self, tlv_payload: bytes) -> list[bytes]:
-    #     return self.common_tlv_serialize(
-    #         InsType.PROVIDE_TX_SIMULATION, tlv_payload, p1l=[0x00], p2l=[0x01, 0x00]
-    #     )
+    def provide_tx_simulation(self, tlv_payload: bytes) -> list[bytes]:
+        return self.common_tlv_serialize(
+            InsType.PROVIDE_TX_SIMULATION, tlv_payload, p1l=[0x00], p2l=[0x01, 0x00]
+        )
 
-    # def provide_proxy_info(self, tlv_payload: bytes) -> list[bytes]:
-    #     return self.common_tlv_serialize(InsType.PROVIDE_PROXY_INFO, tlv_payload)
+    def provide_proxy_info(self, tlv_payload: bytes) -> list[bytes]:
+        return self.common_tlv_serialize(InsType.PROVIDE_PROXY_INFO, tlv_payload)

@@ -2,7 +2,7 @@ from typing import Optional
 from enum import IntEnum
 
 from .eth_tlv import TlvSerializable, FieldTag
-from .keychain import sign_data, Key
+from .eth_keychain import sign_data, Key
 
 
 class SimuType(IntEnum):
