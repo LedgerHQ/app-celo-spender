@@ -10,6 +10,7 @@ from ragger.error import ExceptionRAPDU
 from ragger.backend.interface import BackendInterface, RAPDU
 
 import rlp
+from ragger.bip import pack_derivation_path
 
 # ei712 imports
 from .celo_command_builder import CommandBuilder
@@ -112,10 +113,10 @@ class CeloClient:
     backend: BackendInterface
 
     def __init__(self, backend):
-        self._client = backend
+        self._backend = backend
         self.device = backend.device
         self._cmd_builder = CommandBuilder()
-        self.pki_client = PKIClient(self._client)
+        self.pki_client = PKIClient(self._backend)
 
     # These are used to send raw APDUs to the device
     def _exchange_async(self, payload: bytes):
@@ -128,19 +129,19 @@ class CeloClient:
         return self._backend.last_async_response
 
     def get_version(self) -> bytes:
-        version: RAPDU = self._client.exchange(
+        version: RAPDU = self._backend.exchange(
             CLA, INS.INS_GET_APP_CONFIGURATION, Param.P1_UNUSED, Param.P2_UNUSED
         )
         return version
 
     def get_public_addr(
-        self, derivation_path: bytes, show: bool, chaincode: bool
+        self, derivation_path: str, show: bool, chaincode: bool
     ) -> bytes:
         p1 = Param.P1_ShowFetchAddress if show else Param.P1_DirectlyFetchAddress
         p2 = Param.P2_UNUSED if chaincode else Param.P2_DiscardAddressChainCode
-
-        return self._exchange_async(
-            CLA, INS.INS_GET_PUBLIC_KEY, p1, p2, derivation_path
+        derivation_path_bytes = pack_derivation_path(derivation_path)
+        return self._backend.exchange_async(
+            CLA, INS.INS_GET_PUBLIC_KEY, p1, p2, derivation_path_bytes
         )
 
     @contextmanager
@@ -153,7 +154,7 @@ class CeloClient:
             if chunk > len(payload):
                 chunk = len(payload)
 
-            with self._client.exchange_async(
+            with self._backend.exchange_async(
                 CLA, instruction, p1, Param.P2_UNUSED, payload[:chunk]
             ):
                 yield
@@ -168,7 +169,7 @@ class CeloClient:
         p1 = Param.P1_ShowFetchAddress if show else Param.P1_DirectlyFetchAddress
         p2 = Param.P2_UNUSED if chaincode else Param.P2_DiscardAddressChainCode
 
-        with self._client.exchange_async(
+        with self._backend.exchange_async(
             CLA, INS.INS_GET_PUBLIC_KEY, p1, p2, derivation_path
         ):
             yield
