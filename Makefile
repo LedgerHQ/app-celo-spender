@@ -56,7 +56,12 @@ VARIANT_PARAM = CHAIN
 VARIANT_VALUES = celo
 
 # Enabling DEBUG flag will enable PRINTF and disable optimizations
-DEBUG = 0
+DEBUG = 1
+
+
+# Debug flags for GDB debugging
+CFLAGS += -g
+CFLAGS += -O0
 
 
 ########################################
