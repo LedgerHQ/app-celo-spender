@@ -816,7 +816,7 @@ def test_eip712_advanced_trusted_name(
     }
 
     if trusted_name[0] is TrustedNameType.ACCOUNT:
-        challenge = challenge(app_client.get_challenge().data)
+        challenge = ResponseParser.challenge(app_client.get_challenge().data)
     else:
         challenge = None
 
