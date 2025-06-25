@@ -35,6 +35,6 @@ until docker inspect -f '{{.State.Status}}' app-celo-spender-nanosp-1 | grep -q 
     sleep 1
 done
 
-docker exec -it app-celo-spender-nanosp-1 ./tools/debug.sh "apps/app.elf"
+docker exec -it app-celo-spender-nanosp-1 ./tools/debug.sh "build/${BUILD_DEVICE}/bin/app.elf"
 
 docker-compose down
