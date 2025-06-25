@@ -32,7 +32,7 @@ from apps.eth_proxy_info import ProxyInfo
 from pathlib import Path
 
 from apps.celo import CeloClient, StatusCode
-from apps.celo_utils import CELO_PACKED_DERIVATION_PATH
+from apps.celo_utils import CELO_DERIVATION_PATH, CELO_PACKED_DERIVATION_PATH
 from utils import (
     get_async_response,
     get_nano_review_instructions,
@@ -41,7 +41,7 @@ from utils import (
 )
 
 
-BIP32_PATH = CELO_PACKED_DERIVATION_PATH
+BIP32_PATH = CELO_DERIVATION_PATH
 autonext_idx: int
 snapshots_dirname: Optional[str] = None
 WALLET_ADDR: Optional[bytes] = None
