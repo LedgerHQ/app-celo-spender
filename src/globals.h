@@ -25,6 +25,8 @@ extern strings_t strings;
 extern volatile bool dataPresent;
 extern volatile uint8_t dataAllowed;
 extern volatile uint8_t contractDetails;
+extern volatile uint8_t verbose_eip712;
+extern volatile uint8_t blind_signing;
 
 extern const internalStorage_t N_storage_real;
 #define N_storage (*(internalStorage_t *) PIC(&N_storage_real))

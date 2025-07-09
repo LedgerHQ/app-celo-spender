@@ -11,6 +11,22 @@ nbgl_layoutTagValueList_t tagValueList;
 nbgl_contentInfoLongPress_t infoLongPress;
 #endif  // HAVE_NBGL
 
+uint16_t io_seproxyhal_send_status(uint16_t sw, uint32_t tx, bool reset, bool idle) {
+    uint16_t err = 0;
+    if (reset) {
+        reset_app_context();
+    }
+    U2BE_ENCODE(G_io_apdu_buffer, tx, sw);
+    tx += 2;
+    err = io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+    
+    if (idle) {
+        // Display back the original UX
+        ui_idle();
+    }
+    return err;
+}
+
 unsigned int io_seproxyhal_touch_data_ok(void) {
     parserStatus_e txResult = USTREAM_FINISHED;
     txResult = continueTx(&txContext);
@@ -20,20 +36,14 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
         case USTREAM_FINISHED:
             break;
         case USTREAM_PROCESSING:
-            io_seproxyhal_send_status(SW_OK);
-            ui_idle();
+            io_seproxyhal_send_status(SW_OK, 0, false, true);
             break;
         case USTREAM_FAULT:
-            reset_app_context();
-            io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-            ui_idle();
+            io_seproxyhal_send_status(SW_ERROR_IN_DATA, 0, true, true);
             break;
         default:
             PRINTF("Unexpected parser status\n");
-            reset_app_context();
-            io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-
-            ui_idle();
+            io_seproxyhal_send_status(SW_ERROR_IN_DATA, 0, true, true);
     }
 
     if (txResult == USTREAM_FINISHED) {
@@ -44,11 +54,7 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
 }
 
 unsigned int io_seproxyhal_touch_data_cancel(void) {
-    reset_app_context();
-    io_seproxyhal_send_status(SW_INITIALIZATION_ERROR);
-
-    // Display back the original UX
-    ui_idle();
+    io_seproxyhal_send_status(SW_INITIALIZATION_ERROR, 0, true, true);
     return 0;  // do not redraw the widget
 }
 

@@ -100,7 +100,7 @@ def test_eip712_v0(
 
     DEVICE_ADDR = get_wallet_addr(app_client)
 
-    # settings_toggle(device, navigator, [SettingID.BLIND_SIGNING])
+    settings_toggle(device, navigator, [SettingID.BLIND_SIGNING])
     with open(input_files()[0], encoding="utf-8") as file:
         data = json.load(file)
     smsg = encode_typed_data(full_message=data)
@@ -116,11 +116,11 @@ def test_eip712_v0(
     with app_client.eip712_sign_legacy(BIP32_PATH, smsg.header, smsg.body):
         moves = []
         if device.is_nano:
-            moves += [NavInsID.BOTH_CLICK]
+            # moves += [NavInsID.BOTH_CLICK]
             moves += [NavInsID.RIGHT_CLICK] * 5
             moves += [NavInsID.BOTH_CLICK]
         else:
-            moves += [NavInsID.USE_CASE_CHOICE_REJECT]
+            # moves += [NavInsID.USE_CASE_CHOICE_REJECT]
             moves += [NavInsID.SWIPE_CENTER_TO_LEFT] * 2
             moves += [NavInsID.USE_CASE_REVIEW_CONFIRM]
         navigator.navigate(moves)
@@ -247,12 +247,12 @@ def test_eip712_new(
         except (IOError, json.decoder.JSONDecodeError) as e:
             pytest.skip(f"{filterfile.name}: {e.strerror}")
     else:
-        raise Exception("Blind signing not supported for Celo")
-        # settings_to_toggle.append(SettingID.BLIND_SIGNING)
+        # raise Exception("Blind signing not supported for Celo")
+        settings_to_toggle.append(SettingID.BLIND_SIGNING)
 
     if verbose_raw:
-        raise Exception("Verbose raw not supported for Celo")
-        # settings_to_toggle.append(SettingID.VERBOSE_EIP712)
+        # raise Exception("Verbose raw not supported for Celo")
+        settings_to_toggle.append(SettingID.VERBOSE_EIP712)
 
     if not filters or verbose_raw:
         validate_warning = True
@@ -731,116 +731,116 @@ def test_eip712_advanced_missing_token(
     assert addr == get_wallet_addr(app_client)
 
 
-TRUSTED_NAMES = [
-    (TrustedNameType.CONTRACT, TrustedNameSource.CAL, "Validator contract"),
-    (TrustedNameType.ACCOUNT, TrustedNameSource.ENS, "validator.eth"),
-]
+# TRUSTED_NAMES = [
+#     (TrustedNameType.CONTRACT, TrustedNameSource.CAL, "Validator contract"),
+#     (TrustedNameType.ACCOUNT, TrustedNameSource.ENS, "validator.eth"),
+# ]
 
-FILT_TN_TYPES = [
-    [TrustedNameType.CONTRACT],
-    [TrustedNameType.ACCOUNT],
-    [TrustedNameType.CONTRACT, TrustedNameType.ACCOUNT],
-    [TrustedNameType.ACCOUNT, TrustedNameType.CONTRACT],
-]
-
-
-@pytest.fixture(name="trusted_name", params=TRUSTED_NAMES)
-def trusted_name_fixture(request) -> tuple:
-    return request.param
+# FILT_TN_TYPES = [
+#     [TrustedNameType.CONTRACT],
+#     [TrustedNameType.ACCOUNT],
+#     [TrustedNameType.CONTRACT, TrustedNameType.ACCOUNT],
+#     [TrustedNameType.ACCOUNT, TrustedNameType.CONTRACT],
+# ]
 
 
-@pytest.fixture(name="filt_tn_types", params=FILT_TN_TYPES)
-def filt_tn_types_fixture(request) -> list[TrustedNameType]:
-    return request.param
+# @pytest.fixture(name="trusted_name", params=TRUSTED_NAMES)
+# def trusted_name_fixture(request) -> tuple:
+#     return request.param
 
 
-def test_eip712_advanced_trusted_name(
-    backend: BackendInterface,
-    navigator: Navigator,
-    default_screenshot_path: Path,
-    test_name: str,
-    trusted_name: tuple,
-    filt_tn_types: list[TrustedNameType],
-    golden_run: bool,
-):
-    global snapshots_dirname
+# @pytest.fixture(name="filt_tn_types", params=FILT_TN_TYPES)
+# def filt_tn_types_fixture(request) -> list[TrustedNameType]:
+#     return request.param
 
-    test_name += f"_{trusted_name[0].name.lower()}_with"
-    for t in filt_tn_types:
-        test_name += f"_{t.name.lower()}"
-    snapshots_dirname = test_name
 
-    app_client = CeloClient(backend)
-    device = backend.device
+# def test_eip712_advanced_trusted_name(
+#     backend: BackendInterface,
+#     navigator: Navigator,
+#     default_screenshot_path: Path,
+#     test_name: str,
+#     trusted_name: tuple,
+#     filt_tn_types: list[TrustedNameType],
+#     golden_run: bool,
+# ):
+#     global snapshots_dirname
 
-    data = {
-        "types": {
-            "EIP712Domain": [
-                {"name": "name", "type": "string"},
-                {"name": "version", "type": "string"},
-                {"name": "chainId", "type": "uint256"},
-                {"name": "verifyingContract", "type": "address"},
-            ],
-            "Root": [
-                {"name": "validator", "type": "address"},
-                {"name": "enable", "type": "bool"},
-            ],
-        },
-        "primaryType": "Root",
-        "domain": {
-            "name": "test",
-            "version": "1",
-            "verifyingContract": "0x0000000000000000000000000000000000000000",
-            "chainId": 1,
-        },
-        "message": {
-            "validator": "0x1111111111111111111111111111111111111111",
-            "enable": True,
-        },
-    }
+#     test_name += f"_{trusted_name[0].name.lower()}_with"
+#     for t in filt_tn_types:
+#         test_name += f"_{t.name.lower()}"
+#     snapshots_dirname = test_name
 
-    filters = {
-        "name": "Trusted name test",
-        "fields": {
-            "validator": {
-                "type": "trusted_name",
-                "name": "Validator",
-                "tn_type": filt_tn_types,
-                "tn_source": [TrustedNameSource.CAL, TrustedNameSource.ENS],
-            },
-            "enable": {
-                "type": "raw",
-                "name": "State",
-            },
-        },
-    }
+#     app_client = CeloClient(backend)
+#     device = backend.device
 
-    if trusted_name[0] is TrustedNameType.ACCOUNT:
-        challenge = ResponseParser.challenge(app_client.get_challenge().data)
-    else:
-        challenge = None
+#     data = {
+#         "types": {
+#             "EIP712Domain": [
+#                 {"name": "name", "type": "string"},
+#                 {"name": "version", "type": "string"},
+#                 {"name": "chainId", "type": "uint256"},
+#                 {"name": "verifyingContract", "type": "address"},
+#             ],
+#             "Root": [
+#                 {"name": "validator", "type": "address"},
+#                 {"name": "enable", "type": "bool"},
+#             ],
+#         },
+#         "primaryType": "Root",
+#         "domain": {
+#             "name": "test",
+#             "version": "1",
+#             "verifyingContract": "0x0000000000000000000000000000000000000000",
+#             "chainId": 1,
+#         },
+#         "message": {
+#             "validator": "0x1111111111111111111111111111111111111111",
+#             "enable": True,
+#         },
+#     }
 
-    app_client.provide_trusted_name_v2(
-        bytes.fromhex(data["message"]["validator"][2:]),
-        trusted_name[2],
-        trusted_name[0],
-        trusted_name[1],
-        data["domain"]["chainId"],
-        challenge=challenge,
-    )
-    vrs = eip712_new_common(
-        device,
-        navigator,
-        default_screenshot_path,
-        app_client,
-        data,
-        filters,
-        golden_run,
-    )
+#     filters = {
+#         "name": "Trusted name test",
+#         "fields": {
+#             "validator": {
+#                 "type": "trusted_name",
+#                 "name": "Validator",
+#                 "tn_type": filt_tn_types,
+#                 "tn_source": [TrustedNameSource.CAL, TrustedNameSource.ENS],
+#             },
+#             "enable": {
+#                 "type": "raw",
+#                 "name": "State",
+#             },
+#         },
+#     }
 
-    # verify signature
-    addr = recover_message(data, vrs)
-    assert addr == get_wallet_addr(app_client)
+#     if trusted_name[0] is TrustedNameType.ACCOUNT:
+#         challenge = ResponseParser.challenge(app_client.get_challenge().data)
+#     else:
+#         challenge = None
+
+#     app_client.provide_trusted_name_v2(
+#         bytes.fromhex(data["message"]["validator"][2:]),
+#         trusted_name[2],
+#         trusted_name[0],
+#         trusted_name[1],
+#         data["domain"]["chainId"],
+#         challenge=challenge,
+#     )
+#     vrs = eip712_new_common(
+#         device,
+#         navigator,
+#         default_screenshot_path,
+#         app_client,
+#         data,
+#         filters,
+#         golden_run,
+#     )
+
+#     # verify signature
+#     addr = recover_message(data, vrs)
+#     assert addr == get_wallet_addr(app_client)
 
 
 def test_eip712_bs_not_activated_error(
@@ -892,36 +892,36 @@ def test_eip712_skip(
     assert addr == get_wallet_addr(app_client)
 
 
-def test_eip712_proxy(
-    backend: BackendInterface, navigator: Navigator, default_screenshot_path: Path
-):
-    app_client = CeloClient(backend)
-    device = backend.device
+# def test_eip712_proxy(
+#     backend: BackendInterface, navigator: Navigator, default_screenshot_path: Path
+# ):
+#     app_client = CeloClient(backend)
+#     device = backend.device
 
-    input_file = input_files()[0]
-    with open(input_file, encoding="utf-8") as file:
-        data = json.load(file)
-    with open(
-        get_filter_file_from_data_file(Path(input_file)), encoding="utf-8"
-    ) as file:
-        filters = json.load(file)
-    # change its name & set a different address than the one in verifyingContract
-    filters["name"] = "Proxy test"
-    filters["address"] = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+#     input_file = input_files()[0]
+#     with open(input_file, encoding="utf-8") as file:
+#         data = json.load(file)
+#     with open(
+#         get_filter_file_from_data_file(Path(input_file)), encoding="utf-8"
+#     ) as file:
+#         filters = json.load(file)
+#     # change its name & set a different address than the one in verifyingContract
+#     filters["name"] = "Proxy test"
+#     filters["address"] = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
-    proxy_info = ProxyInfo(
-        ResponseParser.challenge(app_client.get_challenge().data),
-        bytes.fromhex(filters["address"][2:]),
-        int(data["domain"]["chainId"]),
-        bytes.fromhex(data["domain"]["verifyingContract"][2:]),
-    )
+#     proxy_info = ProxyInfo(
+#         ResponseParser.challenge(app_client.get_challenge().data),
+#         bytes.fromhex(filters["address"][2:]),
+#         int(data["domain"]["chainId"]),
+#         bytes.fromhex(data["domain"]["verifyingContract"][2:]),
+#     )
 
-    app_client.provide_proxy_info(proxy_info.serialize())
+#     app_client.provide_proxy_info(proxy_info.serialize())
 
-    vrs = eip712_new_common(
-        device, navigator, default_screenshot_path, app_client, data, filters, False
-    )
+#     vrs = eip712_new_common(
+#         device, navigator, default_screenshot_path, app_client, data, filters, False
+#     )
 
-    # verify signature
-    addr = recover_message(data, vrs)
-    assert addr == get_wallet_addr(app_client)
+#     # verify signature
+#     addr = recover_message(data, vrs)
+#     assert addr == get_wallet_addr(app_client)

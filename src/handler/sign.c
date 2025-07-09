@@ -32,7 +32,7 @@ int handleSign(uint8_t p1,
             reset_app_context();
         }
 
-        if (parse_bip32_path(&tmpCtx.transactionContext.derivationPath, workBuffer, dataLength)) {
+        if (parse_bip32_path(&tmpCtx.transactionContext.derivationPath, workBuffer, dataLength) < 0) {
             PRINTF("Invalid path\n");
             return io_send_sw(SW_ERROR_IN_DATA);
         }

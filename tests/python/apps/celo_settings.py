@@ -9,6 +9,7 @@ class SettingID(Enum):
     CONTRACT_DATA = auto()
     DEBUG_DATA = auto()
     VERBOSE_EIP712 = auto()
+    BLIND_SIGNING = auto()
 
 
 # Settings Positions per device. Returns the tuple (page, x, y)
@@ -17,11 +18,13 @@ SETTINGS_POSITIONS = {
         SettingID.CONTRACT_DATA: (0, 350, 130),
         SettingID.DEBUG_DATA: (0, 350, 335),
         SettingID.VERBOSE_EIP712: (1, 350, 130),
+        SettingID.BLIND_SIGNING: (1, 350, 335),
     },
     DeviceType.FLEX: {
         SettingID.CONTRACT_DATA: (0, 420, 130),
         SettingID.DEBUG_DATA: (0, 420, 350),
         SettingID.VERBOSE_EIP712: (1, 420, 130),
+        SettingID.BLIND_SIGNING: (1, 420, 350),
     },
 }
 
@@ -34,11 +37,13 @@ def get_device_settings(device: Device) -> list[SettingID]:
             SettingID.CONTRACT_DATA,
             SettingID.DEBUG_DATA,
             SettingID.VERBOSE_EIP712,
+            SettingID.BLIND_SIGNING,
         ]
     return [
         SettingID.CONTRACT_DATA,
         SettingID.DEBUG_DATA,
         SettingID.VERBOSE_EIP712,
+        SettingID.BLIND_SIGNING,
     ]
 
 
@@ -64,11 +69,11 @@ def get_settings_moves(
                 page, x, y = SETTINGS_POSITIONS[device.type][setting]
                 moves += [NavInsID.USE_CASE_SETTINGS_NEXT] * (page - current_page)
                 moves += [NavIns(NavInsID.TOUCH, (x, y))]
-                if setting == SettingID.WEB3_CHECK:
-                    # Assume Opt-In is not done, Add a confirmation step
-                    moves += [NavInsID.USE_CASE_CHOICE_CONFIRM]
-                    # Dismiss the notification
-                    moves += [NavInsID.TAPPABLE_CENTER_TAP]
+                # if setting == SettingID.WEB3_CHECK:
+                #     # Assume Opt-In is not done, Add a confirmation step
+                #     moves += [NavInsID.USE_CASE_CHOICE_CONFIRM]
+                #     # Dismiss the notification
+                #     moves += [NavInsID.TAPPABLE_CENTER_TAP]
                 current_page = page
         moves += [NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT]
     return moves
