@@ -10,13 +10,6 @@
 #include "types.h"
 
 /**
- * @brief Sends the status code to the SE proxy hardware abstraction layer.
- *
- * @param sw The status code to be sent.
- */
-void io_seproxyhal_send_status(uint32_t sw);
-
-/**
  * @brief Formats the signature output.
  *
  * @param signature The signature to be formatted.
@@ -36,6 +29,14 @@ void reset_app_context();
  * @return A pointer to the token definition.
  */
 tokenDefinition_t *getKnownToken(uint8_t *tokenAddr);
+
+/**
+ * @brief Retrieves the index of a token based on its address.
+ *
+ * @param addr The address of the token.
+ * @return The index of the token. -1 if not found.
+ */
+int get_token_index_by_addr(const uint8_t *addr);
 
 /**
  * @brief Custom processor for transaction context.
@@ -66,5 +67,10 @@ void initTx(txContext_t *context,
  * @param direct Flag indicating if the parsing is direct.
  */
 void finalizeParsing(bool direct);
+
+/**
+ * @brief Forgets the known tokens.
+ */
+void forget_known_tokens(void);
 
 extern volatile uint8_t appState; /**< The application state. */

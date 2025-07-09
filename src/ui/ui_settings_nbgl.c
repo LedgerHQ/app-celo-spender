@@ -9,10 +9,10 @@
 #define FIRST_USER_TOKEN 0
 #endif
 
-#define NB_INFO_FIELDS 2
-#define PAGE_START 0
+#define NB_INFO_FIELDS  2
+#define PAGE_START      0
 #define NB_PAGE_SETTING 2
-#define IS_TOUCHABLE false
+#define IS_TOUCHABLE    false
 
 // Forward declaration
 static uint8_t initSettingPage;
@@ -21,6 +21,8 @@ static void controls_callback(int token, uint8_t index, int page);
 enum {
     SWITCH_CONTRACT_DATA_SET_TOKEN = FIRST_USER_TOKEN,
     SWITCH_DEBUG_DATA_SET_TOKEN,
+    SWITCH_VERBOSE_EIP712_SET_TOKEN,
+    SWITCH_BLIND_SIGNING_SET_TOKEN,
     NB_SETTINGS_SWITCHES,
 };
 
@@ -39,8 +41,8 @@ static const nbgl_contentInfoList_t infoList = {
     .infoContents = (const char**) infoContents,
 };
 
-
 // settings menu definition
+// KM: was 1 even if there were 2 settings. I added a third one and set it to 3. might be wrong.
 #define SETTING_CONTENTS_NB 1
 static const nbgl_content_t contents[SETTING_CONTENTS_NB] = {
     {.type = SWITCHES_LIST,
@@ -53,25 +55,43 @@ static const nbgl_genericContents_t settingContents = {.callbackCallNeeded = fal
                                                        .nbContents = SETTING_CONTENTS_NB};
 
 static void switch_settings_contract_data() {
-  uint8_t value = (N_storage.dataAllowed ? 0 : 1);
-  nvm_write(&N_storage.dataAllowed, (void*)&value, sizeof(uint8_t));
+    uint8_t value = (N_storage.dataAllowed ? 0 : 1);
+    nvm_write(&N_storage.dataAllowed, (void*) &value, sizeof(uint8_t));
 }
 
 static void switch_settings_display_data() {
-  uint8_t value = (N_storage.contractDetails ? 0 : 1);
-  nvm_write(&N_storage.contractDetails, (void*)&value, sizeof(uint8_t));
+    uint8_t value = (N_storage.contractDetails ? 0 : 1);
+    nvm_write(&N_storage.contractDetails, (void*) &value, sizeof(uint8_t));
 }
+
+static void switch_settings_verbose_eip712() {
+    uint8_t value = (N_storage.verbose_eip712 ? 0 : 1);
+    nvm_write(&N_storage.verbose_eip712, (void*) &value, sizeof(uint8_t));
+}
+
+static void switch_settings_blind_signing() {
+    uint8_t value = (N_storage.blind_signing ? 0 : 1);
+    nvm_write(&N_storage.blind_signing, (void*) &value, sizeof(uint8_t));
+}
+
 static void controls_callback(int token, uint8_t index, int page) {
     UNUSED(index);
     initSettingPage = page;
-    switch(token)
-    {
+    switch (token) {
         case SWITCH_CONTRACT_DATA_SET_TOKEN:
             switch_settings_contract_data();
             break;
 
         case SWITCH_DEBUG_DATA_SET_TOKEN:
             switch_settings_display_data();
+            break;
+
+        case SWITCH_VERBOSE_EIP712_SET_TOKEN:
+            switch_settings_verbose_eip712();
+            break;
+
+        case SWITCH_BLIND_SIGNING_SET_TOKEN:
+            switch_settings_blind_signing();
             break;
 
         default:
@@ -81,34 +101,48 @@ static void controls_callback(int token, uint8_t index, int page) {
 
     switches[0].initState = N_storage.dataAllowed;
     switches[1].initState = N_storage.contractDetails;
+    switches[2].initState = N_storage.verbose_eip712;
+    switches[3].initState = N_storage.blind_signing;
 }
 
 void ui_idle(void) {
-        switches[0].initState = N_storage.dataAllowed;
-        switches[0].text = "Contract data";
-        switches[0].subText = "Allow contract data\nin transactions";
-        switches[0].token = SWITCH_CONTRACT_DATA_SET_TOKEN;
+    switches[0].initState = N_storage.dataAllowed;
+    switches[0].text = "Contract data";
+    switches[0].subText = "Allow contract data\nin transactions";
+    switches[0].token = SWITCH_CONTRACT_DATA_SET_TOKEN;
 #ifdef HAVE_PIEZO_SOUND
-        switches[0].tuneId = TUNE_TAP_CASUAL;
+    switches[0].tuneId = TUNE_TAP_CASUAL;
 #endif
-        switches[1].initState = N_storage.contractDetails;
-        switches[1].text = "Debug data";
-        switches[1].subText = "Display contract data details";
-        switches[1].token = SWITCH_DEBUG_DATA_SET_TOKEN;
+    switches[1].initState = N_storage.contractDetails;
+    switches[1].text = "Debug data";
+    switches[1].subText = "Display contract data details";
+    switches[1].token = SWITCH_DEBUG_DATA_SET_TOKEN;
 #ifdef HAVE_PIEZO_SOUND
-        switches[1].tuneId = TUNE_TAP_CASUAL;
+    switches[1].tuneId = TUNE_TAP_CASUAL;
+#endif
+    switches[2].initState = N_storage.verbose_eip712;
+    switches[2].text = "Verbose EIP712";
+    switches[2].subText = "Display EIP712 data details";
+    switches[2].token = SWITCH_VERBOSE_EIP712_SET_TOKEN;
+#ifdef HAVE_PIEZO_SOUND
+    switches[2].tuneId = TUNE_TAP_CASUAL;
+#endif
+    switches[3].initState = N_storage.blind_signing;
+    switches[3].text = "Blind signing";
+    switches[3].subText = "Enable transaction blind signing";
+    switches[3].token = SWITCH_BLIND_SIGNING_SET_TOKEN;
+#ifdef HAVE_PIEZO_SOUND
+    switches[3].tuneId = TUNE_TAP_CASUAL;
 #endif
 
-    nbgl_useCaseHomeAndSettings(
-        "Celo",
-        &ICON_APP_CELO,
-        NULL,
-        INIT_HOME_PAGE,
-        &settingContents,
-        &infoList,
-        NULL,
-        onQuitCallback
-    );
+    nbgl_useCaseHomeAndSettings("Celo",
+                                &ICON_APP_CELO,
+                                NULL,
+                                INIT_HOME_PAGE,
+                                &settingContents,
+                                &infoList,
+                                NULL,
+                                onQuitCallback);
 }
 
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL

@@ -7,11 +7,12 @@ services:
       - ./bin:/speculos/apps
       - ./src:/speculos/sources
       - ./src_common:/speculos/lib
+      - ./src_features:/speculos/features
       - ./build:/speculos/build
     ports:
       - "5000:5000" # api
       - "40000:40000" # apdu
     environment:
-      - GDB_DIRECTORY_LIST="/speculos/sources:/speculos/sources/apdu:/speculos/sources/handlers:/speculos/sources/helper:/speculos/sources/ui:/speculos/lib"
+      - GDB_DIRECTORY_LIST="/speculos/sources:/speculos/sources/apdu:/speculos/sources/handlers:/speculos/sources/helper:/speculos/sources/ui:/speculos/lib:/speculos/features/signMessageEIP712:/speculos/features/signMessageEIP712_v0:/speculos/features/signMessageEIP712_common"
     command: "-d --model ${DEVICE:-nanox} /speculos/build/${BUILD_DEVICE:-nanox}/bin/app.elf --display headless --apdu-port 40000 --debug"
     # Add `--vnc-password "<password>"` for macos users to use built-in vnc client.

@@ -33,7 +33,7 @@ int handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t dat
         return io_send_sw(SW_WRONG_P1_OR_P2);
     }
 
-    if (parse_bip32_path(&derivationPath, dataBuffer, dataLength)) {
+    if (parse_bip32_path(&derivationPath, dataBuffer, dataLength) < 0) {
         PRINTF("Invalid path\n");
         return io_send_sw(SW_ERROR_IN_DATA);
     }

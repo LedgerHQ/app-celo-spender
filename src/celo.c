@@ -22,12 +22,6 @@ static const uint8_t WITHDRAW_METHOD_ID[] = {0x2e, 0x1a, 0x7d, 0x4d};
 static const uint8_t RELOCK_METHOD_ID[] = {0xb2, 0xfb, 0x30, 0xcb};
 static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = {0x9d, 0xca, 0x36, 0x2f};
 
-void io_seproxyhal_send_status(uint32_t sw) {
-    G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
-    G_io_apdu_buffer[1] = (sw & 0xff);
-    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
-}
-
 volatile uint8_t appState;
 
 void reset_app_context() {
@@ -38,23 +32,33 @@ void reset_app_context() {
     explicit_bzero(&txContext, sizeof(txContext));
 }
 
+void forget_known_tokens(void) {
+    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
+    tmpCtx.transactionContext.currentTokenIndex = 0;
+}
+
 #include "uint256.h"
 
 #define WEI_TO_ETHER 18
 
 tokenDefinition_t *getKnownToken(uint8_t *tokenAddr) {
-    tokenDefinition_t *currentToken = NULL;
-
-    for (int i = 0; i < MAX_TOKEN; i++) {
-        currentToken = &tmpCtx.transactionContext.tokens[i];
-        if (tmpCtx.transactionContext.tokenSet[i] &&
-            (memcmp(currentToken->address, tokenAddr, 20) == 0)) {
-            PRINTF("Token found at index %d\n", i);
-            return currentToken;
-        }
+    int index = get_token_index_by_addr(tokenAddr);
+    if (index == -1) {
+        return NULL;
     }
 
-    return NULL;
+    return &tmpCtx.transactionContext.tokens[index];
+}
+
+int get_token_index_by_addr(const uint8_t *addr) {
+    for (int i = 0; i < MAX_TOKEN; i++) {
+        if (tmpCtx.transactionContext.tokenSet[i] &&
+            (memcmp(tmpCtx.transactionContext.tokens[i].address, addr, ADDRESS_LENGTH) == 0)) {
+            PRINTF("Token found at index %d\n", i);
+            return i;
+        }
+    }
+    return -1;
 }
 
 static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {

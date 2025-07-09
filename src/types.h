@@ -19,12 +19,26 @@
 
 #include <stdint.h>
 #include "constants.h"
+#include "ethUstream.h"
+
+// Shared context field sizes
+#ifdef SCREEN_SIZE_WALLET
+#define SHARED_CTX_FIELD_1_SIZE 380
+#else
+#define SHARED_CTX_FIELD_1_SIZE 256
+#endif
+#define SHARED_CTX_FIELD_2_SIZE 40
 
 typedef struct tokenDefinition_t {
-    uint8_t address[20];
+    uint8_t address[ADDRESS_LENGTH];
     char ticker[10];
     uint8_t decimals;
 } tokenDefinition_t;
+
+// typedef union extraInfo_t {
+//     tokenDefinition_t token;
+//     // NFTs are not supported.
+// } extraInfo_t;
 
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
@@ -103,6 +117,11 @@ typedef struct messageSigningContext_t {
     uint8_t hash[32];
     uint32_t remainingLength;
 } messageSigningContext_t;
+typedef struct messageSigningContext712_t {
+    bip32Path_t derivationPath;
+    uint8_t domainHash[32];
+    uint8_t messageHash[32];
+} messageSigningContext712_t;
 
 typedef struct transactionContext_t {
     bip32Path_t derivationPath;
@@ -116,6 +135,7 @@ typedef union {
     publicKeyContext_t publicKeyContext;
     transactionContext_t transactionContext;
     messageSigningContext_t messageSigningContext;
+    messageSigningContext712_t messageSigningContext712;
 } tmpCtx_t;
 
 typedef struct strData_t {
@@ -128,8 +148,8 @@ typedef struct strData_t {
 } strData_t;
 
 typedef struct strDataTmp_t {
-    char tmp[100];
-    char tmp2[40];
+    char tmp[SHARED_CTX_FIELD_1_SIZE];
+    char tmp2[SHARED_CTX_FIELD_2_SIZE];
 } strDataTmp_t;
 
 typedef union {
@@ -140,6 +160,8 @@ typedef union {
 typedef struct internalStorage_t {
     unsigned char dataAllowed;
     unsigned char contractDetails;
+    unsigned char verbose_eip712;
+    unsigned char blind_signing;
     uint8_t initialized;
 } internalStorage_t;
 
@@ -160,4 +182,9 @@ typedef enum {
 /**
  * @brief Enumeration representing the application state.
  */
-typedef enum { APP_STATE_IDLE, APP_STATE_SIGNING_TX, APP_STATE_SIGNING_MESSAGE } app_state_t;
+typedef enum {
+    APP_STATE_IDLE,
+    APP_STATE_SIGNING_TX,
+    APP_STATE_SIGNING_MESSAGE,
+    APP_STATE_SIGNING_EIP712
+} app_state_t;

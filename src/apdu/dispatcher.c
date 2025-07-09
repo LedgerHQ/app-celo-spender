@@ -1,17 +1,22 @@
+#include <stdint.h>
+
 #include "dispatcher.h"
 #include "sw.h"
 #include "io.h"
 #include "globals.h"
 #include "celo.h"
 #include "handlers.h"
+#include "commands_712.h"
 
 #include "constants.h"
-
 
 /**
  * Dispatch structured APDU command to handler
  */
 int apdu_dispatcher(const command_t *cmd) {
+    uint32_t *flags = 0;
+    uint16_t sw;
+
     if (cmd == NULL) {
         io_send_sw(SW_ERROR_IN_DATA);
         return -1;
@@ -52,8 +57,22 @@ int apdu_dispatcher(const command_t *cmd) {
         case INS_GET_APP_TYPE:
             return handler_get_app_type(cmd);
 
+        case INS_SIGN_EIP_712_MESSAGE:
+            switch (cmd->p2) {
+                case P2_EIP712_LEGACY_IMPLEM:
+                    forget_known_tokens();
+                    sw = handleSignEIP712Message_v0(cmd->p1, cmd->data, cmd->lc, flags);
+                    break;
+                // case P2_EIP712_FULL_IMPLEM:
+                //     sw = handle_eip712_sign(cmd->data, cmd->lc, flags);
+                //     break;
+                default:
+                    sw = APDU_RESPONSE_INVALID_P1_P2;
+            }
+            return 0;
+            break;
         default:
             io_send_sw(SW_INS_NOT_SUPPORTED);
             return -1;
     }
-} 
+}

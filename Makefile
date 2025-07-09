@@ -32,7 +32,7 @@ APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
-APP_SOURCE_PATH += src_common src
+APP_SOURCE_PATH += src_features src_common src
 
 # Application icons following guidelines:
 # https://developers.ledger.com/docs/embedded-app/design-requirements/#device-icon
@@ -101,5 +101,14 @@ ENABLE_NBGL_QRCODE = 1
 #DISABLE_STANDARD_WEBUSB = 1
 #DISABLE_DEBUG_LEDGER_ASSERT = 1
 #DISABLE_DEBUG_THROW = 1
+
+
+ENABLE_DYNAMIC_ALLOC = 1
+ifneq ($(DEBUG), 0)
+    MEMORY_PROFILING ?= 0
+    ifneq ($(MEMORY_PROFILING),0)
+        DEFINES += HAVE_MEMORY_PROFILING
+    endif
+endif
 
 include $(BOLOS_SDK)/Makefile.standard_app
