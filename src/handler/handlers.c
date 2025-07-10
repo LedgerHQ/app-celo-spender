@@ -178,3 +178,7 @@ int handler_get_wallet_id(const command_t *cmd) {
     return 0;
 }
 #endif
+
+// int handler_sign_eip712_message(const command_t *cmd) {
+//     volatile unsigned int flags = 0;
+//     volatile unsigned int tx = 0;

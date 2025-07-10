@@ -61,16 +61,20 @@ int apdu_dispatcher(const command_t *cmd) {
             switch (cmd->p2) {
                 case P2_EIP712_LEGACY_IMPLEM:
                     forget_known_tokens();
-                    sw = handleSignEIP712Message_v0(cmd->p1, cmd->data, cmd->lc, flags);
-                    break;
-                // case P2_EIP712_FULL_IMPLEM:
-                //     sw = handle_eip712_sign(cmd->data, cmd->lc, flags);
-                //     break;
+                    return handleSignEIP712Message_v0(cmd->p1, cmd->data, cmd->lc, flags);
+                case P2_EIP712_FULL_IMPLEM:
+                    return handle_eip712_sign(cmd->data, cmd->lc, flags);
                 default:
-                    sw = APDU_RESPONSE_INVALID_P1_P2;
+                    return io_send_sw(APDU_RESPONSE_INVALID_P1_P2);
             }
-            return 0;
-            break;
+        case INS_EIP712_STRUCT_DEF:
+            return handle_eip712_struct_def(cmd->p2, cmd->data, cmd->lc);
+
+        case INS_EIP712_STRUCT_IMPL:
+            return handle_eip712_struct_impl(cmd->p1, cmd->p2, cmd->data, cmd->lc, flags);
+
+        case INS_EIP712_FILTERING:
+            return handle_eip712_filtering(cmd->p1, cmd->p2, cmd->data, cmd->lc, flags);
         default:
             io_send_sw(SW_INS_NOT_SUPPORTED);
             return -1;

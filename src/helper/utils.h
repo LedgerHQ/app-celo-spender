@@ -32,6 +32,8 @@
 // The length of a 256-bit integer in bytes.
 #define INT256_LENGTH 32
 
+#define SET_BIT(a) (1 << a)
+
 // Hexadecimal digits for formatting and parsing purposes.
 static const char HEXDIGITS[] = "0123456789abcdef";
 
