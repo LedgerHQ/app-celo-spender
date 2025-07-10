@@ -49,27 +49,28 @@ void ui_sign_712_v0(void) {
     // #ifdef HAVE_WEB3_CHECKS
     //     set_tx_simulation_warning(&warning, true, true);
     // #endif
-    // warning.predefinedSet |= SET_BIT(BLIND_SIGNING_WARN);
+    warning.predefinedSet |= SET_BIT(BLIND_SIGNING_WARN);
 
     // snprintf(g_stax_shared_buffer,
     //          sizeof(g_stax_shared_buffer),
     //          "%s typed message?",
     //          ui_tx_simulation_finish_str());
-    nbgl_useCaseReview(TYPE_TRANSACTION,
-                       &pairs_list,
-                       &ICON_APP_CELO,
-                       "Review typed message",
-                       NULL,
-                       "Sign typed message",
-                       ui_typed_message_review_choice_v0);
 
-    // nbgl_useCaseAdvancedReview(TYPE_TRANSACTION,
-    //                            &pairs_list,
-    //                            &ICON_APP_CELO,
-    //                            "Review typed message",
-    //                            NULL,
-    //                            "Sign typed message",
-    //                            NULL,
-    //                            &warning,
-    //                            ui_typed_message_review_choice_v0);
+    // nbgl_useCaseReview(TYPE_TRANSACTION,
+    //                    &pairs_list,
+    //                    &ICON_APP_CELO,
+    //                    "Review typed message",
+    //                    NULL,
+    //                    "Sign typed message",
+    //                    ui_typed_message_review_choice_v0);
+
+    nbgl_useCaseAdvancedReview(TYPE_TRANSACTION,
+                               &pairs_list,
+                               &ICON_APP_CELO,
+                               "Review typed message",
+                               NULL,
+                               "Sign typed message",
+                               NULL,
+                               &warning,
+                               ui_typed_message_review_choice_v0);
 }

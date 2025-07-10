@@ -11,6 +11,9 @@ nbgl_layoutTagValueList_t tagValueList;
 nbgl_contentInfoLongPress_t infoLongPress;
 #endif  // HAVE_NBGL
 
+// Global Warning struct for NBGL review flows
+nbgl_warning_t warning;
+
 uint16_t io_seproxyhal_send_status(uint16_t sw, uint32_t tx, bool reset, bool idle) {
     uint16_t err = 0;
     if (reset) {
@@ -19,7 +22,7 @@ uint16_t io_seproxyhal_send_status(uint16_t sw, uint32_t tx, bool reset, bool id
     U2BE_ENCODE(G_io_apdu_buffer, tx, sw);
     tx += 2;
     err = io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
-    
+
     if (idle) {
         // Display back the original UX
         ui_idle();

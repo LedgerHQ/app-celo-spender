@@ -10,6 +10,7 @@
 #include "globals.h"
 #include "utils.h"  // parse_bip32_path, allzeroes
 #include "celo.h"   // forget_known_tokens
+#include "io.h"
 // #include "manage_asset_info.h"
 // #include "ui_callbacks.h"
 
@@ -116,7 +117,7 @@ uint16_t handle_eip712_struct_def(uint8_t p2, const uint8_t *cdata, uint8_t leng
         }
     }
     apdu_reply(ret);
-    return apdu_response_code;
+    return io_send_sw(apdu_response_code);
 }
 
 /**
@@ -171,10 +172,10 @@ uint16_t handle_eip712_struct_impl(uint8_t p1,
     }
     if (reply_apdu) {
         apdu_reply(ret);
-        return apdu_response_code;
+        return io_send_sw(apdu_response_code);
     }
-    *flags |= IO_ASYNCH_REPLY;
-    return APDU_NO_RESPONSE;
+    // *flags |= IO_ASYNCH_REPLY;
+    return 0;
 }
 
 /**
@@ -197,10 +198,10 @@ uint16_t handle_eip712_filtering(uint8_t p1,
 
     if (eip712_context == NULL) {
         apdu_reply(false);
-        return APDU_RESPONSE_CONDITION_NOT_SATISFIED;
+        return io_send_sw(APDU_RESPONSE_CONDITION_NOT_SATISFIED);
     }
     if ((p2 != P2_FILT_ACTIVATE) && (ui_712_get_filtering_mode() != EIP712_FILTERING_FULL)) {
-        return APDU_RESPONSE_OK;
+        return io_send_sw(APDU_RESPONSE_OK);
     }
     switch (p2) {
         case P2_FILT_ACTIVATE:
@@ -249,10 +250,10 @@ uint16_t handle_eip712_filtering(uint8_t p1,
     }
     if (reply_apdu) {
         apdu_reply(ret);
-        return apdu_response_code;
+        return io_send_sw(apdu_response_code);
     }
-    *flags |= IO_ASYNCH_REPLY;
-    return APDU_NO_RESPONSE;
+    // *flags |= IO_ASYNCH_REPLY;
+    return 0;
 }
 
 /**
@@ -292,8 +293,8 @@ uint16_t handle_eip712_sign(const uint8_t *cdata, uint8_t length, uint32_t *flag
 
     if (!ret) {
         apdu_reply(false);
-        return apdu_response_code;
+        return io_send_sw(apdu_response_code);
     }
-    *flags |= IO_ASYNCH_REPLY;
-    return APDU_NO_RESPONSE;
+    // *flags |= IO_ASYNCH_REPLY;
+    return 0;
 }

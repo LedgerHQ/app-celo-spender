@@ -53,7 +53,8 @@
     "limits": "c",
     "optional": "c",
     "ratio": "c",
-    "vector": "c"
+    "vector": "c",
+    "celo.h": "c"
   },
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#fdff85",

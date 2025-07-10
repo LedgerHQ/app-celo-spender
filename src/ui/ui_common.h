@@ -65,3 +65,6 @@ unsigned int io_seproxyhal_touch_signMessage_ok(void);
  * @note If idle is true, the UI will return to idle state via ui_idle()
  */
 uint16_t io_seproxyhal_send_status(uint16_t sw, uint32_t tx, bool reset, bool idle);
+
+// Global Warning struct for NBGL review flows
+extern nbgl_warning_t warning;

@@ -15,6 +15,9 @@
 #define INS_SIGN_PERSONAL_MESSAGE           0x08
 #define INS_PROVIDE_ERC20_TOKEN_INFORMATION 0x0A
 #define INS_SIGN_EIP_712_MESSAGE            0x0C
+#define INS_EIP712_STRUCT_DEF               0x1A
+#define INS_EIP712_STRUCT_IMPL              0x1C
+#define INS_EIP712_FILTERING                0x1E
 #define INS_GET_APP_TYPE                    0xFF
 
 // Common instructions
