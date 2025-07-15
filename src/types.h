@@ -126,8 +126,8 @@ typedef struct messageSigningContext712_t {
 typedef struct transactionContext_t {
     bip32Path_t derivationPath;
     uint8_t hash[32];
-    tokenDefinition_t tokens[MAX_TOKEN];
-    uint8_t tokenSet[MAX_TOKEN];
+    tokenDefinition_t tokens[MAX_TOKENS];
+    uint8_t tokenSet[MAX_TOKENS];
     uint8_t currentTokenIndex;
 } transactionContext_t;
 

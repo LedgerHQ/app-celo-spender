@@ -52,9 +52,19 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   uint8_t hash[32];
   cx_ecfp_public_key_t tokenKey;
 
+    PRINTF(
+        "km_logs [provide_erc20_token_information.c] (handleProvideErc20TokenInformation) - START "
+        "tmpCtx.transactionContext.tokens: ");
+    for (int i = 0; i < MAX_TOKENS; i++) {
+        PRINTF("\n[%d].address: ", i);
+        for (int j = 0; j < ADDRESS_LENGTH; j++) {
+            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+        }
+    }
+    PRINTF("\n");
 
-  tmpCtx.transactionContext.currentTokenIndex = (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKEN;
-  tokenDefinition_t* token = &tmpCtx.transactionContext.tokens[tmpCtx.transactionContext.currentTokenIndex];
+    tokenDefinition_t *token =
+        &tmpCtx.transactionContext.tokens[tmpCtx.transactionContext.currentTokenIndex];
 
   PRINTF("Provisioning currentTokenIndex %d\n", tmpCtx.transactionContext.currentTokenIndex);
 
@@ -86,11 +96,27 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   // Skip chainId
   offset += 4;
   dataLength -= 4;
-  CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1, TOKEN_SIGNATURE_PUBLIC_KEY, sizeof(TOKEN_SIGNATURE_PUBLIC_KEY), &tokenKey));
+    CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1,
+                                              TOKEN_SIGNATURE_PUBLIC_KEY,
+                                              sizeof(TOKEN_SIGNATURE_PUBLIC_KEY),
+                                              &tokenKey));
   if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset, dataLength)) {
     PRINTF("Invalid token signature\n");
     THROW(SW_ERROR_IN_DATA);
   }
+    PRINTF(
+        "km_logs [provide_erc20_token_information.c] (handleProvideErc20TokenInformation) - END "
+        "tmpCtx.transactionContext.tokens: ");
+    for (int i = 0; i < MAX_TOKENS; i++) {
+        PRINTF("\n[%d].address: ", i);
+        for (int j = 0; j < ADDRESS_LENGTH; j++) {
+            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+        }
+    }
+    PRINTF("\n");
+
   tmpCtx.transactionContext.tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
+    tmpCtx.transactionContext.currentTokenIndex =
+        (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKENS;
   THROW(SW_OK);
 }

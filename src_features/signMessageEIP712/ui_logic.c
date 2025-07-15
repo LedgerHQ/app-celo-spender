@@ -283,6 +283,9 @@ static bool ui_712_format_addr(const uint8_t *data, uint8_t length, bool first) 
                                   strings.tmp.tmp,
                                   sizeof(strings.tmp.tmp),
                                   CHAIN_ID)) {
+        PRINTF(
+            "km_logs [provide_erc20_token_information] (ui_712_format_addr) "
+            "getEthDisplayableAddress failed\n");
         apdu_response_code = APDU_RESPONSE_ERROR_NO_INFO;
         return false;
     }
@@ -484,6 +487,15 @@ void amount_join_set_token_received(void) {
  */
 static bool update_amount_join(const uint8_t *data, uint8_t length) {
     const tokenDefinition_t *token = NULL;
+    // print tmpCtx.transactionContext.tokens
+    PRINTF("km_logs [ui_logic.c] (update_amount_join) - tmpCtx.transactionContext.tokens: ");
+    for (int i = 0; i < MAX_TOKENS; i++) {
+        PRINTF("\n[%d].address: ", i);
+        for (int j = 0; j < ADDRESS_LENGTH; j++) {
+            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+        }
+    }
+    PRINTF("\n");
 
     if (tmpCtx.transactionContext.tokenSet[ui_ctx->amount.idx]) {
         token = &tmpCtx.transactionContext.tokens[ui_ctx->amount.idx];
@@ -498,6 +510,20 @@ static bool update_amount_join(const uint8_t *data, uint8_t length) {
         case AMOUNT_JOIN_STATE_TOKEN:
             if (token != NULL) {
                 if (memcmp(data, token->address, ADDRESS_LENGTH) != 0) {
+                    // print data and token->address raw
+                    PRINTF("km_logs [ui_logic.c] (update_amount_join) - data: ");
+                    for (int i = 0; i < ADDRESS_LENGTH; i++) {
+                        PRINTF("%02x", data[i]);
+                    }
+                    PRINTF("\n");
+                    PRINTF("km_logs [ui_logic.c] (update_amount_join) - token->address: ");
+                    for (int i = 0; i < ADDRESS_LENGTH; i++) {
+                        PRINTF("%02x", token->address[i]);
+                    }
+                    PRINTF("\n");
+                    PRINTF(
+                        "km_logs [ui_logic.c] (update_amount_join) - memcmp(data, token->address, "
+                        "ADDRESS_LENGTH) != 0\n");
                     return false;
                 }
             }
@@ -511,6 +537,8 @@ static bool update_amount_join(const uint8_t *data, uint8_t length) {
             break;
 
         default:
+            PRINTF(
+                "km_logs [ui_logic.c] (update_amount_join) - ui_ctx->amount.state is not valid\n");
             return false;
     }
     return true;
@@ -575,10 +603,16 @@ bool ui_712_feed_to_display(const void *field_ptr,
                             bool last) {
     if (ui_ctx == NULL) {
         apdu_response_code = APDU_RESPONSE_CONDITION_NOT_SATISFIED;
+        PRINTF("km_logs [ui_logic.c] (ui_712_feed_to_display) - ui_ctx == NULL failed\n");
         return false;
     }
 
     if (first && (strlen(strings.tmp.tmp) > 0)) {
+        PRINTF(
+            "km_logs [ui_logic.c] (ui_712_feed_to_display) - first=%d, strlen(strings.tmp.tmp)=%zu "
+            "failed\n",
+            first,
+            strlen(strings.tmp.tmp));
         return false;
     }
     // Value
@@ -589,44 +623,88 @@ bool ui_712_feed_to_display(const void *field_ptr,
                 break;
             case TYPE_SOL_ADDRESS:
                 if (ui_712_format_addr(data, length, first) == false) {
+                    PRINTF(
+                        "km_logs [ui_logic.c] (ui_712_feed_to_display) - "
+                        "ui_712_format_addr(data=%p, length=%u, first=%d) failed\n",
+                        data,
+                        length,
+                        first);
                     return false;
                 }
                 break;
             case TYPE_SOL_BOOL:
                 if (ui_712_format_bool(data, length, first) == false) {
+                    PRINTF(
+                        "km_logs [ui_logic.c] (ui_712_feed_to_display) - "
+                        "ui_712_format_bool(data=%p, length=%u, first=%d) failed\n",
+                        data,
+                        length,
+                        first);
                     return false;
                 }
                 break;
             case TYPE_SOL_BYTES_FIX:
             case TYPE_SOL_BYTES_DYN:
                 if (ui_712_format_bytes(data, length, first, last) == false) {
+                    PRINTF(
+                        "km_logs [ui_logic.c] (ui_712_feed_to_display) - "
+                        "ui_712_format_bytes(data=%p, length=%u, first=%d, last=%d) failed\n",
+                        data,
+                        length,
+                        first,
+                        last);
                     return false;
                 }
                 break;
             case TYPE_SOL_INT:
                 if (ui_712_format_int(data, length, first, field_ptr) == false) {
+                    PRINTF(
+                        "km_logs [ui_logic.c] (ui_712_feed_to_display) - "
+                        "ui_712_format_int(data=%p, length=%u, first=%d, field_ptr=%p) failed\n",
+                        data,
+                        length,
+                        first,
+                        field_ptr);
                     return false;
                 }
                 break;
             case TYPE_SOL_UINT:
                 if (ui_712_format_uint(data, length, first) == false) {
+                    PRINTF(
+                        "km_logs [ui_logic.c] (ui_712_feed_to_display) - "
+                        "ui_712_format_uint(data=%p, length=%u, first=%d) failed\n",
+                        data,
+                        length,
+                        first);
                     return false;
                 }
                 break;
             default:
                 PRINTF("Unhandled type\n");
+                PRINTF(
+                    "km_logs [ui_logic.c] (ui_712_feed_to_display) - "
+                    "struct_field_type(field_ptr)=%d failed\n",
+                    struct_field_type(field_ptr));
                 return false;
         }
     }
 
     if (ui_ctx->field_flags & UI_712_AMOUNT_JOIN) {
         if (!update_amount_join(data, length)) {
+            PRINTF(
+                "km_logs [ui_logic.c] (ui_712_feed_to_display) - update_amount_join(data=%p, "
+                "length=%u) failed\n",
+                data,
+                length);
             return false;
         }
 
         if (ui_ctx->amount.joins[ui_ctx->amount.idx].flags ==
             (AMOUNT_JOIN_FLAG_TOKEN | AMOUNT_JOIN_FLAG_VALUE)) {
             if (!ui_712_format_amount_join()) {
+                PRINTF(
+                    "km_logs [ui_logic.c] (ui_712_feed_to_display) - ui_712_format_amount_join() "
+                    "failed\n");
                 return false;
             }
         }
@@ -634,6 +712,12 @@ bool ui_712_feed_to_display(const void *field_ptr,
 
     if (ui_ctx->field_flags & UI_712_DATETIME) {
         if (!ui_712_format_datetime(data, length, field_ptr)) {
+            PRINTF(
+                "km_logs [ui_logic.c] (ui_712_feed_to_display) - ui_712_format_datetime(data=%p, "
+                "length=%u, field_ptr=%p) failed\n",
+                data,
+                length,
+                field_ptr);
             return false;
         }
     }
@@ -646,7 +730,12 @@ bool ui_712_feed_to_display(const void *field_ptr,
 
     // Check if this field is supposed to be displayed
     if (last && ui_712_field_shown()) {
-        if (!ui_712_redraw_generic_step()) return false;
+        if (!ui_712_redraw_generic_step()) {
+            PRINTF(
+                "km_logs [ui_logic.c] (ui_712_feed_to_display) - ui_712_redraw_generic_step() "
+                "failed\n");
+            return false;
+        }
     }
     return true;
 }

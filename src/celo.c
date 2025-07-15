@@ -27,13 +27,13 @@ volatile uint8_t appState;
 void reset_app_context() {
     appState = APP_STATE_IDLE;
     PRINTF("Resetting context\n");
-    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
+    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKENS);
     explicit_bzero(&tmpContent, sizeof(tmpContent));
     explicit_bzero(&txContext, sizeof(txContext));
 }
 
 void forget_known_tokens(void) {
-    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKEN);
+    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKENS);
     tmpCtx.transactionContext.currentTokenIndex = 0;
 }
 
@@ -51,7 +51,26 @@ tokenDefinition_t *getKnownToken(uint8_t *tokenAddr) {
 }
 
 int get_token_index_by_addr(const uint8_t *addr) {
-    for (int i = 0; i < MAX_TOKEN; i++) {
+    PRINTF("km_logs [celo.c] (get_token_index_by_addr) - addr: ");
+    for (int i = 0; i < ADDRESS_LENGTH; i++) {
+        PRINTF("%02x", addr[i]);
+    }
+    PRINTF("\n");
+
+    for (int i = 0; i < MAX_TOKENS; i++) {
+        PRINTF(
+            "km_logs [celo.c] (get_token_index_by_addr) - "
+            "tmpCtx.transactionContext.tokens[%d].address: ",
+            i);
+        for (int j = 0; j < ADDRESS_LENGTH; j++) {
+            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+        }
+        PRINTF("\n");
+        PRINTF(
+            "km_logs [celo.c] (get_token_index_by_addr) - "
+            "tmpCtx.transactionContext.tokenSet[%d]: %d\n",
+            i,
+            tmpCtx.transactionContext.tokenSet[i]);
         if (tmpCtx.transactionContext.tokenSet[i] &&
             (memcmp(tmpCtx.transactionContext.tokens[i].address, addr, ADDRESS_LENGTH) == 0)) {
             PRINTF("Token found at index %d\n", i);

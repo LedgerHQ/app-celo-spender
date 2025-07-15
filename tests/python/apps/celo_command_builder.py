@@ -16,7 +16,7 @@ class InsType(IntEnum):
     # SIGN = 0x04
     # GET_APP_CONFIGURATION = 0x06
     # PERSONAL_SIGN = 0x08
-    # PROVIDE_ERC20_TOKEN_INFORMATION = 0x0A
+    PROVIDE_ERC20_TOKEN_INFORMATION = 0x0A
     # EXTERNAL_PLUGIN_SETUP = 0x12
     # PROVIDE_NFT_INFORMATION = 0x14
     # SET_PLUGIN = 0x16
@@ -433,19 +433,19 @@ class CommandBuilder:
     #         p1 = P1Type.SIGN_SUBSQT_CHUNK
     #     return chunks
 
-    # def provide_erc20_token_information(
-    #     self, ticker: str, addr: bytes, decimals: int, chain_id: int, sig: bytes
-    # ) -> bytes:
-    #     payload = bytearray()
-    #     payload.append(len(ticker))
-    #     payload += ticker.encode()
-    #     payload += addr
-    #     payload += struct.pack(">I", decimals)
-    #     payload += struct.pack(">I", chain_id)
-    #     payload += sig
-    #     return self._serialize(
-    #         InsType.PROVIDE_ERC20_TOKEN_INFORMATION, 0x00, 0x00, payload
-    #     )
+    def provide_erc20_token_information(
+        self, ticker: str, addr: bytes, decimals: int, chain_id: int, sig: bytes
+    ) -> bytes:
+        payload = bytearray()
+        payload.append(len(ticker))
+        payload += ticker.encode()
+        payload += addr
+        payload += struct.pack(">I", decimals)
+        payload += struct.pack(">I", chain_id)
+        payload += sig
+        return self._serialize(
+            InsType.PROVIDE_ERC20_TOKEN_INFORMATION, 0x00, 0x00, payload
+        )
 
     # def common_tlv_serialize(
     #     self,

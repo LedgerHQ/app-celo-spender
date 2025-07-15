@@ -621,7 +621,8 @@ bool filtering_amount_join_value(const uint8_t *payload,
     if (token_idx == TOKEN_IDX_ADDR_IN_DOMAIN) {
         // Permit (ERC-2612)
         int resolved_idx = get_token_index_by_addr(eip712_context->contract_addr);
-
+        PRINTF("km_logs [filtering.c] (filtering_amount_join_value) - resolved_idx: %d\n",
+               resolved_idx);
         if (resolved_idx == -1) {
             PRINTF("ERROR: Could not find token info for verifyingContract address!\n");
             return false;
