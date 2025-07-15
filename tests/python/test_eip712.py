@@ -93,13 +93,8 @@ def get_wallet_addr(client: CeloClient) -> bytes:
 def test_eip712_v0(
     backend: BackendInterface,
     navigator: Navigator,
-    test_name: str,
-    simu_params: Optional[TxSimu] = None,
 ):
     global validate_warning
-    global snapshots_dirname
-
-    snapshots_dirname = test_name
 
     app_client = CeloClient(backend)
     device = backend.device
@@ -121,7 +116,7 @@ def test_eip712_v0(
             moves += [NavInsID.USE_CASE_CHOICE_REJECT]
             moves += [NavInsID.SWIPE_CENTER_TO_LEFT] * 2
             moves += [NavInsID.USE_CASE_REVIEW_CONFIRM]
-        navigator.navigate_and_compare(TESTS_ROOT_DIR, snapshots_dirname, moves)
+        navigator.navigate(moves)
 
     vrs = ResponseParser.signature(app_client.response().data)
     assert DEVICE_ADDR == recover_message(data, vrs)
@@ -231,17 +226,6 @@ def test_eip712_new(
     test_name: str,
 ):
     global validate_warning
-    global snapshots_dirname
-
-    snapshots_dirname = (
-        test_name
-        + "/"
-        + input_file.name.split(".")[0]
-        + "-"
-        + str(verbose_raw)
-        + "-"
-        + str(filtering)
-    )
 
     settings_to_toggle: list[SettingID] = []
     app_client = CeloClient(backend)
@@ -761,9 +745,6 @@ def test_eip712_skip(
 ):
     global validate_warning
     global skip_flow
-    global snapshots_dirname
-
-    snapshots_dirname = test_name
 
     app_client = CeloClient(backend)
     device = backend.device
