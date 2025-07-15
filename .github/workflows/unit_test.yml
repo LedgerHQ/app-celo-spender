@@ -1,4 +1,4 @@
-name: Compilation & tests
+name: Unit tests
 
 on:
   workflow_dispatch:
@@ -12,7 +12,6 @@ on:
       - develop
 
 jobs:
-
   job_unit_test:
     name: Unit test
     runs-on: ubuntu-latest
@@ -20,7 +19,7 @@ jobs:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
     steps:
       - name: Clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build unit tests
         run: |
           cd tests/unit
