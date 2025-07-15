@@ -1,4 +1,4 @@
-This file contains the data neccessary to use a different feeCurrency than Celo. Use the method provideERC20TokenInformation and give it the data_hex.
+This file contains the data necessary to use a different feeCurrency than Celo. Use the method provideERC20TokenInformation and give it the data_hex.
 
 
 It's been parsed with a script from ledgerhq that can be found here:
