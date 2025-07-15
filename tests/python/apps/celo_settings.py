@@ -17,14 +17,14 @@ SETTINGS_POSITIONS = {
     DeviceType.STAX: {
         SettingID.CONTRACT_DATA: (0, 350, 130),
         SettingID.DEBUG_DATA: (0, 350, 335),
-        SettingID.VERBOSE_EIP712: (1, 350, 130),
-        SettingID.BLIND_SIGNING: (1, 350, 335),
+        SettingID.VERBOSE_EIP712: (0, 350, 445),
+        SettingID.BLIND_SIGNING: (1, 350, 130),
     },
     DeviceType.FLEX: {
         SettingID.CONTRACT_DATA: (0, 420, 130),
         SettingID.DEBUG_DATA: (0, 420, 350),
         SettingID.VERBOSE_EIP712: (1, 420, 130),
-        SettingID.BLIND_SIGNING: (1, 420, 350),
+        SettingID.BLIND_SIGNING: (1, 420, 270),
     },
 }
 

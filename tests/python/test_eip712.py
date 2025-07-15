@@ -48,6 +48,8 @@ WALLET_ADDR: Optional[bytes] = None
 validate_warning: bool = False
 skip_flow: bool = False
 
+TESTS_ROOT_DIR = Path(__file__).parent
+
 
 def eip712_json_path() -> str:
     return f"{os.path.dirname(__file__)}/eip712_input_files"
@@ -91,7 +93,6 @@ def get_wallet_addr(client: CeloClient) -> bytes:
 def test_eip712_v0(
     backend: BackendInterface,
     navigator: Navigator,
-    default_screenshot_path: Path,
     test_name: str,
     simu_params: Optional[TxSimu] = None,
 ):
@@ -110,14 +111,6 @@ def test_eip712_v0(
         data = json.load(file)
     smsg = encode_typed_data(full_message=data)
 
-    # if simu_params is not None:
-    #     validate_warning = True
-    #     simu_params.from_addr = DEVICE_ADDR
-    #     simu_params.tx_hash = smsg.body
-    #     simu_params.domain_hash = smsg.header
-    #     response = app_client.provide_tx_simulation(simu_params)
-    #     assert response.status == StatusCode.STATUS_OK
-
     with app_client.eip712_sign_legacy(BIP32_PATH, smsg.header, smsg.body):
         moves = []
         if device.is_nano:
@@ -128,9 +121,7 @@ def test_eip712_v0(
             moves += [NavInsID.USE_CASE_CHOICE_REJECT]
             moves += [NavInsID.SWIPE_CENTER_TO_LEFT] * 2
             moves += [NavInsID.USE_CASE_REVIEW_CONFIRM]
-        navigator.navigate_and_compare(
-            default_screenshot_path, snapshots_dirname, moves
-        )
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, snapshots_dirname, moves)
 
     vrs = ResponseParser.signature(app_client.response().data)
     assert DEVICE_ADDR == recover_message(data, vrs)
@@ -191,7 +182,6 @@ def eip712_new_common(
     global snapshots_dirname
 
     autonext_idx = 0
-    print("km-logs: [test_eip712.py] (eip712_new_common) About to process data")
     assert InputData.process_data(
         app_client,
         json_data,
@@ -199,8 +189,6 @@ def eip712_new_common(
         partial(autonext, device, navigator, default_screenshot_path),
         golden_run,
     )
-    print("km-logs: [test_eip712.py] (eip712_new_common) Data processed")
-    print("km-logs: [test_eip712.py] (eip712_new_common) About to sign message")
     with app_client.eip712_sign_new(BIP32_PATH):
         if device.is_nano:
             nav_ins = NavInsID.RIGHT_CLICK
@@ -237,7 +225,6 @@ def get_filter_file_from_data_file(data_file: Path) -> Path:
 def test_eip712_new(
     backend: BackendInterface,
     navigator: Navigator,
-    default_screenshot_path: Path,
     input_file: Path,
     verbose_raw: bool,
     filtering: bool,
@@ -283,7 +270,7 @@ def test_eip712_new(
     with open(input_file, encoding="utf-8") as file:
         data = json.load(file)
         vrs = eip712_new_common(
-            device, navigator, default_screenshot_path, app_client, data, filters, False
+            device, navigator, TESTS_ROOT_DIR, app_client, data, filters, False
         )
 
         recovered_addr = recover_message(data, vrs)
@@ -313,10 +300,10 @@ ADVANCED_DATA_SETS = [
             },
             "message": {
                 "with": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-                "value_recv": 10000000000000000,
-                "token_send": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-                "value_send": 24500000000000000000,
-                "token_recv": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                "value_recv": 10000,
+                "token_send": "0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72",
+                "value_send": 10000000000000000,
+                "token_recv": "0x2f25deb3848c207fc8e0c34035b3ba7fc157602b",
                 "expires": 1714559400,
             },
             "primaryType": "Transfer",
@@ -341,16 +328,16 @@ ADVANCED_DATA_SETS = [
             "name": "Advanced Filtering",
             "tokens": [
                 {
-                    "addr": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                    "ticker": "WETH",
-                    "decimals": 18,
-                    "chain_id": 1,
+                    "addr": "0x2f25deb3848c207fc8e0c34035b3ba7fc157602b",
+                    "ticker": "USDC",
+                    "decimals": 6,
+                    "chain_id": 42220,
                 },
                 {
-                    "addr": "0x6b175474e89094c44da98b954eedeac495271d0f",
-                    "ticker": "DAI",
+                    "addr": "0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72",
+                    "ticker": "USDT",
                     "decimals": 18,
-                    "chain_id": 1,
+                    "chain_id": 42220,
                 },
             ],
             "fields": {
@@ -399,10 +386,10 @@ ADVANCED_DATA_SETS = [
             },
             "primaryType": "Permit",
             "domain": {
-                "name": "ENS",
+                "name": "cUSD",
                 "version": "1",
-                "verifyingContract": "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72",
-                "chainId": 1,
+                "verifyingContract": "0x765de816845861e75a25fca122bb6898b8b1282a",
+                "chainId": 42220,
             },
             "message": {
                 "owner": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
@@ -416,10 +403,10 @@ ADVANCED_DATA_SETS = [
             "name": "Permit filtering",
             "tokens": [
                 {
-                    "addr": "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72",
-                    "ticker": "ENS",
+                    "addr": "0x765de816845861e75a25fca122bb6898b8b1282a",
+                    "ticker": "cUSD",
                     "decimals": 18,
-                    "chain_id": 1,
+                    "chain_id": 42220,
                 },
             ],
             "fields": {
@@ -459,9 +446,9 @@ ADVANCED_DATA_SETS = [
                 "chainId": 1,
             },
             "message": {
-                "token_big": "0x6b175474e89094c44da98b954eedeac495271d0f",
+                "token_big": "0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73",
                 "value_big": c_uint64(-1).value,
-                "token_biggest": "0x6b175474e89094c44da98b954eedeac495271d0f",
+                "token_biggest": "0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73",
                 "value_biggest": int(web3.constants.MAX_INT, 0),
             },
         },
@@ -469,10 +456,10 @@ ADVANCED_DATA_SETS = [
             "name": "Unlimited test",
             "tokens": [
                 {
-                    "addr": "0x6b175474e89094c44da98b954eedeac495271d0f",
-                    "ticker": "DAI",
+                    "addr": "0xd8763cba276a3738e6de85b4b3bf5fded6d6ca73",
+                    "ticker": "cEUR",
                     "decimals": 18,
-                    "chain_id": 1,
+                    "chain_id": 42220,
                 },
             ],
             "fields": {
@@ -509,7 +496,6 @@ def data_set_fixture(request) -> DataSet:
 def test_eip712_advanced_filtering(
     backend: BackendInterface,
     navigator: Navigator,
-    default_screenshot_path: Path,
     test_name: str,
     data_set: DataSet,
     golden_run: bool,
@@ -524,7 +510,7 @@ def test_eip712_advanced_filtering(
     vrs = eip712_new_common(
         device,
         navigator,
-        default_screenshot_path,
+        TESTS_ROOT_DIR,
         app_client,
         data_set.data,
         data_set.filters,
@@ -539,7 +525,6 @@ def test_eip712_advanced_filtering(
 def test_eip712_filtering_empty_array(
     backend: BackendInterface,
     navigator: Navigator,
-    default_screenshot_path: Path,
     test_name: str,
     golden_run: bool,
     simu_params: Optional[TxSimu] = None,
@@ -627,7 +612,7 @@ def test_eip712_filtering_empty_array(
     vrs = eip712_new_common(
         device,
         navigator,
-        default_screenshot_path,
+        TESTS_ROOT_DIR,
         app_client,
         data,
         filters,
@@ -642,20 +627,20 @@ def test_eip712_filtering_empty_array(
 TOKENS = [
     [
         {
-            "addr": "0x1111111111111111111111111111111111111111",
-            "ticker": "SRC",
+            "addr": "0x73f93dcc49cb8a239e2032663e9475dd5ef29a08",
+            "ticker": "eXOF",
             "decimals": 18,
-            "chain_id": 1,
+            "chain_id": 42220,
         },
         {},
     ],
     [
         {},
         {
-            "addr": "0x2222222222222222222222222222222222222222",
-            "ticker": "DST",
-            "decimals": 18,
-            "chain_id": 1,
+            "addr": "0x2f25deb3848c207fc8e0c34035b3ba7fc157602b",
+            "ticker": "USDC",
+            "decimals": 6,
+            "chain_id": 42220,
         },
     ],
 ]
@@ -669,7 +654,6 @@ def tokens_fixture(request) -> list[dict]:
 def test_eip712_advanced_missing_token(
     backend: BackendInterface,
     navigator: Navigator,
-    default_screenshot_path: Path,
     test_name: str,
     tokens: list[dict],
     golden_run: bool,
@@ -705,10 +689,10 @@ def test_eip712_advanced_missing_token(
             "chainId": 1,
         },
         "message": {
-            "token_from": "0x1111111111111111111111111111111111111111",
-            "value_from": web3.Web3.to_wei(3.65, "ether"),
-            "token_to": "0x2222222222222222222222222222222222222222",
-            "value_to": web3.Web3.to_wei(15.47, "ether"),
+            "token_from": "0x73f93dcc49cb8a239e2032663e9475dd5ef29a08",
+            "value_from": web3.Web3.to_wei(3.65, "ether"),  # 3,65 eXOF
+            "token_to": "0x2f25deb3848c207fc8e0c34035b3ba7fc157602b",
+            "value_to": 15470000,  # 15,47 USDC
         },
     }
 
@@ -739,7 +723,7 @@ def test_eip712_advanced_missing_token(
     vrs = eip712_new_common(
         device,
         navigator,
-        default_screenshot_path,
+        TESTS_ROOT_DIR,
         app_client,
         data,
         filters,
@@ -751,122 +735,7 @@ def test_eip712_advanced_missing_token(
     assert addr == get_wallet_addr(app_client)
 
 
-# out of scope
-# # TRUSTED_NAMES = [
-# #     (TrustedNameType.CONTRACT, TrustedNameSource.CAL, "Validator contract"),
-# #     (TrustedNameType.ACCOUNT, TrustedNameSource.ENS, "validator.eth"),
-# # ]
-
-# # FILT_TN_TYPES = [
-# #     [TrustedNameType.CONTRACT],
-# #     [TrustedNameType.ACCOUNT],
-# #     [TrustedNameType.CONTRACT, TrustedNameType.ACCOUNT],
-# #     [TrustedNameType.ACCOUNT, TrustedNameType.CONTRACT],
-# # ]
-
-
-# # @pytest.fixture(name="trusted_name", params=TRUSTED_NAMES)
-# # def trusted_name_fixture(request) -> tuple:
-# #     return request.param
-
-
-# # @pytest.fixture(name="filt_tn_types", params=FILT_TN_TYPES)
-# # def filt_tn_types_fixture(request) -> list[TrustedNameType]:
-# #     return request.param
-
-
-# # def test_eip712_advanced_trusted_name(
-# #     backend: BackendInterface,
-# #     navigator: Navigator,
-# #     default_screenshot_path: Path,
-# #     test_name: str,
-# #     trusted_name: tuple,
-# #     filt_tn_types: list[TrustedNameType],
-# #     golden_run: bool,
-# # ):
-# #     global snapshots_dirname
-
-# #     test_name += f"_{trusted_name[0].name.lower()}_with"
-# #     for t in filt_tn_types:
-# #         test_name += f"_{t.name.lower()}"
-# #     snapshots_dirname = test_name
-
-# #     app_client = CeloClient(backend)
-# #     device = backend.device
-
-# #     data = {
-# #         "types": {
-# #             "EIP712Domain": [
-# #                 {"name": "name", "type": "string"},
-# #                 {"name": "version", "type": "string"},
-# #                 {"name": "chainId", "type": "uint256"},
-# #                 {"name": "verifyingContract", "type": "address"},
-# #             ],
-# #             "Root": [
-# #                 {"name": "validator", "type": "address"},
-# #                 {"name": "enable", "type": "bool"},
-# #             ],
-# #         },
-# #         "primaryType": "Root",
-# #         "domain": {
-# #             "name": "test",
-# #             "version": "1",
-# #             "verifyingContract": "0x0000000000000000000000000000000000000000",
-# #             "chainId": 1,
-# #         },
-# #         "message": {
-# #             "validator": "0x1111111111111111111111111111111111111111",
-# #             "enable": True,
-# #         },
-# #     }
-
-# #     filters = {
-# #         "name": "Trusted name test",
-# #         "fields": {
-# #             "validator": {
-# #                 "type": "trusted_name",
-# #                 "name": "Validator",
-# #                 "tn_type": filt_tn_types,
-# #                 "tn_source": [TrustedNameSource.CAL, TrustedNameSource.ENS],
-# #             },
-# #             "enable": {
-# #                 "type": "raw",
-# #                 "name": "State",
-# #             },
-# #         },
-# #     }
-
-# #     if trusted_name[0] is TrustedNameType.ACCOUNT:
-# #         challenge = ResponseParser.challenge(app_client.get_challenge().data)
-# #     else:
-# #         challenge = None
-
-# #     app_client.provide_trusted_name_v2(
-# #         bytes.fromhex(data["message"]["validator"][2:]),
-# #         trusted_name[2],
-# #         trusted_name[0],
-# #         trusted_name[1],
-# #         data["domain"]["chainId"],
-# #         challenge=challenge,
-# #     )
-# #     vrs = eip712_new_common(
-# #         device,
-# #         navigator,
-# #         default_screenshot_path,
-# #         app_client,
-# #         data,
-# #         filters,
-# #         golden_run,
-# #     )
-
-# #     # verify signature
-# #     addr = recover_message(data, vrs)
-# #     assert addr == get_wallet_addr(app_client)
-
-
-def test_eip712_bs_not_activated_error(
-    backend: BackendInterface, navigator: Navigator, default_screenshot_path: Path
-):
+def test_eip712_bs_not_activated_error(backend: BackendInterface, navigator: Navigator):
     app_client = CeloClient(backend)
     device = backend.device
 
@@ -874,7 +743,7 @@ def test_eip712_bs_not_activated_error(
         eip712_new_common(
             device,
             navigator,
-            default_screenshot_path,
+            TESTS_ROOT_DIR,
             app_client,
             ADVANCED_DATA_SETS[0].data,
             None,
@@ -887,11 +756,14 @@ def test_eip712_bs_not_activated_error(
 def test_eip712_skip(
     backend: BackendInterface,
     navigator: Navigator,
-    default_screenshot_path: Path,
     golden_run: bool,
+    test_name: str,
 ):
     global validate_warning
     global skip_flow
+    global snapshots_dirname
+
+    snapshots_dirname = test_name
 
     app_client = CeloClient(backend)
     device = backend.device
@@ -901,49 +773,13 @@ def test_eip712_skip(
 
     validate_warning = True
     skip_flow = True
-    # settings_toggle(device, navigator, [SettingID.BLIND_SIGNING])
+    settings_toggle(device, navigator, [SettingID.BLIND_SIGNING])
     with open(input_files()[0], encoding="utf-8") as file:
         data = json.load(file)
     vrs = eip712_new_common(
-        device, navigator, default_screenshot_path, app_client, data, None, golden_run
+        device, navigator, TESTS_ROOT_DIR, app_client, data, None, golden_run
     )
 
     # verify signature
     addr = recover_message(data, vrs)
     assert addr == get_wallet_addr(app_client)
-
-
-# out of scope
-# # def test_eip712_proxy(
-# #     backend: BackendInterface, navigator: Navigator, default_screenshot_path: Path
-# # ):
-# #     app_client = CeloClient(backend)
-# #     device = backend.device
-
-# #     input_file = input_files()[0]
-# #     with open(input_file, encoding="utf-8") as file:
-# #         data = json.load(file)
-# #     with open(
-# #         get_filter_file_from_data_file(Path(input_file)), encoding="utf-8"
-# #     ) as file:
-# #         filters = json.load(file)
-# #     # change its name & set a different address than the one in verifyingContract
-# #     filters["name"] = "Proxy test"
-# #     filters["address"] = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-
-# #     proxy_info = ProxyInfo(
-# #         ResponseParser.challenge(app_client.get_challenge().data),
-# #         bytes.fromhex(filters["address"][2:]),
-# #         int(data["domain"]["chainId"]),
-# #         bytes.fromhex(data["domain"]["verifyingContract"][2:]),
-# #     )
-
-# #     app_client.provide_proxy_info(proxy_info.serialize())
-
-# #     vrs = eip712_new_common(
-# #         device, navigator, default_screenshot_path, app_client, data, filters, False
-# #     )
-
-# #     # verify signature
-# #     addr = recover_message(data, vrs)
-# #     assert addr == get_wallet_addr(app_client)

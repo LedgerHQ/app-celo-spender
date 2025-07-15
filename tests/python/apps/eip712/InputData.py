@@ -430,7 +430,7 @@ def init_signature_context(types, domain, filters):
     chainid = domain["chainId"]
     sig_ctx["chainid"] = bytearray()
     for i in range(8):
-        sig_ctx["chainid"].append(chainid & (0xFF << (i * 8)))
+        sig_ctx["chainid"].append((chainid >> (i * 8)) & 0xFF)
     sig_ctx["chainid"].reverse()
     schema_str = json.dumps(types).replace(" ", "")
     schema_hash = hashlib.sha224(schema_str.encode())

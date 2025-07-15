@@ -265,9 +265,11 @@ bool field_hash(const uint8_t *data, uint8_t data_length, bool partial) {
     // first packet for this frame
     if (first) {
         if (!ui_712_show_raw_key(field_ptr)) {
+            PRINTF("km_logs [field_hash] (ui_712_show_raw_key) failed\n");
             return false;
         }
         if (data_length < 2) {
+            PRINTF("km_logs [field_hash] (data_length < 2) failed\n");
             apdu_response_code = APDU_RESPONSE_INVALID_DATA;
             return false;
         }
@@ -275,6 +277,7 @@ bool field_hash(const uint8_t *data, uint8_t data_length, bool partial) {
         data = field_hash_prepare(field_ptr, data, &data_length);
     }
     if (data_length > fh->remaining_size) {
+        PRINTF("km_logs [field_hash] (data_length > fh->remaining_size) failed\n");
         apdu_response_code = APDU_RESPONSE_INVALID_DATA;
         return false;
     }
@@ -284,20 +287,24 @@ bool field_hash(const uint8_t *data, uint8_t data_length, bool partial) {
         hash_nbytes(data, data_length, (cx_hash_t *) &sha3);
     }
     if (!ui_712_feed_to_display(field_ptr, data, data_length, first, fh->remaining_size == 0)) {
+        PRINTF("km_logs [field_hash] (ui_712_feed_to_display) failed\n");
         return false;
     }
     if (fh->remaining_size == 0) {
         if (partial)  // only makes sense if marked as complete
         {
+            PRINTF("km_logs [field_hash] (partial) failed\n");
             apdu_response_code = APDU_RESPONSE_INVALID_DATA;
             return false;
         }
         if (field_hash_finalize(field_ptr, data, data_length) == false) {
+            PRINTF("km_logs [field_hash] (field_hash_finalize) failed\n");
             return false;
         }
     } else {
         if (!partial || !IS_DYN(field_type))  // only makes sense if marked as partial
         {
+            PRINTF("km_logs [field_hash] (partial || !IS_DYN(field_type)) failed\n");
             apdu_response_code = APDU_RESPONSE_INVALID_DATA;
             return false;
         }

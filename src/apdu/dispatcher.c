@@ -38,7 +38,7 @@ int apdu_dispatcher(const command_t *cmd) {
     // Handle different INS commands
     switch (cmd->ins) {
         case INS_GET_PUBLIC_KEY:
-            memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+            memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKENS);
             return handler_get_public_key(cmd);
 
         case INS_PROVIDE_ERC20_TOKEN_INFORMATION:
@@ -51,7 +51,7 @@ int apdu_dispatcher(const command_t *cmd) {
             return handler_get_app_configuration(cmd);
 
         case INS_SIGN_PERSONAL_MESSAGE:
-            memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKEN);
+            memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKENS);
             return handler_sign_personal_message(cmd);
 
         case INS_GET_APP_TYPE:
