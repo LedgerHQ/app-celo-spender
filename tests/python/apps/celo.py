@@ -12,13 +12,17 @@ from ragger.backend.interface import BackendInterface, RAPDU
 import rlp
 from ragger.bip import pack_derivation_path
 
-# ei712 imports
+# eip712 imports
 from .celo_command_builder import CommandBuilder
 from .eip712 import EIP712FieldType
 from .eth_keychain import sign_data, Key
 from .eth_tlv import format_tlv, FieldTag
 from .eth_response_parser import pk_addr
 from .eth_tx_simu import TxSimu
+
+# erc-7730 imports
+from eth_utils import keccak
+from web3 import Web3
 
 
 # Token signature mapping based on ticker and chain ID
@@ -122,19 +126,19 @@ class StatusCode(IntEnum):
     STATUS_NOT_IMPLEMENTED = 0x911C
 
 
-class TrustedNameType(IntEnum):
-    ACCOUNT = 0x01
-    CONTRACT = 0x02
-    NFT = 0x03
+# class TrustedNameType(IntEnum):
+#     ACCOUNT = 0x01
+#     CONTRACT = 0x02
+#     NFT = 0x03
 
 
-class TrustedNameSource(IntEnum):
-    LAB = 0x00
-    CAL = 0x01
-    ENS = 0x02
-    UD = 0x03
-    FN = 0x04
-    DNS = 0x05
+# class TrustedNameSource(IntEnum):
+#     LAB = 0x00
+#     CAL = 0x01
+#     ENS = 0x02
+#     UD = 0x03
+#     FN = 0x04
+#     DNS = 0x05
 
 
 class Param(IntEnum):
@@ -162,6 +166,12 @@ class PKIPubKeyUsage(IntEnum):
     PUBKEY_USAGE_TX_SIMU_SIGNER = 0x0A
     PUBKEY_USAGE_CALLDATA = 0x0B
     PUBKEY_USAGE_NETWORK = 0x0C
+
+
+class SignMode(IntEnum):
+    BASIC = 0x00
+    STORE = 0x01
+    START_FLOW = 0x02
 
 
 class PKIClient:
@@ -207,6 +217,24 @@ class CeloClient:
 
     def response(self) -> Optional[RAPDU]:
         return self._backend.last_async_response
+
+    def send_raw(self, cla: int, ins: int, p1: int, p2: int, payload: bytes):
+        header = bytearray()
+        header.append(cla)
+        header.append(ins)
+        header.append(p1)
+        header.append(p2)
+        header.append(len(payload))
+        return self._exchange(header + payload)
+
+    def send_raw_async(self, cla: int, ins: int, p1: int, p2: int, payload: bytes):
+        header = bytearray()
+        header.append(cla)
+        header.append(ins)
+        header.append(p1)
+        header.append(p2)
+        header.append(len(payload))
+        return self._exchange_async(header + payload)
 
     def get_version(self) -> bytes:
         version: RAPDU = self._backend.exchange(
@@ -392,6 +420,30 @@ class CeloClient:
             self._cmd_builder.eip712_filtering_raw(name, sig, discarded)
         )
 
+    def serialize_tx(self, tx_params: dict) -> tuple[bytes, bytes]:
+        """Computes the serialized TX and its hash"""
+
+        tx = Web3().eth.account.create().sign_transaction(tx_params).raw_transaction
+        prefix = bytes()
+        suffix = []
+        if tx[0] in [0x01, 0x02, 0x04]:
+            prefix = tx[:1]
+            tx = tx[len(prefix) :]
+        else:  # legacy
+            if "chainId" in tx_params:
+                suffix = [int(tx_params["chainId"]), bytes(), bytes()]
+        decoded_tx = rlp.decode(tx)[:-3]  # remove already computed signature
+        encoded_tx = prefix + rlp.encode(decoded_tx + suffix)
+        tx_hash = keccak(encoded_tx)
+        return encoded_tx, tx_hash
+
+    def sign(self, bip32_path: str, tx_params: dict, mode: SignMode = SignMode.BASIC):
+        tx, _ = self.serialize_tx(tx_params)
+        chunks = self._cmd_builder.sign(bip32_path, tx, mode)
+        for chunk in chunks[:-1]:
+            self._exchange(chunk)
+        return self._exchange_async(chunks[-1])
+
     @staticmethod
     def get_token_signature(ticker: str, chain_id: int) -> Optional[bytes]:
         """
@@ -446,3 +498,27 @@ class CeloClient:
                 ticker, addr, decimals, chain_id, sig
             )
         )
+
+    def provide_transaction_info(self, payload: bytes) -> RAPDU:
+        # pylint: disable=line-too-long
+        if self.device.type == DeviceType.NANOSP:
+            cert_apdu = "01010102010211040000000212010013020002140101160400000000200863616C6C646174613002000831010B32012133210381C0821E2A14AC2546FB0B9852F37CA2789D7D76483D79217FB36F51DCE1E7B434010135010315463044022076DD2EAB72E69D440D6ED8290C8C37E39F54294C23FF0F8520F836E7BE07455C02201D9A8A75223C1ADA1D9D00966A12EBB919D0BBF2E66F144C83FADCAA23672566"  # noqa: E501
+        elif self.device.type == DeviceType.NANOX:
+            cert_apdu = "01010102010211040000000212010013020002140101160400000000200863616C6C646174613002000831010B32012133210381C0821E2A14AC2546FB0B9852F37CA2789D7D76483D79217FB36F51DCE1E7B434010135010215463044022077FF9625006CB8A4AD41A4B04FF2112E92A732BD263CCE9B97D8E7D2536D04300220445B8EE3616FB907AA5E68359275E94D0A099C3E32A4FC8B3669C34083671F2F"  # noqa: E501
+        elif self.device.type == DeviceType.STAX:
+            cert_apdu = "01010102010211040000000212010013020002140101160400000000200863616C6C646174613002000831010B32012133210381C0821E2A14AC2546FB0B9852F37CA2789D7D76483D79217FB36F51DCE1E7B434010135010415473045022100A88646AD72CA012D5FDAF8F6AE0B7EBEF079212768D57323CB5B57CADD9EB20D022005872F8EA06092C9783F01AF02C5510588FB60CBF4BA51FB382B39C1E060BB6B"  # noqa: E501
+        elif self.device.type == DeviceType.FLEX:
+            cert_apdu = "01010102010211040000000212010013020002140101160400000000200863616C6C646174613002000831010B32012133210381C0821E2A14AC2546FB0B9852F37CA2789D7D76483D79217FB36F51DCE1E7B43401013501051546304402205305BDDDAD0284A2EAC2A9BE4CEF6604AE9415C5F46883448F5F6325026234A3022001ED743BCF33CCEB070FDD73C3D3FCC2CEE5AB30A5C3EB7D2A8D21C6F58D493F"  # noqa: E501
+        else:
+            print(f"Invalid device '{self.device.name}'")
+            cert_apdu = ""
+        # pylint: enable=line-too-long
+        if cert_apdu:
+            self.pki_client.send_certificate(
+                PKIPubKeyUsage.PUBKEY_USAGE_CALLDATA, bytes.fromhex(cert_apdu)
+            )
+
+        chunks = self._cmd_builder.provide_transaction_info(payload)
+        for chunk in chunks[:-1]:
+            self._exchange(chunk)
+        return self._exchange(chunks[-1])
