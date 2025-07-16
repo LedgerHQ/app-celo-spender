@@ -778,6 +778,7 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             }
         }
     }
+    PRINTF("end of here\n");
 }
 
 /**
@@ -835,7 +836,8 @@ void initTx(txContext_t *context,
     context->content = content;
     context->customProcessor = customProcessor;
     context->extra = extra;
-    context->currentField = 1; // This represents the first field in the RLP (CIP64_RLP_CONTENT || EIP1559_RLP_CONTENT)
+    context->currentField =
+        1;  // This represents the first field in the RLP (CIP64_RLP_CONTENT || EIP1559_RLP_CONTENT)
 #ifndef TESTING
     CX_THROW(cx_keccak_init_no_throw(context->sha3, 256));
 #endif

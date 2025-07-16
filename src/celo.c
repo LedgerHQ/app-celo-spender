@@ -79,6 +79,7 @@ int get_token_index_by_addr(const uint8_t *addr) {
     }
     return -1;
 }
+static bool g_use_standard_ui;
 
 static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
     uint32_t i;
@@ -302,6 +303,8 @@ customStatus_e customProcessor(txContext_t *context) {
 }
 
 void finalizeParsing(bool direct) {
+    g_use_standard_ui = true;
+    // ------------------START OF APP-ETHEREUM FINALIZE_PARSING_HELPER -------------------
     uint256_t gasPrice, startGas, uint256;
     uint32_t i;
     uint8_t decimals = WEI_TO_ETHER;
@@ -310,6 +313,17 @@ void finalizeParsing(bool direct) {
     const char *feeTicker = CHAINID_COINNAME " ";
     uint8_t tickerOffset = 0;
 
+    // ----------- verify chainId in ethereum but not in celo -------------------
+
+    // Store the hash
+    CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
+                              CX_LAST,
+                              tmpCtx.transactionContext.hash,
+                              0,
+                              tmpCtx.transactionContext.hash,
+                              32));
+
+    // km: will this be needed for the generic flow as well ?
     // Display correct currency if fee currency field sent
     if (tmpContent.txContent.feeCurrencyLength != 0) {
         tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
@@ -329,124 +343,134 @@ void finalizeParsing(bool direct) {
         }
     }
 
-    // Store the hash
-    CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
-                              CX_LAST,
-                              tmpCtx.transactionContext.hash,
-                              0,
-                              tmpCtx.transactionContext.hash,
-                              32));
-    // If there is a token to process, check if it is well known
-    if (provisionType == PROVISION_TOKEN) {
-        tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
-        if (currentToken != NULL) {
-            dataPresent = false;
-            decimals = currentToken->decimals;
-            ticker = currentToken->ticker;
+    if (g_use_standard_ui) {
+        // If there is a token to process, check if it is well known
+        if (provisionType == PROVISION_TOKEN) {
+            tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
+            if (currentToken != NULL) {
+                dataPresent = false;
+                decimals = currentToken->decimals;
+                ticker = currentToken->ticker;
+                tmpContent.txContent.destinationLength = 20;
+                memcpy(tmpContent.txContent.destination,
+                       dataContext.tokenContext.data + 4 + 12,
+                       20);
+                memcpy(tmpContent.txContent.value.value,
+                       dataContext.tokenContext.data + 4 + 32,
+                       32);
+                tmpContent.txContent.value.length = 32;
+            }
+        } else if (provisionType == PROVISION_VOTE) {
             tmpContent.txContent.destinationLength = 20;
-            memcpy(tmpContent.txContent.destination, dataContext.tokenContext.data + 4 + 12, 20);
-            memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
+            memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
+            memcpy(tmpContent.txContent.value.value, dataContext.voteContext.data + 4 + 32, 32);
             tmpContent.txContent.value.length = 32;
-        }
-    } else if (provisionType == PROVISION_VOTE) {
-        tmpContent.txContent.destinationLength = 20;
-        memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
-        memcpy(tmpContent.txContent.value.value, dataContext.voteContext.data + 4 + 32, 32);
-        tmpContent.txContent.value.length = 32;
-    } else if (provisionType == PROVISION_ACTIVATE) {
-        tmpContent.txContent.destinationLength = 20;
-        memcpy(tmpContent.txContent.destination, dataContext.activateContext.data + 4 + 12, 20);
-    } else if (provisionType == PROVISION_REVOKE) {
-        tmpContent.txContent.destinationLength = 20;
-        memcpy(tmpContent.txContent.destination, dataContext.revokeContext.data + 4 + 12, 20);
-        memcpy(tmpContent.txContent.value.value, dataContext.revokeContext.data + 4 + 32, 32);
-        tmpContent.txContent.value.length = 32;
-    } else if (provisionType == PROVISION_UNLOCK) {
-        memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
-        tmpContent.txContent.value.length = 32;
-    } else if (provisionType == PROVISION_RELOCK) {
-        memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
-        tmpContent.txContent.value.length = 32;
-    } else {
-        if (dataPresent && !N_storage.dataAllowed) {
-            reset_app_context();
-            PRINTF("Data field forbidden\n");
-            if (direct) {
-                THROW(SW_ERROR_IN_DATA);
-            } else {
-                io_send_sw(SW_ERROR_IN_DATA);
-                ui_idle();
-                return;
+        } else if (provisionType == PROVISION_ACTIVATE) {
+            tmpContent.txContent.destinationLength = 20;
+            memcpy(tmpContent.txContent.destination, dataContext.activateContext.data + 4 + 12, 20);
+        } else if (provisionType == PROVISION_REVOKE) {
+            tmpContent.txContent.destinationLength = 20;
+            memcpy(tmpContent.txContent.destination, dataContext.revokeContext.data + 4 + 12, 20);
+            memcpy(tmpContent.txContent.value.value, dataContext.revokeContext.data + 4 + 32, 32);
+            tmpContent.txContent.value.length = 32;
+        } else if (provisionType == PROVISION_UNLOCK) {
+            memcpy(tmpContent.txContent.value.value, dataContext.unlockContext.data + 4, 32);
+            tmpContent.txContent.value.length = 32;
+        } else if (provisionType == PROVISION_RELOCK) {
+            memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
+            tmpContent.txContent.value.length = 32;
+        } else {
+            if (dataPresent && !N_storage.dataAllowed) {
+                reset_app_context();
+                PRINTF("Data is present but not allowed\n");
+                if (direct) {
+                    THROW(SW_ERROR_IN_DATA);
+                } else {
+                    io_send_sw(SW_ERROR_IN_DATA);
+                    ui_idle();
+                    return;
+                }
             }
         }
+
+        // Add address
+        if (tmpContent.txContent.destinationLength != 0) {
+            char address[41];
+            getEthAddressStringFromBinary(tmpContent.txContent.destination,
+                                          address,
+                                          CHAIN_ID,
+                                          &sha3);
+            strings.common.fullAddress[0] = '0';
+            strings.common.fullAddress[1] = 'x';
+            memcpy(strings.common.fullAddress + 2, address, 40);
+            strings.common.fullAddress[42] = '\0';
+        } else {
+            strcpy(strings.common.fullAddress, "New Contract");
+        }
+        // Add gateway fee recipient address
+        if (tmpContent.txContent.gatewayDestinationLength != 0) {
+            char gatewayAddress[41];
+            getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination,
+                                          gatewayAddress,
+                                          CHAIN_ID,
+                                          &sha3);
+            strings.common.fullGatewayAddress[0] = '0';
+            strings.common.fullGatewayAddress[1] = 'x';
+            memcpy(strings.common.fullGatewayAddress + 2, gatewayAddress, 40);
+            strings.common.fullGatewayAddress[42] = '\0';
+        }
+        // Add amount in ethers or tokens
+        convertUint256BE(tmpContent.txContent.value.value,
+                         tmpContent.txContent.value.length,
+                         &uint256);
+        tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
+        i = 0;
+        while (G_io_apdu_buffer[100 + i]) {
+            i++;
+        }
+        adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                       i,
+                       (char *) G_io_apdu_buffer,
+                       100,
+                       decimals);
+        i = 0;
+        tickerOffset = 0;
+        while (ticker[tickerOffset]) {
+            strings.common.fullAmount[tickerOffset] = ticker[tickerOffset];
+            tickerOffset++;
+        }
+        while (G_io_apdu_buffer[i]) {
+            strings.common.fullAmount[tickerOffset + i] = G_io_apdu_buffer[i];
+            i++;
+        }
+        strings.common.fullAmount[tickerOffset + i] = '\0';
+        // Add gateway fee
+        convertUint256BE(tmpContent.txContent.gatewayFee.value,
+                         tmpContent.txContent.gatewayFee.length,
+                         &uint256);
+        tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
+        i = 0;
+        while (G_io_apdu_buffer[100 + i]) {
+            i++;
+        }
+        adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                       i,
+                       (char *) G_io_apdu_buffer,
+                       100,
+                       feeDecimals);
+        i = 0;
+        tickerOffset = 0;
+        while (feeTicker[tickerOffset]) {
+            strings.common.gatewayFee[tickerOffset] = feeTicker[tickerOffset];
+            tickerOffset++;
+        }
+        while (G_io_apdu_buffer[i]) {
+            strings.common.gatewayFee[tickerOffset + i] = G_io_apdu_buffer[i];
+            i++;
+        }
+        strings.common.gatewayFee[tickerOffset + i] = '\0';
     }
-    // Add address
-    if (tmpContent.txContent.destinationLength != 0) {
-        char address[41];
-        getEthAddressStringFromBinary(tmpContent.txContent.destination, address, CHAIN_ID, &sha3);
-        strings.common.fullAddress[0] = '0';
-        strings.common.fullAddress[1] = 'x';
-        memcpy(strings.common.fullAddress + 2, address, 40);
-        strings.common.fullAddress[42] = '\0';
-    } else {
-        strcpy(strings.common.fullAddress, "New Contract");
-    }
-    // Add gateway fee recipient address
-    if (tmpContent.txContent.gatewayDestinationLength != 0) {
-        char gatewayAddress[41];
-        getEthAddressStringFromBinary(tmpContent.txContent.gatewayDestination,
-                                      gatewayAddress,
-                                      CHAIN_ID,
-                                      &sha3);
-        strings.common.fullGatewayAddress[0] = '0';
-        strings.common.fullGatewayAddress[1] = 'x';
-        memcpy(strings.common.fullGatewayAddress + 2, gatewayAddress, 40);
-        strings.common.fullGatewayAddress[42] = '\0';
-    }
-    // Add amount in ethers or tokens
-    convertUint256BE(tmpContent.txContent.value.value, tmpContent.txContent.value.length, &uint256);
-    tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
-    i = 0;
-    while (G_io_apdu_buffer[100 + i]) {
-        i++;
-    }
-    adjustDecimals((char *) (G_io_apdu_buffer + 100), i, (char *) G_io_apdu_buffer, 100, decimals);
-    i = 0;
-    tickerOffset = 0;
-    while (ticker[tickerOffset]) {
-        strings.common.fullAmount[tickerOffset] = ticker[tickerOffset];
-        tickerOffset++;
-    }
-    while (G_io_apdu_buffer[i]) {
-        strings.common.fullAmount[tickerOffset + i] = G_io_apdu_buffer[i];
-        i++;
-    }
-    strings.common.fullAmount[tickerOffset + i] = '\0';
-    // Add gateway fee
-    convertUint256BE(tmpContent.txContent.gatewayFee.value,
-                     tmpContent.txContent.gatewayFee.length,
-                     &uint256);
-    tostring256(&uint256, 10, (char *) (G_io_apdu_buffer + 100), 100);
-    i = 0;
-    while (G_io_apdu_buffer[100 + i]) {
-        i++;
-    }
-    adjustDecimals((char *) (G_io_apdu_buffer + 100),
-                   i,
-                   (char *) G_io_apdu_buffer,
-                   100,
-                   feeDecimals);
-    i = 0;
-    tickerOffset = 0;
-    while (feeTicker[tickerOffset]) {
-        strings.common.gatewayFee[tickerOffset] = feeTicker[tickerOffset];
-        tickerOffset++;
-    }
-    while (G_io_apdu_buffer[i]) {
-        strings.common.gatewayFee[tickerOffset + i] = G_io_apdu_buffer[i];
-        i++;
-    }
-    strings.common.gatewayFee[tickerOffset + i] = '\0';
+
     // Compute maximum fee
     convertUint256BE(tmpContent.txContent.gasprice.value,
                      tmpContent.txContent.gasprice.length,
@@ -476,7 +500,11 @@ void finalizeParsing(bool direct) {
         i++;
     }
     strings.common.maxFee[tickerOffset + i] = '\0';
+    // ---- prepare nonce (in ethereum but not in celo)
+    // ---- prepare network field (in ethereum but not in celo)
+    // ------------------END OF APP-ETHEREUM FINALIZE_PARSING_HELPER -------------------
 
+    // ---- if store_calldata is true and no calldata present, send error invalid data
     switch (provisionType) {
         case PROVISION_LOCK:
             strcpy(strings.common.stakingType, "Lock");
@@ -530,7 +558,12 @@ void finalizeParsing(bool direct) {
         case PROVISION_CREATE_ACCOUNT:
             ui_approval_celo_create_account_flow();
             break;
+        // km_todo: add check, if store_calldata is true, dataPresent and !N_storage.dataAllowed is
+        // false, then show blind signing flow/error ??  -->  this check is at around line 381 in
+        // the last else if the "if (provisionType == PROVISION_TOKEN)"
+        //
         default:
+            // km_todo: there might be the need for another ui for the generic flow here
             if (tmpContent.txContent.gatewayDestinationLength != 0) {
                 if (dataPresent && !N_storage.contractDetails) {
                     ui_approval_celo_data_warning_gateway_tx_flow();
