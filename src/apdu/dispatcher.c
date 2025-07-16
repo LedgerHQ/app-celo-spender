@@ -7,6 +7,7 @@
 #include "celo.h"
 #include "handlers.h"
 #include "commands_712.h"
+#include "sign.h"
 
 #include "constants.h"
 

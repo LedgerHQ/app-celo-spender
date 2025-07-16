@@ -18,6 +18,8 @@
 #define INS_EIP712_STRUCT_DEF               0x1A
 #define INS_EIP712_STRUCT_IMPL              0x1C
 #define INS_EIP712_FILTERING                0x1E
+#define INS_GTP_TRANSACTION_INFO            0x26
+#define INS_GTP_FIELD                       0x28
 #define INS_GET_APP_TYPE                    0xFF
 
 // Common instructions
