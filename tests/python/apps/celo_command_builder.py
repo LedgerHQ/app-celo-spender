@@ -13,7 +13,7 @@ from .eip712 import EIP712FieldType
 class InsType(IntEnum):
     # GET_PUBLIC_ADDR = 0x02
     # GET_ETH2_PUBLIC_ADDR = 0x0E
-    # SIGN = 0x04
+    SIGN = 0x04
     # GET_APP_CONFIGURATION = 0x06
     # PERSONAL_SIGN = 0x08
     PROVIDE_ERC20_TOKEN_INFORMATION = 0x0A
@@ -25,10 +25,10 @@ class InsType(IntEnum):
     EIP712_SEND_STRUCT_IMPL = 0x1C
     EIP712_SEND_FILTERING = 0x1E
     EIP712_SIGN = 0x0C
-    GET_CHALLENGE = 0x20
-    PROVIDE_TRUSTED_NAME = 0x22
+    # GET_CHALLENGE = 0x20
+    # PROVIDE_TRUSTED_NAME = 0x22
     # PROVIDE_ENUM_VALUE = 0x24
-    # PROVIDE_TRANSACTION_INFO = 0x26
+    PROVIDE_TRANSACTION_INFO = 0x26
     # PROVIDE_PROXY_INFO = 0x2A
     # PROVIDE_NETWORK_INFORMATION = 0x30
     # PROVIDE_TX_SIMULATION = 0x32
@@ -314,16 +314,16 @@ class CommandBuilder:
     #         InsType.EXTERNAL_PLUGIN_SETUP, P1Type.COMPLETE_SEND, 0x00, data
     #     )
 
-    # def sign(self, bip32_path: str, rlp_data: bytes, p2: int) -> list[bytes]:
-    #     apdus = []
-    #     payload = pack_derivation_path(bip32_path)
-    #     payload += rlp_data
-    #     p1 = P1Type.SIGN_FIRST_CHUNK
-    #     while len(payload) > 0:
-    #         apdus.append(self._serialize(InsType.SIGN, p1, p2, payload[:0xFF]))
-    #         payload = payload[0xFF:]
-    #         p1 = P1Type.SIGN_SUBSQT_CHUNK
-    #     return apdus
+    def sign(self, bip32_path: str, rlp_data: bytes, p2: int) -> list[bytes]:
+        apdus = []
+        payload = pack_derivation_path(bip32_path)
+        payload += rlp_data
+        p1 = P1Type.SIGN_FIRST_CHUNK
+        while len(payload) > 0:
+            apdus.append(self._serialize(InsType.SIGN, p1, p2, payload[:0xFF]))
+            payload = payload[0xFF:]
+            p1 = P1Type.SIGN_SUBSQT_CHUNK
+        return apdus
 
     # def get_challenge(self) -> bytes:
     #     return self._serialize(InsType.GET_CHALLENGE, 0x00, 0x00)
@@ -447,28 +447,28 @@ class CommandBuilder:
             InsType.PROVIDE_ERC20_TOKEN_INFORMATION, 0x00, 0x00, payload
         )
 
-    # def common_tlv_serialize(
-    #     self,
-    #     ins: InsType,
-    #     tlv_payload: bytes,
-    #     p1l: list[int] = [0x01, 0x00],
-    #     p2l: list[int] = [0x00],
-    #     payload: bytes = bytes(),
-    # ) -> list[bytes]:
-    #     assert len(p1l) in [1, 2]
-    #     assert len(p2l) in [1, 2]
-    #     chunks = []
-    #     payload += struct.pack(">H", len(tlv_payload))
-    #     payload += tlv_payload
-    #     p1 = p1l[0]
-    #     p2 = p2l[0]
-    #     while len(payload) > 0:
-    #         chunks.append(self._serialize(ins, p1, p2, payload[:0xFF]))
-    #         payload = payload[0xFF:]
-    #         # -1 so it works with a list of 1 or 2 items
-    #         p1 = p1l[-1]
-    #         p2 = p2l[-1]
-    #     return chunks
+    def common_tlv_serialize(
+        self,
+        ins: InsType,
+        tlv_payload: bytes,
+        p1l: list[int] = [0x01, 0x00],
+        p2l: list[int] = [0x00],
+        payload: bytes = bytes(),
+    ) -> list[bytes]:
+        assert len(p1l) in [1, 2]
+        assert len(p2l) in [1, 2]
+        chunks = []
+        payload += struct.pack(">H", len(tlv_payload))
+        payload += tlv_payload
+        p1 = p1l[0]
+        p2 = p2l[0]
+        while len(payload) > 0:
+            chunks.append(self._serialize(ins, p1, p2, payload[:0xFF]))
+            payload = payload[0xFF:]
+            # -1 so it works with a list of 1 or 2 items
+            p1 = p1l[-1]
+            p2 = p2l[-1]
+        return chunks
 
     # def provide_network_information(
     #     self, tlv_payload: bytes, icon: Optional[bytes] = None
@@ -518,5 +518,5 @@ class CommandBuilder:
     #         InsType.PROVIDE_TX_SIMULATION, tlv_payload, p1l=[0x00], p2l=[0x01, 0x00]
     #     )
 
-    # def provide_proxy_info(self, tlv_payload: bytes) -> list[bytes]:
-    #     return self.common_tlv_serialize(InsType.PROVIDE_PROXY_INFO, tlv_payload)
+    def provide_proxy_info(self, tlv_payload: bytes) -> list[bytes]:
+        return self.common_tlv_serialize(InsType.PROVIDE_PROXY_INFO, tlv_payload)
