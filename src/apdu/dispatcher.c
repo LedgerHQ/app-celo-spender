@@ -76,6 +76,13 @@ int apdu_dispatcher(const command_t *cmd) {
 
         case INS_EIP712_FILTERING:
             return handle_eip712_filtering(cmd->p1, cmd->p2, cmd->data, cmd->lc, flags);
+        case INS_GTP_FIELD:
+            // km_todo: implement this"
+            return io_send_sw(SW_DENY);
+        case INS_GTP_TRANSACTION_INFO:
+            // km_todo: implement this
+            return io_send_sw(SW_DENY);
+
         default:
             io_send_sw(SW_INS_NOT_SUPPORTED);
             return -1;
