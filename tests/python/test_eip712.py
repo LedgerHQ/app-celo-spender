@@ -19,14 +19,14 @@ from ragger.error import ExceptionRAPDU
 import apps.eth_response_parser as ResponseParser
 from apps.eth_utils import recover_message
 
-from apps.celo import TrustedNameType, TrustedNameSource
+# from apps.celo import TrustedNameType, TrustedNameSource
 from apps.eip712 import InputData
 
 from apps.celo_settings import SettingID, settings_toggle
 
 from apps.eth_tx_simu import TxSimu
 
-from apps.eth_proxy_info import ProxyInfo
+# from apps.eth_proxy_info import ProxyInfo
 
 # my imports
 from pathlib import Path
