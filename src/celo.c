@@ -27,14 +27,14 @@ volatile uint8_t appState;
 void reset_app_context() {
     appState = APP_STATE_IDLE;
     PRINTF("Resetting context\n");
-    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKENS);
+    explicit_bzero(&tmpCtx.transactionContext.assetSet, MAX_ASSETS);
     explicit_bzero(&tmpContent, sizeof(tmpContent));
     explicit_bzero(&txContext, sizeof(txContext));
 }
 
-void forget_known_tokens(void) {
-    explicit_bzero(&tmpCtx.transactionContext.tokenSet, MAX_TOKENS);
-    tmpCtx.transactionContext.currentTokenIndex = 0;
+void forget_known_assets(void) {
+    explicit_bzero(&tmpCtx.transactionContext.assetSet, MAX_ASSETS);
+    tmpCtx.transactionContext.currentAssetIndex = 0;
 }
 
 #include "uint256.h"
@@ -47,7 +47,7 @@ tokenDefinition_t *getKnownToken(uint8_t *tokenAddr) {
         return NULL;
     }
 
-    return &tmpCtx.transactionContext.tokens[index];
+    return &tmpCtx.transactionContext.extraInfo[index].token;
 }
 
 int get_token_index_by_addr(const uint8_t *addr) {
@@ -57,22 +57,23 @@ int get_token_index_by_addr(const uint8_t *addr) {
     }
     PRINTF("\n");
 
-    for (int i = 0; i < MAX_TOKENS; i++) {
+    for (int i = 0; i < MAX_ASSETS; i++) {
         PRINTF(
             "km_logs [celo.c] (get_token_index_by_addr) - "
-            "tmpCtx.transactionContext.tokens[%d].address: ",
+            "tmpCtx.transactionContext.extraInfo[%d].token.address: ",
             i);
         for (int j = 0; j < ADDRESS_LENGTH; j++) {
-            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+            PRINTF("%02x", tmpCtx.transactionContext.extraInfo[i].token.address[j]);
         }
         PRINTF("\n");
         PRINTF(
             "km_logs [celo.c] (get_token_index_by_addr) - "
-            "tmpCtx.transactionContext.tokenSet[%d]: %d\n",
+            "tmpCtx.transactionContext.assetSet[%d]: %d\n",
             i,
-            tmpCtx.transactionContext.tokenSet[i]);
-        if (tmpCtx.transactionContext.tokenSet[i] &&
-            (memcmp(tmpCtx.transactionContext.tokens[i].address, addr, ADDRESS_LENGTH) == 0)) {
+            tmpCtx.transactionContext.assetSet[i]);
+        if (tmpCtx.transactionContext.assetSet[i] &&
+            (memcmp(tmpCtx.transactionContext.extraInfo[i].token.address, addr, ADDRESS_LENGTH) ==
+0)) {
             PRINTF("Token found at index %d\n", i);
             return i;
         }

@@ -45,7 +45,7 @@ typedef enum {
 #define UI_712_TRUSTED_NAME        (1 << 4)
 
 typedef struct {
-    s_amount_join joins[MAX_TOKENS];
+    s_amount_join joins[MAX_ASSETS];
     uint8_t idx;
     e_amount_join_state state;
 } s_amount_context;
@@ -443,8 +443,8 @@ static bool ui_712_format_uint(const uint8_t *data, uint8_t length, bool first) 
 static bool ui_712_format_amount_join(void) {
     const tokenDefinition_t *token = NULL;
 
-    if (tmpCtx.transactionContext.tokenSet[ui_ctx->amount.idx]) {
-        token = &tmpCtx.transactionContext.tokens[ui_ctx->amount.idx];
+    if (tmpCtx.transactionContext.assetSet[ui_ctx->amount.idx]) {
+        token = &tmpCtx.transactionContext.extraInfo[ui_ctx->amount.idx].token;
     }
     if ((ui_ctx->amount.joins[ui_ctx->amount.idx].value_length == INT256_LENGTH) &&
         ismaxint(ui_ctx->amount.joins[ui_ctx->amount.idx].value,
@@ -487,23 +487,23 @@ void amount_join_set_token_received(void) {
  */
 static bool update_amount_join(const uint8_t *data, uint8_t length) {
     const tokenDefinition_t *token = NULL;
-    // print tmpCtx.transactionContext.tokens
-    PRINTF("km_logs [ui_logic.c] (update_amount_join) - tmpCtx.transactionContext.tokens: ");
-    for (int i = 0; i < MAX_TOKENS; i++) {
-        PRINTF("\n[%d].address: ", i);
+    // print tmpCtx.transactionContext.extraInfo
+    PRINTF("km_logs [ui_logic.c] (update_amount_join) - tmpCtx.transactionContext.extraInfo: ");
+    for (int i = 0; i < MAX_ASSETS; i++) {
+        PRINTF("\n[%d].token.address: ", i);
         for (int j = 0; j < ADDRESS_LENGTH; j++) {
-            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+            PRINTF("%02x", tmpCtx.transactionContext.extraInfo[i].token.address[j]);
         }
     }
     PRINTF("\n");
 
-    if (tmpCtx.transactionContext.tokenSet[ui_ctx->amount.idx]) {
-        token = &tmpCtx.transactionContext.tokens[ui_ctx->amount.idx];
+    if (tmpCtx.transactionContext.assetSet[ui_ctx->amount.idx]) {
+        token = &tmpCtx.transactionContext.extraInfo[ui_ctx->amount.idx].token;
     } else {
-        if (tmpCtx.transactionContext.currentTokenIndex == ui_ctx->amount.idx) {
+        if (tmpCtx.transactionContext.currentAssetIndex == ui_ctx->amount.idx) {
             // So that the following amount-join find their tokens in the expected indices
-            tmpCtx.transactionContext.currentTokenIndex =
-                (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKENS;
+            tmpCtx.transactionContext.currentAssetIndex =
+                (tmpCtx.transactionContext.currentAssetIndex + 1) % MAX_ASSETS;
         }
     }
     switch (ui_ctx->amount.state) {

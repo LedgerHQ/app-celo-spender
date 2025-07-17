@@ -54,19 +54,19 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
 
     PRINTF(
         "km_logs [provide_erc20_token_information.c] (handleProvideErc20TokenInformation) - START "
-        "tmpCtx.transactionContext.tokens: ");
-    for (int i = 0; i < MAX_TOKENS; i++) {
+        "tmpCtx.transactionContext.extraInfo: ");
+    for (int i = 0; i < MAX_ASSETS; i++) {
         PRINTF("\n[%d].address: ", i);
         for (int j = 0; j < ADDRESS_LENGTH; j++) {
-            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+            PRINTF("%02x", tmpCtx.transactionContext.extraInfo[i].token.address[j]);
         }
     }
     PRINTF("\n");
 
     tokenDefinition_t *token =
-        &tmpCtx.transactionContext.tokens[tmpCtx.transactionContext.currentTokenIndex];
+        &tmpCtx.transactionContext.extraInfo[tmpCtx.transactionContext.currentAssetIndex].token;
 
-  PRINTF("Provisioning currentTokenIndex %d\n", tmpCtx.transactionContext.currentTokenIndex);
+    PRINTF("Provisioning currentAssetIndex %d\n", tmpCtx.transactionContext.currentAssetIndex);
 
   if (dataLength < 1) {
     THROW(SW_ERROR_IN_DATA);
@@ -106,17 +106,17 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   }
     PRINTF(
         "km_logs [provide_erc20_token_information.c] (handleProvideErc20TokenInformation) - END "
-        "tmpCtx.transactionContext.tokens: ");
-    for (int i = 0; i < MAX_TOKENS; i++) {
+        "tmpCtx.transactionContext.extraInfo: ");
+    for (int i = 0; i < MAX_ASSETS; i++) {
         PRINTF("\n[%d].address: ", i);
         for (int j = 0; j < ADDRESS_LENGTH; j++) {
-            PRINTF("%02x", tmpCtx.transactionContext.tokens[i].address[j]);
+            PRINTF("%02x", tmpCtx.transactionContext.extraInfo[i].token.address[j]);
         }
     }
     PRINTF("\n");
 
-  tmpCtx.transactionContext.tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
-    tmpCtx.transactionContext.currentTokenIndex =
-        (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKENS;
+    tmpCtx.transactionContext.assetSet[tmpCtx.transactionContext.currentAssetIndex] = 1;
+    tmpCtx.transactionContext.currentAssetIndex =
+        (tmpCtx.transactionContext.currentAssetIndex + 1) % MAX_ASSETS;
   THROW(SW_OK);
 }

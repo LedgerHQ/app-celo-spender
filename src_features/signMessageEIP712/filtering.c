@@ -11,7 +11,7 @@
 #include "filtering.h"
 #include "os.h"
 #include "os_pki.h"
-#include "constants.h"  // MAX_TOKENS, ADDRESS_LENGTH, INT256_LENGTH
+#include "constants.h"  // MAX_ASSETS, ADDRESS_LENGTH, INT256_LENGTH
 #include "globals.h"
 #include "celo.h"  // get_token_index_by_addr
 // #include "trusted_name.h"
@@ -150,7 +150,7 @@ end:
  * @return whether the index is valid or not
  */
 static bool check_token_index(uint8_t idx) {
-    if (idx >= MAX_TOKENS) {
+    if (idx >= MAX_ASSETS) {
         PRINTF("Error: token index out of range (%u)\n", idx);
         return false;
     }

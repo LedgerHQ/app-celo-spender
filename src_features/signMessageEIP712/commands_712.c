@@ -9,7 +9,7 @@
 #include "ui_common.h"  // ui_idle, io_seproxyhal_send_status
 #include "globals.h"
 #include "utils.h"  // parse_bip32_path, allzeroes
-#include "celo.h"   // forget_known_tokens
+#include "celo.h"   // forget_known_assets
 #include "io.h"
 #include "commands_712.h"
 // #include "manage_asset_info.h"
@@ -225,7 +225,7 @@ uint16_t handle_eip712_filtering(uint8_t p1,
                 ui_712_set_filtering_mode(EIP712_FILTERING_FULL);
                 ret = compute_schema_hash();
             }
-            forget_known_tokens();
+            forget_known_assets();
             break;
         case P2_FILT_DISCARDED_PATH:
             ret = filtering_discarded_path(cdata, length);
