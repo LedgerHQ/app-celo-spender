@@ -28,6 +28,7 @@ int handleSign(uint8_t p1,
                volatile unsigned int *flags) {
     parserStatus_e txResult;
     switch (p2) {
+        PRINTF("km-logs [sign.c] (handleSign) Sign mode: %d\n", p2);
         case SIGN_MODE_BASIC:
         case SIGN_MODE_STORE:
             // ------------------START OF APP-ETHEREUM HANDLE_FIRST_SIGN_CHUNK-------------------
@@ -67,6 +68,7 @@ int handleSign(uint8_t p1,
                     return io_send_sw(SW_TX_TYPE_NOT_SUPPORTED);
                 }
                 // ------------------END OF APP-ETHEREUM HANDLE_FIRST_SIGN_CHUNK-------------------
+                PRINTF("km-logs [sign.c] (handleSign) done with the first sign chunk\n");
             } else if (p1 != P1_MORE) {
                 return io_send_sw(SW_WRONG_P1_OR_P2);
             }
@@ -79,7 +81,22 @@ int handleSign(uint8_t p1,
             }
             break;
         case SIGN_MODE_START_FLOW:
-            // km_todo: add the logic for the generic flow here ( sign_mode_start_flow)
+            if (appState != APP_STATE_SIGNING_TX) {
+                PRINTF("Signature not initialized\n");
+                return APDU_RESPONSE_CONDITION_NOT_SATISFIED;
+            }
+            if (dataLength != 0) {
+                return APDU_RESPONSE_INVALID_DATA;
+            }
+            if (!validate_instruction_hash()) {
+                PRINTF("Error: instructions hash mismatch!\n");
+                return APDU_RESPONSE_INVALID_DATA;
+            }
+            if (!ui_gcs()) {
+                return APDU_RESPONSE_INTERNAL_ERROR;
+            }
+            *flags |= IO_ASYNCH_REPLY;
+            return APDU_NO_RESPONSE;
             break;
         default:
             return io_send_sw(SW_WRONG_P1_OR_P2);
@@ -110,7 +127,7 @@ int handleSign(uint8_t p1,
         finalizeParsing(true);
     }
     // ------------------END OF APP-ETHEREUM HANDLE_PARSING_STATUS -------------------
-    // ------ MISSING A CHECK FOR BASIG MODE HERE ----------------------
+    // ------ MISSING A CHECK FOR BASIG MODE HERE ?----------------------
 
     *flags |= IO_ASYNCH_REPLY;
 
