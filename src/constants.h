@@ -56,9 +56,10 @@
 // The length of a 256-bit integer in bytes.
 #define INT256_LENGTH 32
 
-#define MAX_TOKENS 5
+#define MAX_ASSETS 5
 
-#define ADDRESS_LENGTH     20
-#define INT256_LENGTH      32
-#define MAX_TICKER_LEN     11  // 10 characters + '\0'
-#define CX_KECCAK_256_SIZE 32
+#define ADDRESS_LENGTH          20
+#define COLLECTION_NAME_MAX_LEN 70
+#define INT256_LENGTH           32
+#define MAX_TICKER_LEN          11  // 10 characters + '\0'
+#define CX_KECCAK_256_SIZE      32

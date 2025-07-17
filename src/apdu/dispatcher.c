@@ -39,7 +39,7 @@ int apdu_dispatcher(const command_t *cmd) {
     // Handle different INS commands
     switch (cmd->ins) {
         case INS_GET_PUBLIC_KEY:
-            memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKENS);
+            memset(tmpCtx.transactionContext.assetSet, 0, MAX_ASSETS);
             return handler_get_public_key(cmd);
 
         case INS_PROVIDE_ERC20_TOKEN_INFORMATION:
@@ -52,7 +52,7 @@ int apdu_dispatcher(const command_t *cmd) {
             return handler_get_app_configuration(cmd);
 
         case INS_SIGN_PERSONAL_MESSAGE:
-            memset(tmpCtx.transactionContext.tokenSet, 0, MAX_TOKENS);
+            memset(tmpCtx.transactionContext.assetSet, 0, MAX_ASSETS);
             return handler_sign_personal_message(cmd);
 
         case INS_GET_APP_TYPE:
@@ -61,7 +61,7 @@ int apdu_dispatcher(const command_t *cmd) {
         case INS_SIGN_EIP_712_MESSAGE:
             switch (cmd->p2) {
                 case P2_EIP712_LEGACY_IMPLEM:
-                    forget_known_tokens();
+                    forget_known_assets();
                     return handleSignEIP712Message_v0(cmd->p1, cmd->data, cmd->lc, flags);
                 case P2_EIP712_FULL_IMPLEM:
                     return handle_eip712_sign(cmd->data, cmd->lc, flags);

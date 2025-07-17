@@ -80,7 +80,7 @@ void app_main() {
 
     // Reset context
     reset_app_context();
-    tmpCtx.transactionContext.currentTokenIndex = 0;
+    tmpCtx.transactionContext.currentAssetIndex = 0;
 
     // Initialize the NVM data if required
     if (N_storage.initialized != 0x01) {

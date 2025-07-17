@@ -29,16 +29,34 @@
 #endif
 #define SHARED_CTX_FIELD_2_SIZE 40
 
+// --8<-- [start:asset_info]
+// NFT
+
+typedef struct nftInfo_t {
+    uint8_t contractAddress[ADDRESS_LENGTH];  // must be first item
+    char collectionName[COLLECTION_NAME_MAX_LEN + 1];
+} nftInfo_t;
+
+// TOKENS
+
 typedef struct tokenDefinition_t {
-    uint8_t address[ADDRESS_LENGTH];
-    char ticker[10];
+    uint8_t address[ADDRESS_LENGTH];  // must be first item
+    char ticker[MAX_TICKER_LEN];
     uint8_t decimals;
 } tokenDefinition_t;
 
-// typedef union extraInfo_t {
-//     tokenDefinition_t token;
-//     // NFTs are not supported.
-// } extraInfo_t;
+// UNION
+
+typedef union extraInfo_t {
+    tokenDefinition_t token;
+// Would have used HAVE_NFT_SUPPORT but it is only declared for the Ethereum app
+// and not plugins
+#ifndef TARGET_NANOS
+    nftInfo_t nft;
+#endif
+} extraInfo_t;
+// --8<-- [end:asset_info]
+
 
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
@@ -126,9 +144,10 @@ typedef struct messageSigningContext712_t {
 typedef struct transactionContext_t {
     bip32Path_t derivationPath;
     uint8_t hash[32];
-    tokenDefinition_t tokens[MAX_TOKENS];
-    uint8_t tokenSet[MAX_TOKENS];
-    uint8_t currentTokenIndex;
+union extraInfo_t extraInfo[MAX_ASSETS];
+    // tokenDefinition_t tokens[MAX_ASSETS]; // km_todo: remove this
+    uint8_t assetSet[MAX_ASSETS];
+    uint8_t currentAssetIndex;
 } transactionContext_t;
 
 typedef union {

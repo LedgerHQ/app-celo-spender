@@ -71,6 +71,6 @@ void finalizeParsing(bool direct);
 /**
  * @brief Forgets the known tokens.
  */
-void forget_known_tokens(void);
+void forget_known_assets(void);
 
 extern volatile uint8_t appState; /**< The application state. */
