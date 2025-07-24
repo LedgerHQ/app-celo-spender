@@ -43,9 +43,8 @@ int handleSignPersonalMessage(uint8_t p1,
             reset_app_context();
         }
 
-        if (parse_bip32_path(&tmpCtx.messageSigningContext.derivationPath,
-                             workBuffer,
-                             dataLength) < 0) {
+        if (parse_bip32_path(&tmpCtx.messageSigningContext.derivationPath, workBuffer, dataLength) <
+            0) {
             PRINTF("Invalid path\n");
             return io_send_sw(SW_ERROR_IN_DATA);
         }

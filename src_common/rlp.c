@@ -8,7 +8,7 @@ bool rlpCanDecode(const uint8_t *buffer, size_t bufferLength, bool *valid) {
             return false;
         }
         if (*buffer > 0xbb) {
-            *valid = false; // arbitrary 32 bits length limitation
+            *valid = false;  // arbitrary 32 bits length limitation
             return true;
         }
     } else if (*buffer <= 0xf7) {
@@ -17,7 +17,7 @@ bool rlpCanDecode(const uint8_t *buffer, size_t bufferLength, bool *valid) {
             return false;
         }
         if (*buffer > 0xfb) {
-            *valid = false; // arbitrary 32 bits length limitation
+            *valid = false;  // arbitrary 32 bits length limitation
             return true;
         }
     }
@@ -25,8 +25,11 @@ bool rlpCanDecode(const uint8_t *buffer, size_t bufferLength, bool *valid) {
     return true;
 }
 
-bool rlpDecodeLength(const uint8_t *buffer, size_t bufferLength,
-                     uint32_t *fieldLength, uint32_t *offset, bool *list) {
+bool rlpDecodeLength(const uint8_t *buffer,
+                     size_t bufferLength,
+                     uint32_t *fieldLength,
+                     uint32_t *offset,
+                     bool *list) {
     (void) bufferLength;
     if (*buffer <= 0x7f) {
         *offset = 0;
@@ -40,22 +43,21 @@ bool rlpDecodeLength(const uint8_t *buffer, size_t bufferLength,
         *offset = 1 + (*buffer - 0xb7);
         *list = false;
         switch (*buffer) {
-        case 0xb8:
-            *fieldLength = *(buffer + 1);
-            break;
-        case 0xb9:
-            *fieldLength = (*(buffer + 1) << 8) + *(buffer + 2);
-            break;
-        case 0xba:
-            *fieldLength =
-                (*(buffer + 1) << 16) + (*(buffer + 2) << 8) + *(buffer + 3);
-            break;
-        case 0xbb:
-            *fieldLength = (*(buffer + 1) << 24) + (*(buffer + 2) << 16) +
-                           (*(buffer + 3) << 8) + *(buffer + 4);
-            break;
-        default:
-            return false; // arbitrary 32 bits length limitation
+            case 0xb8:
+                *fieldLength = *(buffer + 1);
+                break;
+            case 0xb9:
+                *fieldLength = (*(buffer + 1) << 8) + *(buffer + 2);
+                break;
+            case 0xba:
+                *fieldLength = (*(buffer + 1) << 16) + (*(buffer + 2) << 8) + *(buffer + 3);
+                break;
+            case 0xbb:
+                *fieldLength = (*(buffer + 1) << 24) + (*(buffer + 2) << 16) +
+                               (*(buffer + 3) << 8) + *(buffer + 4);
+                break;
+            default:
+                return false;  // arbitrary 32 bits length limitation
         }
     } else if (*buffer <= 0xf7) {
         *offset = 1;
@@ -65,22 +67,21 @@ bool rlpDecodeLength(const uint8_t *buffer, size_t bufferLength,
         *offset = 1 + (*buffer - 0xf7);
         *list = true;
         switch (*buffer) {
-        case 0xf8:
-            *fieldLength = *(buffer + 1);
-            break;
-        case 0xf9:
-            *fieldLength = (*(buffer + 1) << 8) + *(buffer + 2);
-            break;
-        case 0xfa:
-            *fieldLength =
-                (*(buffer + 1) << 16) + (*(buffer + 2) << 8) + *(buffer + 3);
-            break;
-        case 0xfb:
-            *fieldLength = (*(buffer + 1) << 24) + (*(buffer + 2) << 16) +
-                           (*(buffer + 3) << 8) + *(buffer + 4);
-            break;
-        default:
-            return false; // arbitrary 32 bits length limitation
+            case 0xf8:
+                *fieldLength = *(buffer + 1);
+                break;
+            case 0xf9:
+                *fieldLength = (*(buffer + 1) << 8) + *(buffer + 2);
+                break;
+            case 0xfa:
+                *fieldLength = (*(buffer + 1) << 16) + (*(buffer + 2) << 8) + *(buffer + 3);
+                break;
+            case 0xfb:
+                *fieldLength = (*(buffer + 1) << 24) + (*(buffer + 2) << 16) +
+                               (*(buffer + 3) << 8) + *(buffer + 4);
+                break;
+            default:
+                return false;  // arbitrary 32 bits length limitation
         }
     }
 
