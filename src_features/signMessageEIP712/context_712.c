@@ -60,7 +60,6 @@ bool eip712_context_init(void) {
     eip712_context->go_home_on_failure = true;
 
     struct_state = NOT_INITIALIZED;
-
     return true;
 }
 

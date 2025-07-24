@@ -20,6 +20,7 @@
 
 #include "ethUstream.h"
 #include "rlp.h"
+#include "calldata.h"
 
 #ifdef TESTING
 #define PRINTF(...)
@@ -427,6 +428,14 @@ static bool processData(txContext_t *context) {
             (context->commandLength < ((context->currentFieldLength - context->currentFieldPos))
                  ? context->commandLength
                  : context->currentFieldLength - context->currentFieldPos);
+        if (context->store_calldata) {
+            if (context->currentFieldPos == 0) {
+                if (!calldata_init(context->currentFieldLength)) {
+                    return true;
+                }
+            }
+            calldata_append(context->workBuffer, copySize);
+        }
         if (copyTxData(context, NULL, copySize)) {
             return true;
         }
@@ -830,11 +839,13 @@ void initTx(txContext_t *context,
             cx_sha3_t *sha3,
             txContent_t *content,
             ustreamProcess_t customProcessor,
+            bool store_calldata,
             void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
     context->customProcessor = customProcessor;
+    context->store_calldata = store_calldata;
     context->extra = extra;
     context->currentField =
         1;  // This represents the first field in the RLP (CIP64_RLP_CONTENT || EIP1559_RLP_CONTENT)

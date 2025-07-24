@@ -40,6 +40,7 @@
 
 // Latest includes
 #include "constants.h"
+#include "mem.h"
 
 // Contexts
 dataContext_t dataContext;
@@ -63,6 +64,7 @@ uint16_t apdu_response_code;
 
 // Internal storage
 const internalStorage_t N_storage_real;
+const chain_config_t *chainConfig;
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
@@ -77,6 +79,8 @@ void app_main() {
     io_init();
 
     ui_idle();
+
+    app_mem_init();
 
     // Reset context
     reset_app_context();

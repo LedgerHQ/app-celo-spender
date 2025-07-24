@@ -506,8 +506,8 @@ class CommandBuilder:
     # def provide_enum_value(self, tlv_payload: bytes) -> list[bytes]:
     #     return self.common_tlv_serialize(InsType.PROVIDE_ENUM_VALUE, tlv_payload)
 
-    # def provide_transaction_info(self, tlv_payload: bytes) -> list[bytes]:
-    #     return self.common_tlv_serialize(InsType.PROVIDE_TRANSACTION_INFO, tlv_payload)
+    def provide_transaction_info(self, tlv_payload: bytes) -> list[bytes]:
+        return self.common_tlv_serialize(InsType.PROVIDE_TRANSACTION_INFO, tlv_payload)
 
     # def opt_in_tx_simulation(self) -> bytes:
     #     # Serialize the payload

@@ -11,6 +11,10 @@
 #include "utils.h"
 #include "ethUtils.h"
 
+#include "gtp_tx_info.h"
+
+static bool g_use_standard_ui;
+
 /**
  * Handles the signing of a transaction.
  *
@@ -26,9 +30,11 @@ int handleSign(uint8_t p1,
                const uint8_t *workBuffer,
                uint16_t dataLength,
                volatile unsigned int *flags) {
+    PRINTF("km-logs [sign.c] (handleSign) Starting this function\n");
+    PRINTF("km-logs [sign.c] (handleSign) Sign mode: %d\n", p2);
     parserStatus_e txResult;
+    g_use_standard_ui = (p2 == SIGN_MODE_BASIC);
     switch (p2) {
-        PRINTF("km-logs [sign.c] (handleSign) Sign mode: %d\n", p2);
         case SIGN_MODE_BASIC:
         case SIGN_MODE_STORE:
             // ------------------START OF APP-ETHEREUM HANDLE_FIRST_SIGN_CHUNK-------------------
@@ -53,10 +59,12 @@ int handleSign(uint8_t p1,
                        &sha3,
                        &tmpContent.txContent,
                        customProcessor,  // this is not present in the app-ethereum----------->
-                       NULL);            // the null is diff in the app-ethereum---------------->
+                       p2 == SIGN_MODE_STORE,
+                       NULL);
 
                 // Extract and validate the transaction type
                 uint8_t txType = *workBuffer;
+                PRINTF("km-logs [sign.c] (handleSign) txType: %d\n", txType);
                 if (txType == EIP1559 || txType == CIP64) {
                     // Initialize the SHA3 hashing with the transaction type
                     CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, workBuffer, 1, NULL, 0));
@@ -107,6 +115,7 @@ int handleSign(uint8_t p1,
         return io_send_sw(SW_INITIALIZATION_ERROR);
     }
     txResult = processTx(&txContext, workBuffer, dataLength);
+    PRINTF("km-logs [sign.c] (handleSign) - processTx result: %d\n", txResult);
     // --------to this level, the code does the same as in the app-ethereum ------------
     // ------------------START OF APP-ETHEREUM HANDLE_PARSING_STATUS -------------------
     switch (txResult) {
@@ -124,7 +133,7 @@ int handleSign(uint8_t p1,
     }
 
     if (txResult == USTREAM_FINISHED) {
-        finalizeParsing(true);
+        finalizeParsing(true, g_use_standard_ui);
     }
     // ------------------END OF APP-ETHEREUM HANDLE_PARSING_STATUS -------------------
     // ------ MISSING A CHECK FOR BASIG MODE HERE ?----------------------

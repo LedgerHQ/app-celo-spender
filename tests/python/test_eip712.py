@@ -24,13 +24,11 @@ from apps.eip712 import InputData
 
 from apps.celo_settings import SettingID, settings_toggle
 
-from apps.eth_tx_simu import TxSimu
+# from apps.eth_tx_simu import TxSimu
 
 # from apps.eth_proxy_info import ProxyInfo
 
 # my imports
-from pathlib import Path
-
 from apps.celo import CeloClient, StatusCode
 from apps.celo_utils import CELO_DERIVATION_PATH, CELO_PACKED_DERIVATION_PATH
 from utils import (
@@ -511,7 +509,7 @@ def test_eip712_filtering_empty_array(
     navigator: Navigator,
     test_name: str,
     golden_run: bool,
-    simu_params: Optional[TxSimu] = None,
+    # simu_params: Optional[TxSimu] = None,
 ):
     global snapshots_dirname
     global validate_warning
@@ -585,13 +583,13 @@ def test_eip712_filtering_empty_array(
         },
     }
 
-    if simu_params is not None:
-        validate_warning = True
-        smsg = encode_typed_data(full_message=data)
-        simu_params.tx_hash = smsg.body
-        simu_params.domain_hash = smsg.header
-        response = app_client.provide_tx_simulation(simu_params)
-        assert response.status == StatusCode.STATUS_OK
+    # if simu_params is not None:
+    #     validate_warning = True
+    #     smsg = encode_typed_data(full_message=data)
+    #     simu_params.tx_hash = smsg.body
+    #     simu_params.domain_hash = smsg.header
+    #     response = app_client.provide_tx_simulation(simu_params)
+    #     assert response.status == StatusCode.STATUS_OK
 
     vrs = eip712_new_common(
         device,

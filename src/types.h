@@ -57,7 +57,6 @@ typedef union extraInfo_t {
 } extraInfo_t;
 // --8<-- [end:asset_info]
 
-
 typedef struct tokenContext_t {
     uint8_t data[4 + 32 + 32];
 } tokenContext_t;
@@ -144,7 +143,7 @@ typedef struct messageSigningContext712_t {
 typedef struct transactionContext_t {
     bip32Path_t derivationPath;
     uint8_t hash[32];
-union extraInfo_t extraInfo[MAX_ASSETS];
+    union extraInfo_t extraInfo[MAX_ASSETS];
     // tokenDefinition_t tokens[MAX_ASSETS]; // km_todo: remove this
     uint8_t assetSet[MAX_ASSETS];
     uint8_t currentAssetIndex;
@@ -207,3 +206,8 @@ typedef enum {
     APP_STATE_SIGNING_MESSAGE,
     APP_STATE_SIGNING_EIP712
 } app_state_t;
+
+typedef struct chain_config_s {
+    char coinName[MAX_TICKER_LEN];  // ticker
+    uint64_t chainId;
+} chain_config_t;
