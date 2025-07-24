@@ -13,7 +13,4 @@ int handler_get_app_type(const command_t *cmd);
 int handler_get_wallet_id(const command_t *cmd);
 #endif
 
-uint16_t handleSignEIP712Message_v0(uint8_t p1,
-                                    const uint8_t *dataBuffer,
-                                    uint8_t dataLength,
-                                    unsigned int *flags);
+uint16_t handleSignEIP712Message_v0(uint8_t p1, const uint8_t *dataBuffer, uint8_t dataLength);

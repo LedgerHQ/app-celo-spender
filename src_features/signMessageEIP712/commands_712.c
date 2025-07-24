@@ -132,11 +132,7 @@ uint16_t handle_eip712_struct_def(uint8_t p2, const uint8_t *cdata, uint8_t leng
  * @param[in] length length of the command data
  * @return whether the command was successful or not
  */
-uint16_t handle_eip712_struct_impl(uint8_t p1,
-                                   uint8_t p2,
-                                   const uint8_t *cdata,
-                                   uint8_t length,
-                                   uint32_t *flags) {
+uint16_t handle_eip712_struct_impl(uint8_t p1, uint8_t p2, const uint8_t *cdata, uint8_t length) {
     bool ret = false;
     bool reply_apdu = true;
 
@@ -202,11 +198,7 @@ uint16_t handle_eip712_struct_impl(uint8_t p1,
  * @param[in] length length of the command data
  * @return whether the command was successful or not
  */
-uint16_t handle_eip712_filtering(uint8_t p1,
-                                 uint8_t p2,
-                                 const uint8_t *cdata,
-                                 uint8_t length,
-                                 uint32_t *flags) {
+uint16_t handle_eip712_filtering(uint8_t p1, uint8_t p2, const uint8_t *cdata, uint8_t length) {
     bool ret = true;
     bool reply_apdu = true;
     uint32_t path_crc = 0;
@@ -277,7 +269,7 @@ uint16_t handle_eip712_filtering(uint8_t p1,
  * @param[in] apdu_buf the APDU payload
  * @return whether the command was successful or not
  */
-uint16_t handle_eip712_sign(const uint8_t *cdata, uint8_t length, uint32_t *flags) {
+uint16_t handle_eip712_sign(const uint8_t *cdata, uint8_t length) {
     bool ret = false;
 
     if (eip712_context == NULL) {

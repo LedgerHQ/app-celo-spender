@@ -34,6 +34,10 @@ void ui_712_start_unfiltered(void);
 void ui_712_switch_to_message(void);
 void ui_712_switch_to_sign(void);
 void ui_sign_712_v0(void);
+
+// Generic clear-signing
+bool ui_gcs(void);
+
 void ui_error_blind_signing(void);
 
 unsigned int io_seproxyhal_touch_data_ok(void);

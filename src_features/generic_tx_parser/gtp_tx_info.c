@@ -242,8 +242,8 @@ bool handle_tx_info_struct(const s_tlv_data *data, s_tx_info_ctx *context) {
 bool verify_tx_info_struct(const s_tx_info_ctx *context) {
     uint16_t required_bits = 0;
     uint8_t hash[INT256_LENGTH];
-    const uint8_t *proxy_parent;
-    uint64_t tx_chain_id;
+    // const uint8_t *proxy_parent;
+    // uint64_t tx_chain_id;
 
     // check if struct version was provided
     required_bits |= SET_BIT(BIT_VERSION);
