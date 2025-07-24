@@ -30,12 +30,17 @@ void reset_app_context() {
     explicit_bzero(&tmpCtx.transactionContext.assetSet, MAX_ASSETS);
     explicit_bzero(&tmpContent, sizeof(tmpContent));
     explicit_bzero(&txContext, sizeof(txContext));
+
+    forget_known_assets();
+    if (txContext.store_calldata) {
+        gcs_cleanup();
+    }
 }
 
-void forget_known_assets(void) {
-    explicit_bzero(&tmpCtx.transactionContext.assetSet, MAX_ASSETS);
-    tmpCtx.transactionContext.currentAssetIndex = 0;
-}
+// void forget_known_assets(void) {
+//     explicit_bzero(&tmpCtx.transactionContext.assetSet, MAX_ASSETS);
+//     tmpCtx.transactionContext.currentAssetIndex = 0;
+// }
 
 #include "uint256.h"
 
@@ -73,14 +78,13 @@ int get_token_index_by_addr(const uint8_t *addr) {
             tmpCtx.transactionContext.assetSet[i]);
         if (tmpCtx.transactionContext.assetSet[i] &&
             (memcmp(tmpCtx.transactionContext.extraInfo[i].token.address, addr, ADDRESS_LENGTH) ==
-0)) {
+             0)) {
             PRINTF("Token found at index %d\n", i);
             return i;
         }
     }
     return -1;
 }
-static bool g_use_standard_ui;
 
 static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
     uint32_t i;
@@ -303,8 +307,8 @@ customStatus_e customProcessor(txContext_t *context) {
     return CUSTOM_NOT_HANDLED;
 }
 
-void finalizeParsing(bool direct) {
-    g_use_standard_ui = true;
+void finalizeParsing(bool direct, bool use_standard_ui) {
+    PRINTF("km-logs [celo.c] (finalizeParsing) - use_standard_ui: %d\n", use_standard_ui);
     // ------------------START OF APP-ETHEREUM FINALIZE_PARSING_HELPER -------------------
     uint256_t gasPrice, startGas, uint256;
     uint32_t i;
@@ -328,6 +332,9 @@ void finalizeParsing(bool direct) {
     // Display correct currency if fee currency field sent
     if (tmpContent.txContent.feeCurrencyLength != 0) {
         tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
+        // display the ticker of the fee currency token
+        PRINTF("km-logs [celo.c] (finalizeParsing) - feeCurrencyToken->ticker: %s\n",
+               feeCurrencyToken->ticker);
         if (feeCurrencyToken == NULL) {
             reset_app_context();
             PRINTF("Invalid fee currency");
@@ -344,7 +351,7 @@ void finalizeParsing(bool direct) {
         }
     }
 
-    if (g_use_standard_ui) {
+    if (use_standard_ui) {
         // If there is a token to process, check if it is well known
         if (provisionType == PROVISION_TOKEN) {
             tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
@@ -535,49 +542,55 @@ void finalizeParsing(bool direct) {
             break;
     }
 
+    // start display only if the standard ui is used
+    if (use_standard_ui) {
 #ifdef NO_CONSENT
-    io_seproxyhal_touch_tx_ok(NULL);
+        io_seproxyhal_touch_tx_ok(NULL);
 #else   // NO_CONSENT
-    switch (provisionType) {
-        case PROVISION_LOCK:
-        case PROVISION_UNLOCK:
-            ui_approval_celo_lock_unlock_flow();
-            break;
-        case PROVISION_WITHDRAW:
-            ui_approval_celo_withdraw_flow();
-            break;
-        case PROVISION_VOTE:
-        case PROVISION_REVOKE:
-            ui_approval_celo_vote_revoke_flow();
-            break;
-        case PROVISION_ACTIVATE:
-            ui_approval_celo_activate_flow();
-            break;
-        case PROVISION_RELOCK:
-            ui_approval_celo_relock_flow();
-            break;
-        case PROVISION_CREATE_ACCOUNT:
-            ui_approval_celo_create_account_flow();
-            break;
-        // km_todo: add check, if store_calldata is true, dataPresent and !N_storage.dataAllowed is
-        // false, then show blind signing flow/error ??  -->  this check is at around line 381 in
-        // the last else if the "if (provisionType == PROVISION_TOKEN)"
-        //
-        default:
-            // km_todo: there might be the need for another ui for the generic flow here
-            if (tmpContent.txContent.gatewayDestinationLength != 0) {
-                if (dataPresent && !N_storage.contractDetails) {
-                    ui_approval_celo_data_warning_gateway_tx_flow();
+        switch (provisionType) {
+            case PROVISION_LOCK:
+            case PROVISION_UNLOCK:
+                ui_approval_celo_lock_unlock_flow();
+                break;
+            case PROVISION_WITHDRAW:
+                ui_approval_celo_withdraw_flow();
+                break;
+            case PROVISION_VOTE:
+            case PROVISION_REVOKE:
+                ui_approval_celo_vote_revoke_flow();
+                break;
+            case PROVISION_ACTIVATE:
+                ui_approval_celo_activate_flow();
+                break;
+            case PROVISION_RELOCK:
+                ui_approval_celo_relock_flow();
+                break;
+            case PROVISION_CREATE_ACCOUNT:
+                ui_approval_celo_create_account_flow();
+                break;
+            // km_todo: add check, if store_calldata is true, dataPresent and !N_storage.dataAllowed
+            // is false, then show blind signing flow/error ??  -->  this check is at around line
+            // 381 in the last else if the "if (provisionType == PROVISION_TOKEN)"
+            //
+            default:
+                // km_todo: there might be the need for another ui for the generic flow here
+                if (tmpContent.txContent.gatewayDestinationLength != 0) {
+                    if (dataPresent && !N_storage.contractDetails) {
+                        ui_approval_celo_data_warning_gateway_tx_flow();
+                    } else {
+                        ui_approval_celo_gateway_tx_flow();
+                    }
                 } else {
-                    ui_approval_celo_gateway_tx_flow();
+                    if (dataPresent && !N_storage.contractDetails) {
+                        ui_approval_celo_data_warning_tx_flow();
+                    } else {
+                        ui_approval_celo_tx_flow();
+                    }
                 }
-            } else {
-                if (dataPresent && !N_storage.contractDetails) {
-                    ui_approval_celo_data_warning_tx_flow();
-                } else {
-                    ui_approval_celo_tx_flow();
-                }
-            }
-    }
+        }
 #endif  // NO_CONSENT
+    } else {
+        io_send_sw(SW_OK);
+        return;
+    }
 }

@@ -50,7 +50,8 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
     }
 
     if (txResult == USTREAM_FINISHED) {
-        finalizeParsing(false);
+        // km: will we reach this point if the parsing is supposed to be generic ?
+        finalizeParsing(false, true);
     }
 
     return 0;

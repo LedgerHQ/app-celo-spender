@@ -12,7 +12,7 @@
 #include "celo.h"   // forget_known_assets
 #include "io.h"
 #include "commands_712.h"
-// #include "manage_asset_info.h"
+#include "manage_asset_info.h"
 // #include "ui_callbacks.h"
 
 // #include "apdu_constants.h"  // APDU response codes
@@ -98,7 +98,6 @@ void handle_eip712_return_code(bool success) {
  */
 uint16_t handle_eip712_struct_def(uint8_t p2, const uint8_t *cdata, uint8_t length) {
     bool ret = true;
-
     if (eip712_context == NULL) {
         ret = eip712_context_init();
     }

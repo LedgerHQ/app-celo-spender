@@ -179,6 +179,7 @@ void ui_712_switch_to_sign(void) {
         // #else
         //         snprintf(g_stax_shared_buffer, sizeof(g_stax_shared_buffer), "Sign message");
         // #endif
+        // km_todo: correct the string here to say sign typed message on stax/flex
         nbgl_useCaseReviewStreamingFinish("Sign message", ui_typed_message_review_choice);
     }
 }

@@ -3,8 +3,9 @@ import struct
 import json
 import hashlib
 from web3 import Web3
+from pathlib import Path
 
-from ragger.navigator.navigation_scenario import NavigateWithScenario
+from ragger.navigator.navigation_scenario import NavigateWithScenario, Navigator
 
 
 from constants import ABIS_FOLDER
@@ -40,13 +41,21 @@ from apps.eth_gcs import (
     TxInfo,
 )
 
+from apps.celo_settings import SettingID, settings_toggle
+
+
 # from apps.tx_simu import TxSimu
 # from apps.proxy_info import ProxyInfo
 
+TESTS_ROOT_DIR = Path(__file__).parent
 
-def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
+
+def test_gcs_1inch(
+    navigator: Navigator, scenario_navigator: NavigateWithScenario, test_name: str
+):
     backend = scenario_navigator.backend
     app_client = CeloClient(backend)
+    device = backend.device
 
     with open(f"{ABIS_FOLDER}/1inch.abi.json", encoding="utf-8") as file:
         contract = Web3().eth.contract(abi=json.load(file), address=None)
@@ -56,11 +65,13 @@ def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
         [
             bytes.fromhex("F313B370D28760b98A2E935E56Be92Feb2c4EC04"),
             [
-                bytes.fromhex("EeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"),
-                bytes.fromhex("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"),
+                bytes.fromhex(
+"EeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+                ),  # address sent token
+                bytes.fromhex("2f25deb3848c207fc8e0c34035b3ba7fc157602b"),
                 bytes.fromhex("F313B370D28760b98A2E935E56Be92Feb2c4EC04"),
                 bytes.fromhex("Dad77910DbDFdE764fC21FCD4E74D71bBACA6D8D"),
-                Web3.to_wei(0.22, "ether"),
+                Web3.to_wei(0.22, "ether"),  # amount sent token
                 682119805,
                 0,
             ],
@@ -76,12 +87,12 @@ def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
         # Aggregation Router V6
         "to": bytes.fromhex("111111125421cA6dc452d289314280a0f8842A65"),
         "data": data,
-        "chainId": 1,
+        "chainId": 42220,
     }
+    settings_toggle(device, navigator, [SettingID.CONTRACT_DATA])
     # Start the signing process by sending the transaction parameters
     with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
         pass
-
     # Define the fields, used to decide which fields to display and how to display them
     fields = [
         Field(
@@ -199,7 +210,7 @@ def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
     app_client.provide_transaction_info(tx_info.serialize())
 
     app_client.provide_token_metadata(
-        "USDC", bytes.fromhex("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"), 6, 42220
+        "USDC", bytes.fromhex("2f25deb3848c207fc8e0c34035b3ba7fc157602b"), 6, 42220
     )
 
     for field in fields:
@@ -209,7 +220,318 @@ def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
         )
 
     with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
-        scenario_navigator.review_approve(test_name=test_name)
+        scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name=test_name)
+
+
+def test_gcs_poap(
+    navigator: Navigator,
+    scenario_navigator: NavigateWithScenario,
+    test_name: str,
+    # simu_params: Optional[TxSimu] = None,
+):
+    backend = scenario_navigator.backend
+    app_client = CeloClient(backend)
+    device = backend.device
+
+    settings_toggle(device, navigator, [SettingID.CONTRACT_DATA])
+
+    with open(f"{ABIS_FOLDER}/poap.abi.json", encoding="utf-8") as file:
+        contract = Web3().eth.contract(abi=json.load(file), address=None)
+    # pylint: disable=line-too-long
+    data = contract.encode_abi(
+        "mintToken",
+        [
+            175676,
+            7163978,
+            bytes.fromhex("Dad77910DbDFdE764fC21FCD4E74D71bBACA6D8D"),
+            1730621615,
+            bytes.fromhex(
+                "8991da687cff5300959810a08c4ec183bb2a56dc82f5aac2b24f1106c2d983ac6f7a6b28700a236724d814000d0fd8c395fcf9f87c4424432ebf30c9479201d71c"
+            ),
+        ],
+    )
+    tx_params = {
+        "nonce": 235,
+        "maxFeePerGas": Web3.to_wei(100, "gwei"),
+        "maxPriorityFeePerGas": Web3.to_wei(10, "gwei"),
+        "gas": 44001,
+        # PoapBridge
+        "to": bytes.fromhex("0bb4D3e88243F4A057Db77341e6916B0e449b158"),
+        "data": data,
+        "chainId": 42220,
+    }
+    # pylint: enable=line-too-long
+
+    # if simu_params is not None:
+    #     _, tx_hash = app_client.serialize_tx(tx_params)
+    #     simu_params.tx_hash = tx_hash
+    #     simu_params.chain_id = tx_params["chainId"]
+    #     response = app_client.provide_tx_simulation(simu_params)
+    #     assert response.status == StatusCode.OK
+
+    with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
+        pass
+
+    fields = [
+        Field(
+            1,
+            "Event ID",
+            ParamType.RAW,
+            ParamRaw(
+                1,
+                Value(
+                    1,
+                    TypeFamily.UINT,
+                    type_size=32,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(0),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+        Field(
+            1,
+            "Token ID",
+            ParamType.RAW,
+            ParamRaw(
+                1,
+                Value(
+                    1,
+                    TypeFamily.UINT,
+                    type_size=32,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(1),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+        Field(
+            1,
+            "Receiver",
+            ParamType.RAW,
+            ParamRaw(
+                1,
+                Value(
+                    1,
+                    TypeFamily.ADDRESS,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(2),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+        Field(
+            1,
+            "Expiration time",
+            ParamType.DATETIME,
+            ParamDatetime(
+                1,
+                Value(
+                    1,
+                    TypeFamily.UINT,
+                    type_size=32,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(3),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+                DatetimeType.DT_UNIX,
+            ),
+        ),
+        Field(
+            1,
+            "Signature",
+            ParamType.RAW,
+            ParamRaw(
+                1,
+                Value(
+                    1,
+                    TypeFamily.BYTES,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(4),
+                            PathRef(),
+                            PathLeaf(PathLeafType.DYNAMIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+    ]
+
+    # compute instructions hash
+    inst_hash = hashlib.sha3_256()
+    for field in fields:
+        inst_hash.update(field.serialize())
+
+    tx_info = TxInfo(
+        1,
+        tx_params["chainId"],
+        tx_params["to"],
+        get_selector_from_data(tx_params["data"]),
+        inst_hash.digest(),
+        "mint POAP",
+        creator_name="POAP",
+        creator_legal_name="Proof of Attendance Protocol",
+        creator_url="poap.xyz",
+        contract_name="PoapBridge",
+        deploy_date=1646305200,
+    )
+
+    app_client.provide_transaction_info(tx_info.serialize())
+
+    for field in fields:
+        payload = field.serialize()
+        app_client.send_raw(
+            0xE0, 0x28, 0x01, 0x00, struct.pack(">H", len(payload)) + payload
+        )
+
+    with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
+        # if simu_params is not None:
+        #     scenario_navigator.review_approve_with_warning(test_name=test_name)
+        # else:
+        scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name=test_name)
+
+
+def test_gcs_4226(
+    navigator: Navigator, scenario_navigator: NavigateWithScenario, test_name: str
+):
+    backend = scenario_navigator.backend
+    app_client = CeloClient(backend)
+    device = backend.device
+
+    settings_toggle(device, navigator, [SettingID.CONTRACT_DATA])
+
+    with open(f"{ABIS_FOLDER}/rSWELL.abi.json", encoding="utf-8") as file:
+        contract = Web3().eth.contract(abi=json.load(file), address=None)
+    data = contract.encode_abi(
+        "deposit",
+        [
+            Web3.to_wei(4.20, "ether"),
+            bytes.fromhex("Dad77910DbDFdE764fC21FCD4E74D71bBACA6D8D"),
+        ],
+    )
+    tx_params = {
+        "nonce": 235,
+        "maxFeePerGas": Web3.to_wei(3, "gwei"),
+        "maxPriorityFeePerGas": Web3.to_wei(1, "gwei"),
+        "gas": 128872,
+        "to": bytes.fromhex("358d94b5b2F147D741088803d932Acb566acB7B6"),
+        "data": data,
+        "chainId": 42220,
+    }
+    with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
+        pass
+
+    swell_token_addr = bytes.fromhex("0a6e7ba5042b38349e437ec6db6214aec7b35676")
+    fields = [
+        Field(
+            1,
+            "Deposit asset",
+            ParamType.TOKEN_AMOUNT,
+            ParamTokenAmount(
+                1,
+                Value(
+                    1,
+                    TypeFamily.UINT,
+                    type_size=32,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(0),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+                token=Value(
+                    1,
+                    TypeFamily.ADDRESS,
+                    constant=swell_token_addr,
+                ),
+            ),
+        ),
+        Field(
+            1,
+            "Receive shares",
+            ParamType.TOKEN,
+            ParamToken(
+                1,
+                Value(
+                    1,
+                    TypeFamily.ADDRESS,
+                    container_path=ContainerPath.TO,
+                ),
+            ),
+        ),
+        Field(
+            1,
+            "Send shares to",
+            ParamType.RAW,
+            ParamToken(
+                1,
+                Value(
+                    1,
+                    TypeFamily.ADDRESS,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(1),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+    ]
+
+    # compute instructions hash
+    inst_hash = hashlib.sha3_256()
+    for field in fields:
+        inst_hash.update(field.serialize())
+
+    tx_info = TxInfo(
+        1,
+        tx_params["chainId"],
+        tx_params["to"],
+        get_selector_from_data(tx_params["data"]),
+        inst_hash.digest(),
+        "deposit",
+        creator_name="Swell",
+        creator_legal_name="Swell Network",
+        creator_url="www.swellnetwork.io",
+        contract_name="rSWELL Token",
+        deploy_date=1726817291,
+    )
+
+    app_client.provide_transaction_info(tx_info.serialize())
+
+    app_client.provide_token_metadata("rSWELL", tx_params["to"], 18, 1)
+    app_client.provide_token_metadata("SWELL", swell_token_addr, 18, 1)
+
+    for field in fields:
+        payload = field.serialize()
+        app_client.send_raw(
+            0xE0, 0x28, 0x01, 0x00, struct.pack(">H", len(payload)) + payload
+        )
+
+    with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
+        scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name=test_name)
 
 
 # def test_gcs_nft(scenario_navigator: NavigateWithScenario, test_name: str):
@@ -410,186 +732,6 @@ def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
 #     with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
 #         scenario_navigator.review_approve(test_name=test_name)
 
-# def test_gcs_poap(
-#     scenario_navigator: NavigateWithScenario,
-#     test_name: str,
-#     simu_params: Optional[TxSimu] = None,
-# ):
-#     backend = scenario_navigator.backend
-#     app_client = CeloClient(backend)
-
-#     with open(f"{ABIS_FOLDER}/poap.abi.json", encoding="utf-8") as file:
-#         contract = Web3().eth.contract(abi=json.load(file), address=None)
-#     # pylint: disable=line-too-long
-#     data = contract.encode_abi(
-#         "mintToken",
-#         [
-#             175676,
-#             7163978,
-#             bytes.fromhex("Dad77910DbDFdE764fC21FCD4E74D71bBACA6D8D"),
-#             1730621615,
-#             bytes.fromhex(
-#                 "8991da687cff5300959810a08c4ec183bb2a56dc82f5aac2b24f1106c2d983ac6f7a6b28700a236724d814000d0fd8c395fcf9f87c4424432ebf30c9479201d71c"
-#             ),
-#         ],
-#     )
-#     tx_params = {
-#         "nonce": 235,
-#         "maxFeePerGas": Web3.to_wei(100, "gwei"),
-#         "maxPriorityFeePerGas": Web3.to_wei(10, "gwei"),
-#         "gas": 44001,
-#         # PoapBridge
-#         "to": bytes.fromhex("0bb4D3e88243F4A057Db77341e6916B0e449b158"),
-#         "data": data,
-#         "chainId": 1,
-#     }
-#     # pylint: enable=line-too-long
-
-#     if simu_params is not None:
-#         _, tx_hash = app_client.serialize_tx(tx_params)
-#         simu_params.tx_hash = tx_hash
-#         simu_params.chain_id = tx_params["chainId"]
-#         response = app_client.provide_tx_simulation(simu_params)
-#         assert response.status == StatusCode.OK
-
-#     with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
-#         pass
-
-#     fields = [
-#         Field(
-#             1,
-#             "Event ID",
-#             ParamType.RAW,
-#             ParamRaw(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.UINT,
-#                     type_size=32,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(0),
-#                             PathLeaf(PathLeafType.STATIC),
-#                         ],
-#                     ),
-#                 ),
-#             ),
-#         ),
-#         Field(
-#             1,
-#             "Token ID",
-#             ParamType.RAW,
-#             ParamRaw(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.UINT,
-#                     type_size=32,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(1),
-#                             PathLeaf(PathLeafType.STATIC),
-#                         ],
-#                     ),
-#                 ),
-#             ),
-#         ),
-#         Field(
-#             1,
-#             "Receiver",
-#             ParamType.RAW,
-#             ParamRaw(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.ADDRESS,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(2),
-#                             PathLeaf(PathLeafType.STATIC),
-#                         ],
-#                     ),
-#                 ),
-#             ),
-#         ),
-#         Field(
-#             1,
-#             "Expiration time",
-#             ParamType.DATETIME,
-#             ParamDatetime(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.UINT,
-#                     type_size=32,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(3),
-#                             PathLeaf(PathLeafType.STATIC),
-#                         ],
-#                     ),
-#                 ),
-#                 DatetimeType.DT_UNIX,
-#             ),
-#         ),
-#         Field(
-#             1,
-#             "Signature",
-#             ParamType.RAW,
-#             ParamRaw(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.BYTES,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(4),
-#                             PathRef(),
-#                             PathLeaf(PathLeafType.DYNAMIC),
-#                         ],
-#                     ),
-#                 ),
-#             ),
-#         ),
-#     ]
-
-#     # compute instructions hash
-#     inst_hash = hashlib.sha3_256()
-#     for field in fields:
-#         inst_hash.update(field.serialize())
-
-#     tx_info = TxInfo(
-#         1,
-#         tx_params["chainId"],
-#         tx_params["to"],
-#         get_selector_from_data(tx_params["data"]),
-#         inst_hash.digest(),
-#         "mint POAP",
-#         creator_name="POAP",
-#         creator_legal_name="Proof of Attendance Protocol",
-#         creator_url="poap.xyz",
-#         contract_name="PoapBridge",
-#         deploy_date=1646305200,
-#     )
-
-#     app_client.provide_transaction_info(tx_info.serialize())
-
-#     for field in fields:
-#         payload = field.serialize()
-#         app_client.send_raw(
-#             0xE0, 0x28, 0x01, 0x00, struct.pack(">H", len(payload)) + payload
-#         )
-
-#     with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
-#         if simu_params is not None:
-#             scenario_navigator.review_approve_with_warning(test_name=test_name)
-#         else:
-#             scenario_navigator.review_approve(test_name=test_name)
 
 # def test_gcs_proxy(scenario_navigator: NavigateWithScenario, test_name: str):
 #     backend = scenario_navigator.backend
@@ -693,125 +835,6 @@ def test_gcs_1inch(scenario_navigator: NavigateWithScenario, test_name: str):
 #         tx_info.chain_id,
 #         challenge=ResponseParser.challenge(app_client.get_challenge().data),
 #     )
-
-#     for field in fields:
-#         payload = field.serialize()
-#         app_client.send_raw(
-#             0xE0, 0x28, 0x01, 0x00, struct.pack(">H", len(payload)) + payload
-#         )
-
-#     with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
-#         scenario_navigator.review_approve(test_name=test_name)
-
-# def test_gcs_4226(scenario_navigator: NavigateWithScenario, test_name: str):
-#     backend = scenario_navigator.backend
-#     app_client = CeloClient(backend)
-
-#     with open(f"{ABIS_FOLDER}/rSWELL.abi.json", encoding="utf-8") as file:
-#         contract = Web3().eth.contract(abi=json.load(file), address=None)
-#     data = contract.encode_abi(
-#         "deposit",
-#         [
-#             Web3.to_wei(4.20, "ether"),
-#             bytes.fromhex("Dad77910DbDFdE764fC21FCD4E74D71bBACA6D8D"),
-#         ],
-#     )
-#     tx_params = {
-#         "nonce": 235,
-#         "maxFeePerGas": Web3.to_wei(3, "gwei"),
-#         "maxPriorityFeePerGas": Web3.to_wei(1, "gwei"),
-#         "gas": 128872,
-#         "to": bytes.fromhex("358d94b5b2F147D741088803d932Acb566acB7B6"),
-#         "data": data,
-#         "chainId": 1,
-#     }
-#     with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
-#         pass
-
-#     swell_token_addr = bytes.fromhex("0a6e7ba5042b38349e437ec6db6214aec7b35676")
-#     fields = [
-#         Field(
-#             1,
-#             "Deposit asset",
-#             ParamType.TOKEN_AMOUNT,
-#             ParamTokenAmount(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.UINT,
-#                     type_size=32,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(0),
-#                             PathLeaf(PathLeafType.STATIC),
-#                         ],
-#                     ),
-#                 ),
-#                 token=Value(
-#                     1,
-#                     TypeFamily.ADDRESS,
-#                     constant=swell_token_addr,
-#                 ),
-#             ),
-#         ),
-#         Field(
-#             1,
-#             "Receive shares",
-#             ParamType.TOKEN,
-#             ParamToken(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.ADDRESS,
-#                     container_path=ContainerPath.TO,
-#                 ),
-#             ),
-#         ),
-#         Field(
-#             1,
-#             "Send shares to",
-#             ParamType.RAW,
-#             ParamToken(
-#                 1,
-#                 Value(
-#                     1,
-#                     TypeFamily.ADDRESS,
-#                     data_path=DataPath(
-#                         1,
-#                         [
-#                             PathTuple(1),
-#                             PathLeaf(PathLeafType.STATIC),
-#                         ],
-#                     ),
-#                 ),
-#             ),
-#         ),
-#     ]
-
-#     # compute instructions hash
-#     inst_hash = hashlib.sha3_256()
-#     for field in fields:
-#         inst_hash.update(field.serialize())
-
-#     tx_info = TxInfo(
-#         1,
-#         tx_params["chainId"],
-#         tx_params["to"],
-#         get_selector_from_data(tx_params["data"]),
-#         inst_hash.digest(),
-#         "deposit",
-#         creator_name="Swell",
-#         creator_legal_name="Swell Network",
-#         creator_url="www.swellnetwork.io",
-#         contract_name="rSWELL Token",
-#         deploy_date=1726817291,
-#     )
-
-#     app_client.provide_transaction_info(tx_info.serialize())
-
-#     app_client.provide_token_metadata("rSWELL", tx_params["to"], 18, 1)
-#     app_client.provide_token_metadata("SWELL", swell_token_addr, 18, 1)
 
 #     for field in fields:
 #         payload = field.serialize()

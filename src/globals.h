@@ -31,6 +31,8 @@ extern volatile uint8_t blind_signing;
 extern const internalStorage_t N_storage_real;
 #define N_storage (*(internalStorage_t *) PIC(&N_storage_real))
 
+extern const chain_config_t *chainConfig;
+
 extern char addressSummary[32];
 extern cx_sha3_t sha3;
 

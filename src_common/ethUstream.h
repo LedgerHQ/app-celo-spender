@@ -139,14 +139,18 @@ typedef struct txContext_t {
     uint32_t processingFlags;
     ustreamProcess_t customProcessor;
     txContent_t *content;
+    bool rlp_size_known;
+    uint32_t remaining_rlp_size;
     void *extra;
     uint8_t txType;
+    bool store_calldata;
 } txContext_t;
 
 void initTx(txContext_t *context,
             cx_sha3_t *sha3,
             txContent_t *content,
             ustreamProcess_t customProcessor,
+            bool store_calldata,
             void *extra);
 parserStatus_e processTx(txContext_t *context, const uint8_t *buffer, size_t length);
 parserStatus_e continueTx(txContext_t *context);

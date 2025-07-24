@@ -4,12 +4,14 @@
 #include "sw.h"
 #include "io.h"
 #include "globals.h"
-#include "celo.h"
+#include "manage_asset_info.h"
 #include "handlers.h"
 #include "commands_712.h"
 #include "sign.h"
 
 #include "constants.h"
+#include "cmd_tx_info.h"
+#include "cmd_field.h"
 
 /**
  * Dispatch structured APDU command to handler
@@ -77,11 +79,9 @@ int apdu_dispatcher(const command_t *cmd) {
         case INS_EIP712_FILTERING:
             return handle_eip712_filtering(cmd->p1, cmd->p2, cmd->data, cmd->lc, flags);
         case INS_GTP_FIELD:
-            // km_todo: implement this"
-            return io_send_sw(SW_DENY);
+            return handle_field(cmd->p1, cmd->p2, cmd->lc, cmd->data);
         case INS_GTP_TRANSACTION_INFO:
-            // km_todo: implement this
-            return io_send_sw(SW_DENY);
+            return handle_tx_info(cmd->p1, cmd->p2, cmd->lc, cmd->data);
 
         default:
             io_send_sw(SW_INS_NOT_SUPPORTED);

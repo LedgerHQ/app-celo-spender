@@ -15,6 +15,9 @@
  *  limitations under the License.
  ********************************************************************************/
 
+#include <ctype.h>
+#include <string.h>
+
 #include "ethUstream.h"
 #include "ethUtils.h"
 #include "globals.h"
@@ -223,7 +226,6 @@ bool getEthDisplayableAddress(uint8_t *in, char *out, size_t out_len, uint64_t c
         strlcpy(out, "ERROR", out_len);
         return false;
     }
-
     return true;
 }
 
@@ -394,4 +396,117 @@ int ismaxint(uint8_t *buf, int n) {
         }
     }
     return 1;
+}
+
+void buf_shrink_expand(const uint8_t *src, size_t src_size, uint8_t *dst, size_t dst_size) {
+    size_t src_off;
+    size_t dst_off;
+
+    if (src_size > dst_size) {
+        src_off = src_size - dst_size;
+        dst_off = 0;
+    } else {
+        src_off = 0;
+        dst_off = dst_size - src_size;
+        explicit_bzero(dst, dst_off);
+    }
+    memcpy(&dst[dst_off], &src[src_off], dst_size - dst_off);
+}
+
+void str_cpy_explicit_trunc(const char *src, size_t src_size, char *dst, size_t dst_size) {
+    size_t off;
+    const char trunc_marker[] = "...";
+
+    if (src_size < dst_size) {
+        memcpy(dst, src, src_size);
+        dst[src_size] = '\0';
+    } else {
+        off = dst_size - sizeof(trunc_marker);
+        memcpy(dst, src, off);
+        memcpy(&dst[off], trunc_marker, sizeof(trunc_marker));
+    }
+}
+
+/**
+ * @brief Check the name is printable.
+ *
+ * @param[in] data buffer received
+ * @param[in] name Name to check
+ * @param[in] len Length of the name
+ * @return True/False
+ */
+bool check_name(const uint8_t *name, uint16_t len) {
+    for (uint16_t i = 0; i < len; i++) {
+        if (!isprint(name[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// km: I hard coded the ticker to CELO, this might need an update to account for other fee
+// currencies possible instead of determining it with chain id
+static void raw_fee_to_string(uint256_t *rawFee, char *displayBuffer, uint32_t displayBufferSize) {
+    // uint64_t chain_id = get_tx_chain_id();
+    const char *feeTicker = "CELO";
+    uint8_t tickerOffset = 0;
+    uint32_t i;
+
+    tostring256(rawFee, 10, (char *) (G_io_apdu_buffer + 100), 100);
+    i = 0;
+    while (G_io_apdu_buffer[100 + i]) {
+        i++;
+    }
+    adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                   i,
+                   (char *) G_io_apdu_buffer,
+                   100,
+                   WEI_TO_ETHER);
+    i = 0;
+    tickerOffset = 0;
+    memset(displayBuffer, 0, displayBufferSize);
+
+    while (feeTicker[tickerOffset]) {
+        if ((uint32_t) tickerOffset >= displayBufferSize) {
+            break;
+        }
+
+        displayBuffer[tickerOffset] = feeTicker[tickerOffset];
+        tickerOffset++;
+    }
+    if ((uint32_t) tickerOffset < displayBufferSize) displayBuffer[tickerOffset++] = ' ';
+    while (G_io_apdu_buffer[i]) {
+        if ((uint32_t) (tickerOffset) + i >= displayBufferSize) {
+            break;
+        }
+        displayBuffer[tickerOffset + i] = G_io_apdu_buffer[i];
+        i++;
+    }
+
+    if ((uint32_t) (tickerOffset) + i < displayBufferSize) {
+        displayBuffer[tickerOffset + i] = '\0';
+    }
+}
+
+// Compute the fees, transform it to a string, prepend a ticker to it and copy everything to
+// `displayBuffer` output
+bool max_transaction_fee_to_string(const txInt256_t *BEGasPrice,
+                                   const txInt256_t *BEGasLimit,
+                                   char *displayBuffer,
+                                   uint32_t displayBufferSize) {
+    // Use temporary variables to convert values to uint256_t
+    uint256_t gasPrice = {0};
+    uint256_t gasLimit = {0};
+    // Use temporary variable to store the result of the operation in uint256_t
+    uint256_t rawFee = {0};
+
+    PRINTF("Gas price %.*H\n", BEGasPrice->length, BEGasPrice->value);
+    PRINTF("Gas limit %.*H\n", BEGasLimit->length, BEGasLimit->value);
+    convertUint256BE(BEGasPrice->value, BEGasPrice->length, &gasPrice);
+    convertUint256BE(BEGasLimit->value, BEGasLimit->length, &gasLimit);
+    if (mul256(&gasPrice, &gasLimit, &rawFee) == false) {
+        return false;
+    }
+    raw_fee_to_string(&rawFee, displayBuffer, displayBufferSize);
+    return true;
 }

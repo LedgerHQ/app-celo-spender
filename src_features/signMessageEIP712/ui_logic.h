@@ -53,3 +53,5 @@ const char *ui_712_get_discarded_path(uint8_t *length);
 //                                           uint8_t source_count,
 //                                           const e_name_source *sources);
 char *get_ui_pairs_buffer(size_t *size);
+
+extern const char g_unknown_ticker[];

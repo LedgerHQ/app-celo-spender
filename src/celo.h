@@ -53,24 +53,27 @@ customStatus_e customProcessor(txContext_t *context);
  * @param sha3 The SHA3 context.
  * @param content The transaction content.
  * @param customProcessor The custom processor function.
+ * @param store_calldata Flag indicating if the calldata should be stored.
  * @param extra Additional data for the custom processor.
  */
 void initTx(txContext_t *context,
             cx_sha3_t *sha3,
             txContent_t *content,
             ustreamProcess_t customProcessor,
+            bool store_calldata,
             void *extra);
 
 /**
  * @brief Finalizes the parsing process.
  *
  * @param direct Flag indicating if the parsing is direct.
+ * @param use_standard_ui Flag indicating if the standard UI should be used.
  */
-void finalizeParsing(bool direct);
+void finalizeParsing(bool direct, bool use_standard_ui);
 
-/**
- * @brief Forgets the known tokens.
- */
-void forget_known_assets(void);
+// /**
+//  * @brief Forgets the known tokens.
+//  */
+// void forget_known_assets(void);
 
 extern volatile uint8_t appState; /**< The application state. */

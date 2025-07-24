@@ -60,6 +60,14 @@
 
 #define ADDRESS_LENGTH          20
 #define COLLECTION_NAME_MAX_LEN 70
-#define INT256_LENGTH           32
-#define MAX_TICKER_LEN          11  // 10 characters + '\0'
-#define CX_KECCAK_256_SIZE      32
+
+#define INT256_LENGTH              32
+#define MAX_TICKER_LEN             11  // 10 characters + '\0'
+#define CX_KECCAK_256_SIZE         32
+#define ECDSA_SIGNATURE_MAX_LENGTH 73
+
+// Size of a selector in bytes
+#define SELECTOR_SIZE 4
+
+// Length of a parameter in bytes
+#define PARAMETER_LENGTH 32
