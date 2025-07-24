@@ -9,7 +9,7 @@ typedef enum {
 } e_sign_mode;
 
 int handleSign(uint8_t p1,
-                    uint8_t p2,
-                    const uint8_t *workBuffer,
-                    uint16_t dataLength,
-                    volatile unsigned int *flags);
+               uint8_t p2,
+               const uint8_t *workBuffer,
+               uint16_t dataLength,
+               volatile unsigned int *flags);

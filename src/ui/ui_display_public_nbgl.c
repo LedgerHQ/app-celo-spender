@@ -6,13 +6,11 @@
 #include "send_response.h"
 #include "validate.h"
 
-
 static void address_confirmation(bool confirm) {
     validate_pubkey(confirm);
     if (confirm) {
         nbgl_useCaseReviewStatus(STATUS_TYPE_ADDRESS_VERIFIED, ui_idle);
-    }
-    else {
+    } else {
         nbgl_useCaseReviewStatus(STATUS_TYPE_ADDRESS_REJECTED, ui_idle);
     }
 }
@@ -26,4 +24,4 @@ void ui_display_address(void) {
                               address_confirmation);
 }
 
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL
