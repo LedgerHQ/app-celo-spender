@@ -77,11 +77,11 @@ bool format_param_token(const s_param_token *param, const char *name) {
     s_parsed_value_collection collec = {0};
     uint8_t addr[ADDRESS_LENGTH];
     const tokenDefinition_t *token_def;
-    uint64_t chain_id;
+    // uint64_t chain_id;
     const char *ticker = NULL;
 
     // chain_id = get_tx_chain_id();
-    chain_id = 42220;
+    // chain_id = 42220;
     if ((ret = value_get(&param->address, &collec))) {
         for (int i = 0; i < collec.size; ++i) {
             buf_shrink_expand(collec.value[i].ptr, collec.value[i].length, addr, sizeof(addr));

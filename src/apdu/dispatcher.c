@@ -17,8 +17,8 @@
  * Dispatch structured APDU command to handler
  */
 int apdu_dispatcher(const command_t *cmd) {
-    uint32_t *flags = 0;
-    uint16_t sw;
+    // uint32_t *flags = 0;
+    // uint16_t sw;
 
     if (cmd == NULL) {
         io_send_sw(SW_ERROR_IN_DATA);
@@ -64,9 +64,9 @@ int apdu_dispatcher(const command_t *cmd) {
             switch (cmd->p2) {
                 case P2_EIP712_LEGACY_IMPLEM:
                     forget_known_assets();
-                    return handleSignEIP712Message_v0(cmd->p1, cmd->data, cmd->lc, flags);
+                    return handleSignEIP712Message_v0(cmd->p1, cmd->data, cmd->lc);
                 case P2_EIP712_FULL_IMPLEM:
-                    return handle_eip712_sign(cmd->data, cmd->lc, flags);
+                    return handle_eip712_sign(cmd->data, cmd->lc);
                 default:
                     return io_send_sw(APDU_RESPONSE_INVALID_P1_P2);
             }
@@ -74,10 +74,10 @@ int apdu_dispatcher(const command_t *cmd) {
             return handle_eip712_struct_def(cmd->p2, cmd->data, cmd->lc);
 
         case INS_EIP712_STRUCT_IMPL:
-            return handle_eip712_struct_impl(cmd->p1, cmd->p2, cmd->data, cmd->lc, flags);
+            return handle_eip712_struct_impl(cmd->p1, cmd->p2, cmd->data, cmd->lc);
 
         case INS_EIP712_FILTERING:
-            return handle_eip712_filtering(cmd->p1, cmd->p2, cmd->data, cmd->lc, flags);
+            return handle_eip712_filtering(cmd->p1, cmd->p2, cmd->data, cmd->lc);
         case INS_GTP_FIELD:
             return handle_field(cmd->p1, cmd->p2, cmd->lc, cmd->data);
         case INS_GTP_TRANSACTION_INFO:

@@ -124,7 +124,7 @@ static bool process_token_amount(const s_param_token_amount *param,
     uint256_t val256;
     const tokenDefinition_t *token_def;
     // uint64_t chain_id = get_tx_chain_id();
-    uint64_t chain_id = 42220;
+    // uint64_t chain_id = 42220;
     const char *ticker = g_unknown_ticker;
     uint8_t decimals = 0;
 

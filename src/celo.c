@@ -7,6 +7,8 @@
 #include "io.h"
 
 #include "ui_common.h"
+#include "manage_asset_info.h"
+#include "cmd_tx_info.h"
 
 #include <string.h>
 
