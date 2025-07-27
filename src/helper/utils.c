@@ -510,3 +510,10 @@ bool max_transaction_fee_to_string(const txInt256_t *BEGasPrice,
     raw_fee_to_string(&rawFee, displayBuffer, displayBufferSize);
     return true;
 }
+
+bool is_celo_native_address(const uint8_t *addr) {
+    static const uint8_t celo_native_addr[ADDRESS_LENGTH] = {
+        0x47, 0x1E, 0xCE, 0x37, 0x50, 0xDA, 0x23, 0x7F, 0x93, 0xB8,
+        0xE3, 0x39, 0xC5, 0x36, 0x98, 0x9B, 0x89, 0x78, 0xA4, 0x38};
+    return memcmp(addr, celo_native_addr, ADDRESS_LENGTH) == 0;
+}
