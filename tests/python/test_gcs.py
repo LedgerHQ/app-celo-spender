@@ -146,7 +146,7 @@ def test_gcs_1inch(
                     ),
                 ),
                 native_currency=[
-                    bytes.fromhex("EeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"),
+                    bytes.fromhex("471EcE3750Da237f93B8E339c536989b8978a438"),
                 ],
             ),
         ),
@@ -182,7 +182,7 @@ def test_gcs_1inch(
                     ),
                 ),
                 native_currency=[
-                    bytes.fromhex("EeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"),
+                    bytes.fromhex("471EcE3750Da237f93B8E339c536989b8978a438"),
                 ],
             ),
         ),

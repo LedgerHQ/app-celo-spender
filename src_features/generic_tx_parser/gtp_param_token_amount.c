@@ -5,6 +5,7 @@
 #include "gtp_field_table.h"
 #include "globals.h"
 #include "ui_logic.h"
+#include "utils.h"
 #include "manage_asset_info.h"
 
 enum {
@@ -130,8 +131,7 @@ static bool process_token_amount(const s_param_token_amount *param,
 
     if (param->has_token) {
         buf_shrink_expand(token->ptr, token->length, addr_buf, sizeof(addr_buf));
-        if (match_native(addr_buf, param)) {
-            // ticker = get_displayable_ticker(&chain_id, chainConfig);
+        if (match_native(addr_buf, param) && is_celo_native_address(addr_buf)) {
             ticker = "CELO";
             decimals = WEI_TO_ETHER;
         } else {
