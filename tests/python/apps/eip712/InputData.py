@@ -9,9 +9,9 @@ import struct
 
 from ledgered.devices import DeviceType
 
-from apps import eth_keychain
-from apps.celo import CeloClient, PKIPubKeyUsage
-from apps.eip712 import EIP712FieldType
+from .. import eth_keychain
+from ..celo import CeloClient, PKIPubKeyUsage
+from . import EIP712FieldType
 
 # global variables
 app_client: CeloClient = None
