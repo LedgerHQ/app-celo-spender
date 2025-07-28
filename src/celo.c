@@ -291,7 +291,6 @@ customStatus_e customProcessor(txContext_t *context) {
 }
 
 void finalizeParsing(bool direct, bool use_standard_ui) {
-    PRINTF("km-logs [celo.c] (finalizeParsing) - use_standard_ui: %d\n", use_standard_ui);
     uint256_t gasPrice, startGas, uint256;
     uint32_t i;
     uint8_t decimals = WEI_TO_ETHER;
@@ -314,8 +313,6 @@ void finalizeParsing(bool direct, bool use_standard_ui) {
     if (tmpContent.txContent.feeCurrencyLength != 0) {
         tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
         // display the ticker of the fee currency token
-        PRINTF("km-logs [celo.c] (finalizeParsing) - feeCurrencyToken->ticker: %s\n",
-               feeCurrencyToken->ticker);
         if (feeCurrencyToken == NULL) {
             reset_app_context();
             PRINTF("Invalid fee currency");

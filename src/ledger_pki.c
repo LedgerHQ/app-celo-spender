@@ -37,10 +37,7 @@ int check_signature_with_pubkey(const char *tag,
         "[%s] "
         "=======================================================================================\n",
         tag);
-    PRINTF("km-logs [ledger_pki.c] (check_signature_with_pubkey) - key_usage: %d\n", key_usage);
-    PRINTF("km-logs [ledger_pki.c] (check_signature_with_pubkey) - keyUsageExp: %d\n", keyUsageExp);
     error = os_pki_get_info(&key_usage, trusted_name, &trusted_name_len, &public_key);
-    PRINTF("km-logs [ledger_pki.c] (check_signature_with_pubkey) - error: %d\n", error);
     if ((error == 0) && (key_usage == keyUsageExp)) {
         PRINTF("[%s] Certificate '%s' loaded for usage 0x%x (%s)\n",
                tag,

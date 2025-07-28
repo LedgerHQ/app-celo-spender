@@ -49,10 +49,6 @@ void handleProvideErc20TokenInformation(uint8_t p1,
     uint8_t tickerLength;
     uint8_t hash[32];
     cx_ecfp_public_key_t tokenKey;
-
-    PRINTF(
-        "km_logs [provide_erc20_token_information.c] (handleProvideErc20TokenInformation) - START "
-        "tmpCtx.transactionContext.extraInfo: ");
     for (int i = 0; i < MAX_ASSETS; i++) {
         PRINTF("\n[%d].address: ", i);
         for (int j = 0; j < ADDRESS_LENGTH; j++) {
@@ -102,17 +98,6 @@ void handleProvideErc20TokenInformation(uint8_t p1,
         PRINTF("Invalid token signature\n");
         THROW(SW_ERROR_IN_DATA);
     }
-    PRINTF(
-        "km_logs [provide_erc20_token_information.c] (handleProvideErc20TokenInformation) - "
-        "END "
-        "tmpCtx.transactionContext.extraInfo: ");
-    for (int i = 0; i < MAX_ASSETS; i++) {
-        PRINTF("\n[%d].address: ", i);
-        for (int j = 0; j < ADDRESS_LENGTH; j++) {
-            PRINTF("%02x", tmpCtx.transactionContext.extraInfo[i].token.address[j]);
-        }
-    }
-    PRINTF("\n");
 
     tmpCtx.transactionContext.assetSet[tmpCtx.transactionContext.currentAssetIndex] = 1;
     tmpCtx.transactionContext.currentAssetIndex =
