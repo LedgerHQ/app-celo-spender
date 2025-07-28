@@ -1,9 +1,0 @@
-nanox:
-  clear && docker exec -it app-celo-spender-container bash -c 'make -C ./ clean' && \
-  git submodule update --init --recursive ; docker exec -it app-celo-spender-container bash -c 'export BOLOS_SDK=$(echo $NANOX_SDK) && make -C ./ -j  CHAIN=celo'  && \
-  docker exec -it -u 0 app-celo-spender-container bash -c ' [ -f ./tests/python/requirements.txt ] && pip install --break-system-packages -r ./tests/python/requirements.txt' ; docker exec -it app-celo-spender-container bash -c "pytest ./tests/python/test_celo.py::test_celo_derive_address -s --tb=short -v --device nanox --golden_run --display"
-
-flex:
-  clear && docker exec -it app-celo-spender-container bash -c 'make -C ./ clean' && \
-  git submodule update --init --recursive ; docker exec -it app-celo-spender-container bash -c 'export BOLOS_SDK=$(echo $FLEX_SDK) && make -C ./ -j  CHAIN=celo' && \
-  docker exec -it -u 0 app-celo-spender-container bash -c ' [ -f ./tests/python/requirements.txt ] && pip install --break-system-packages -r ./tests/python/requirements.txt' ; docker exec -it app-celo-spender-container bash -c "pytest ./tests/python/test_celo.py::test_celo_derive_address --tb=short -s -v --device flex --golden_run --display"
