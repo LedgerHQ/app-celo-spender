@@ -10,6 +10,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "icons.h"
+#include "validate.h"
 // #include "cmd_get_tx_simulation.h"
 
 static nbgl_contentTagValueList_t *g_pair_list = NULL;
@@ -17,11 +18,10 @@ static char *g_review_title = NULL;
 static char *g_sign_title = NULL;
 
 static void review_choice(bool confirm) {
+    validate_transaction(confirm);
     if (confirm) {
-        io_seproxyhal_touch_tx_ok();
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_idle);
     } else {
-        io_seproxyhal_touch_tx_cancel();
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_idle);
     }
 }
