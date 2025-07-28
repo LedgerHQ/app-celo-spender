@@ -50,6 +50,184 @@ from apps.celo_settings import SettingID, settings_toggle
 TESTS_ROOT_DIR = Path(__file__).parent
 
 
+# smart contract address: 0xD533Ca259b330c7A88f74E000a3FaEa2d63B7972
+def test_gcs_celo_governance_approve(
+    navigator: Navigator, scenario_navigator: NavigateWithScenario, test_name: str
+):
+    backend = scenario_navigator.backend
+    app_client = CeloClient(backend)
+    device = backend.device
+
+    with open(
+        f"{ABIS_FOLDER}/celo_governance_proxy.abi.json", encoding="utf-8"
+    ) as file:
+        contract = Web3().eth.contract(abi=json.load(file), address=None)
+    # Encode the call data
+    data = contract.encode_abi(
+        "approve",
+        [15000, 14000],
+    )
+    # Define the transaction parameters
+    tx_params = {
+        "nonce": 235,
+        "maxFeePerGas": Web3.to_wei(100, "gwei"),
+        "maxPriorityFeePerGas": Web3.to_wei(10, "gwei"),
+        "gas": 44001,
+        # Governance Proxy
+        "to": bytes.fromhex("D533Ca259b330c7A88f74E000a3FaEa2d63B7972"),
+        "data": data,
+        "chainId": 42220,
+    }
+    settings_toggle(device, navigator, [SettingID.CONTRACT_DATA])
+    # Start the signing process by sending the transaction parameters
+    with app_client.sign("m/44'/52752'/0'/0/0", tx_params, mode=SignMode.STORE):
+        pass
+    # Define the fields, used to decide which fields to display and how to display them
+    fields = [
+        Field(
+            1,
+            "Proposal",
+            ParamType.RAW,
+            ParamRaw(
+                1,
+                Value(
+                    1,
+                    TypeFamily.UINT,
+                    type_size=32,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(0),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+        Field(
+            1,
+            "Index",
+            ParamType.RAW,
+            ParamRaw(
+                1,
+                Value(
+                    1,
+                    TypeFamily.UINT,
+                    type_size=32,
+                    data_path=DataPath(
+                        1,
+                        [
+                            PathTuple(1),
+                            PathLeaf(PathLeafType.STATIC),
+                        ],
+                    ),
+                ),
+            ),
+        ),
+    ]
+    # compute instructions hash
+    inst_hash = hashlib.sha3_256()
+    for field in fields:
+        inst_hash.update(field.serialize())
+    # Define the transaction info
+    tx_info = TxInfo(
+        1,
+        tx_params["chainId"],
+        tx_params["to"],
+        get_selector_from_data(tx_params["data"]),
+        inst_hash.digest(),
+        "Approve proposal",
+        creator_name="Celo Governance",
+        creator_legal_name="Celo",
+        creator_url="https://celo.org",
+        contract_name="GovernanceProxy",
+        deploy_date=1707724800,
+    )
+
+    app_client.provide_transaction_info(tx_info.serialize())
+
+    # app_client.provide_token_metadata(
+    #     "USDC", bytes.fromhex("2f25deb3848c207fc8e0c34035b3ba7fc157602b"), 6, 42220
+    # )
+
+    for field in fields:
+        payload = field.serialize()
+        app_client.send_raw(
+            0xE0, 0x28, 0x01, 0x00, struct.pack(">H", len(payload)) + payload
+        )
+
+    with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
+        scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name=test_name)
+
+
+def test_gcs_celo_governance_withdraw(
+    navigator: Navigator, scenario_navigator: NavigateWithScenario, test_name: str
+):
+    backend = scenario_navigator.backend
+    app_client = CeloClient(backend)
+    device = backend.device
+
+    with open(
+        f"{ABIS_FOLDER}/celo_governance_proxy.abi.json", encoding="utf-8"
+    ) as file:
+        contract = Web3().eth.contract(abi=json.load(file), address=None)
+    # Encode the call data
+    data = contract.encode_abi(
+        "withdraw",
+        [],
+    )
+    # Define the transaction parameters
+    tx_params = {
+        "nonce": 235,
+        "maxFeePerGas": Web3.to_wei(100, "gwei"),
+        "maxPriorityFeePerGas": Web3.to_wei(10, "gwei"),
+        "gas": 44001,
+        # Governance Proxy
+        "to": bytes.fromhex("D533Ca259b330c7A88f74E000a3FaEa2d63B7972"),
+        "data": data,
+        "chainId": 42220,
+    }
+    settings_toggle(device, navigator, [SettingID.CONTRACT_DATA])
+    # Start the signing process by sending the transaction parameters
+    with app_client.sign("m/44'/52752'/0'/0/0", tx_params, mode=SignMode.STORE):
+        pass
+    # Define the fields, used to decide which fields to display and how to display them
+    fields = []
+    # compute instructions hash
+    inst_hash = hashlib.sha3_256()
+    for field in fields:
+        inst_hash.update(field.serialize())
+    # Define the transaction info
+    tx_info = TxInfo(
+        1,
+        tx_params["chainId"],
+        tx_params["to"],
+        get_selector_from_data(tx_params["data"]),
+        inst_hash.digest(),
+        "withdraw",
+        creator_name="Celo Governance",
+        creator_legal_name="Celo",
+        creator_url="https://celo.org",
+        contract_name="GovernanceProxy",
+        deploy_date=1707724800,
+    )
+
+    app_client.provide_transaction_info(tx_info.serialize())
+
+    # app_client.provide_token_metadata(
+    #     "USDC", bytes.fromhex("2f25deb3848c207fc8e0c34035b3ba7fc157602b"), 6, 42220
+    # )
+
+    for field in fields:
+        payload = field.serialize()
+        app_client.send_raw(
+            0xE0, 0x28, 0x01, 0x00, struct.pack(">H", len(payload)) + payload
+        )
+
+    with app_client.send_raw_async(0xE0, 0x04, 0x00, 0x02, bytes()):
+        scenario_navigator.review_approve(TESTS_ROOT_DIR, test_name=test_name)
+
+
 def test_gcs_1inch(
     navigator: Navigator, scenario_navigator: NavigateWithScenario, test_name: str
 ):
@@ -91,7 +269,7 @@ def test_gcs_1inch(
     }
     settings_toggle(device, navigator, [SettingID.CONTRACT_DATA])
     # Start the signing process by sending the transaction parameters
-    with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
+    with app_client.sign("m/44'/52752'/0'/0/0", tx_params, mode=SignMode.STORE):
         pass
     # Define the fields, used to decide which fields to display and how to display them
     fields = [
@@ -269,7 +447,7 @@ def test_gcs_poap(
     #     response = app_client.provide_tx_simulation(simu_params)
     #     assert response.status == StatusCode.OK
 
-    with app_client.sign("m/44'/60'/0'/0/0", tx_params, mode=SignMode.STORE):
+    with app_client.sign("m/44'/52752'/0'/0/0", tx_params, mode=SignMode.STORE):
         pass
 
     fields = [
