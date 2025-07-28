@@ -18,7 +18,8 @@ from .eip712 import EIP712FieldType
 from .eth_keychain import sign_data, Key
 from .eth_tlv import format_tlv, FieldTag
 from .eth_response_parser import pk_addr
-from .eth_tx_simu import TxSimu
+
+# from .eth_tx_simu import TxSimu
 
 # erc-7730 imports
 from eth_utils import keccak
@@ -236,7 +237,7 @@ class CeloClient:
         header.append(len(payload))
         return self._exchange_async(header + payload)
 
-    def get_version(self) -> bytes:
+    def get_version(self) -> RAPDU:
         version: RAPDU = self._backend.exchange(
             CLA, INS.INS_GET_APP_CONFIGURATION, Param.P1_UNUSED, Param.P2_UNUSED
         )

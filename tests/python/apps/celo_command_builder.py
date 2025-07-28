@@ -91,8 +91,8 @@ class CommandBuilder:
             name.encode(),
         )
 
-    def get_app_configuration(self) -> bytes:
-        return self._serialize(InsType.GET_APP_CONFIGURATION, 0x00, 0x00)
+    # def get_app_configuration(self) -> bytes:
+    #     return self._serialize(InsType.GET_APP_CONFIGURATION, 0x00, 0x00)
 
     def eip712_send_struct_def_struct_field(
         self,
@@ -518,5 +518,5 @@ class CommandBuilder:
     #         InsType.PROVIDE_TX_SIMULATION, tlv_payload, p1l=[0x00], p2l=[0x01, 0x00]
     #     )
 
-    def provide_proxy_info(self, tlv_payload: bytes) -> list[bytes]:
-        return self.common_tlv_serialize(InsType.PROVIDE_PROXY_INFO, tlv_payload)
+    # def provide_proxy_info(self, tlv_payload: bytes) -> list[bytes]:
+    #     return self.common_tlv_serialize(InsType.PROVIDE_PROXY_INFO, tlv_payload)
