@@ -2,7 +2,6 @@
 #include "gtp_tx_info.h"
 #include "read.h"
 #include "hash_bytes.h"
-// #include "network.h"  // get_tx_chain_id
 #include "globals.h"  // txContext
 #include "utils.h"
 #include "time_format.h"
@@ -52,7 +51,6 @@ static bool handle_version(const s_tlv_data *data, s_tx_info_ctx *context) {
     return true;
 }
 
-// km: not sure haw to handle this. might not work as expected
 static bool handle_chain_id(const s_tlv_data *data, s_tx_info_ctx *context) {
     uint64_t chain_id;
     uint8_t buf[sizeof(chain_id)] = {0};
@@ -62,7 +60,6 @@ static bool handle_chain_id(const s_tlv_data *data, s_tx_info_ctx *context) {
     }
     buf_shrink_expand(data->value, data->length, buf, sizeof(buf));
     chain_id = read_u64_be(buf, 0);
-    // if (chain_id != get_tx_chain_id()) {
     if (chain_id != 42220) {
         PRINTF("Error: chain ID mismatch!\n");
         return false;
@@ -243,7 +240,6 @@ bool verify_tx_info_struct(const s_tx_info_ctx *context) {
     uint16_t required_bits = 0;
     uint8_t hash[INT256_LENGTH];
     // const uint8_t *proxy_parent;
-    // uint64_t tx_chain_id;
 
     // check if struct version was provided
     required_bits |= SET_BIT(BIT_VERSION);
@@ -268,21 +264,6 @@ bool verify_tx_info_struct(const s_tx_info_ctx *context) {
         PRINTF("Error: missing required field(s)\n");
         return false;
     }
-
-    // km: is this check necessary ? it probably is and needs to be adapted to celo
-    // tx_chain_id = get_tx_chain_id();
-    // tx_chain_id = 42220;
-    // if (((proxy_parent = get_proxy_contract(&tx_chain_id,
-    //                                         txContext.content->destination,
-    //                                         context->tx_info->selector)) == NULL) ||
-    //     (memcmp(proxy_parent, context->tx_info->contract_addr, ADDRESS_LENGTH) != 0)) {
-    //     if (memcmp(context->tx_info->contract_addr,
-    //                txContext.content->destination,
-    //                ADDRESS_LENGTH) != 0) {
-    //         PRINTF("Error: contract address mismatch!\n");
-    //         return false;
-    //     }
-    // }
 
     // verify signature
     if (cx_hash_no_throw((cx_hash_t *) &context->struct_hash,

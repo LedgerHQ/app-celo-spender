@@ -1,9 +1,6 @@
 #include "ui_common.h"
-// #include "common_ui.h"
-// #include "ui_nbgl.h"
 #include "ui_logic.h"
 #include "ui_typed_message_signing.h"
-// #include "cmd_get_tx_simulation.h"
 #include "utils.h"
 #include "celo.h"
 #include "globals.h"
@@ -98,9 +95,6 @@ static void ui_712_start_common(void) {
     }
     appState = APP_STATE_SIGNING_EIP712;
     explicit_bzero(&warning, sizeof(nbgl_warning_t));
-    // #ifdef HAVE_WEB3_CHECKS
-    //     set_tx_simulation_warning(&warning, false, false);
-    // #endif
 }
 
 void ui_712_start_unfiltered(void) {
@@ -136,50 +130,12 @@ void ui_712_switch_to_message(void) {
     message_update(true);
 }
 
-// #ifdef HAVE_WEB3_CHECKS
-// static void ui_712_w3c_cb(bool confirm) {
-//     if (confirm) {
-//         // User has clicked on "Reject transaction"
-//         ui_typed_message_review_choice(false);
-//     } else {
-//         // User has clicked on "Sign anyway"
-//         snprintf(g_stax_shared_buffer,
-//                  sizeof(g_stax_shared_buffer),
-// #ifdef SCREEN_SIZE_WALLET
-//                  "%s typed message?",
-// #else
-//                  "%s message",
-// #endif
-//                  ui_tx_simulation_finish_str());
-//         nbgl_useCaseReviewStreamingFinish(g_stax_shared_buffer, ui_typed_message_review_choice);
-//     }
-// }
-// #endif
-
 void ui_712_switch_to_sign(void) {
     if (!review_skipped && (pair_idx > 0)) {
         pairs_list.nbPairs = pair_idx;
         pair_idx = 0;
         nbgl_useCaseReviewStreamingContinueExt(&pairs_list, message_progress, skip_callback);
     } else {
-        // #ifdef HAVE_WEB3_CHECKS
-        //         if ((TX_SIMULATION.risk != RISK_UNKNOWN) && ((check_tx_simulation_hash() ==
-        //         false) ||
-        //                                                      check_tx_simulation_from_address()
-        //                                                      == false)) {
-        //             ui_tx_simulation_error(ui_712_w3c_cb);
-        //             return;
-        //         }
-        // #endif
-        // #ifdef SCREEN_SIZE_WALLET
-        //         snprintf(g_stax_shared_buffer,
-        //                  sizeof(g_stax_shared_buffer),
-        //                  "%s typed message?",
-        //                  ui_tx_simulation_finish_str());
-        // #else
-        //         snprintf(g_stax_shared_buffer, sizeof(g_stax_shared_buffer), "Sign message");
-        // #endif
-        // km_todo: correct the string here to say sign typed message on stax/flex
-        nbgl_useCaseReviewStreamingFinish("Sign message", ui_typed_message_review_choice);
+        nbgl_useCaseReviewStreamingFinish("Sign typed message", ui_typed_message_review_choice);
     }
 }

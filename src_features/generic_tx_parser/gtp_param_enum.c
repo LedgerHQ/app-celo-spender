@@ -1,5 +1,4 @@
 #include "gtp_param_enum.h"
-// #include "network.h"
 #include "enum_value.h"
 #include "gtp_field_table.h"
 #include "calldata.h"
@@ -54,7 +53,6 @@ bool handle_param_enum_struct(const s_tlv_data *data, s_param_enum_context *cont
     }
     return ret;
 }
-// km: check if this works as expected
 bool format_param_enum(const s_param_enum *param, const char *name) {
     bool ret;
     uint64_t chain_id;
@@ -64,7 +62,6 @@ bool format_param_enum(const s_param_enum *param, const char *name) {
     const uint8_t *selector;
 
     if ((ret = value_get(&param->value, &collec))) {
-        // chain_id = get_tx_chain_id();
         chain_id = 42220;
         for (int i = 0; i < collec.size; ++i) {
             if (collec.value[i].length == 0) {

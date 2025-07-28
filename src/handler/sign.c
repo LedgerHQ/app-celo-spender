@@ -30,14 +30,11 @@ int handleSign(uint8_t p1,
                const uint8_t *workBuffer,
                uint16_t dataLength,
                volatile unsigned int *flags) {
-    PRINTF("km-logs [sign.c] (handleSign) Starting this function\n");
-    PRINTF("km-logs [sign.c] (handleSign) Sign mode: %d\n", p2);
     parserStatus_e txResult;
     g_use_standard_ui = (p2 == SIGN_MODE_BASIC);
     switch (p2) {
         case SIGN_MODE_BASIC:
         case SIGN_MODE_STORE:
-            // ------------------START OF APP-ETHEREUM HANDLE_FIRST_SIGN_CHUNK-------------------
             if (p1 == P1_FIRST) {
                 if (appState != APP_STATE_IDLE) {
                     reset_app_context();
@@ -58,13 +55,12 @@ int handleSign(uint8_t p1,
                 initTx(&txContext,
                        &sha3,
                        &tmpContent.txContent,
-                       customProcessor,  // this is not present in the app-ethereum----------->
+                       customProcessor,
                        p2 == SIGN_MODE_STORE,
                        NULL);
 
                 // Extract and validate the transaction type
                 uint8_t txType = *workBuffer;
-                PRINTF("km-logs [sign.c] (handleSign) txType: %d\n", txType);
                 if (txType == EIP1559 || txType == CIP64) {
                     // Initialize the SHA3 hashing with the transaction type
                     CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, workBuffer, 1, NULL, 0));
@@ -75,14 +71,9 @@ int handleSign(uint8_t p1,
                 } else {
                     return io_send_sw(SW_TX_TYPE_NOT_SUPPORTED);
                 }
-                // ------------------END OF APP-ETHEREUM HANDLE_FIRST_SIGN_CHUNK-------------------
-                PRINTF("km-logs [sign.c] (handleSign) done with the first sign chunk\n");
             } else if (p1 != P1_MORE) {
                 return io_send_sw(SW_WRONG_P1_OR_P2);
             }
-            // if (p2 != 0) {
-            //     return io_send_sw(SW_WRONG_P1_OR_P2);
-            // }
             if ((p1 == P1_MORE) && (appState != APP_STATE_SIGNING_TX)) {
                 PRINTF("Signature not initialized\n");
                 return io_send_sw(SW_INITIALIZATION_ERROR);
@@ -115,9 +106,6 @@ int handleSign(uint8_t p1,
         return io_send_sw(SW_INITIALIZATION_ERROR);
     }
     txResult = processTx(&txContext, workBuffer, dataLength);
-    PRINTF("km-logs [sign.c] (handleSign) - processTx result: %d\n", txResult);
-    // --------to this level, the code does the same as in the app-ethereum ------------
-    // ------------------START OF APP-ETHEREUM HANDLE_PARSING_STATUS -------------------
     switch (txResult) {
         case USTREAM_SUSPENDED:
             break;
@@ -135,8 +123,6 @@ int handleSign(uint8_t p1,
     if (txResult == USTREAM_FINISHED) {
         finalizeParsing(true, g_use_standard_ui);
     }
-    // ------------------END OF APP-ETHEREUM HANDLE_PARSING_STATUS -------------------
-    // ------ MISSING A CHECK FOR BASIG MODE HERE ?----------------------
 
     *flags |= IO_ASYNCH_REPLY;
 

@@ -17,9 +17,6 @@
  * Dispatch structured APDU command to handler
  */
 int apdu_dispatcher(const command_t *cmd) {
-    // uint32_t *flags = 0;
-    // uint16_t sw;
-
     if (cmd == NULL) {
         io_send_sw(SW_ERROR_IN_DATA);
         return -1;

@@ -39,11 +39,6 @@ void reset_app_context() {
     }
 }
 
-// void forget_known_assets(void) {
-//     explicit_bzero(&tmpCtx.transactionContext.assetSet, MAX_ASSETS);
-//     tmpCtx.transactionContext.currentAssetIndex = 0;
-// }
-
 #include "uint256.h"
 
 #define WEI_TO_ETHER 18
@@ -58,26 +53,12 @@ tokenDefinition_t *getKnownToken(uint8_t *tokenAddr) {
 }
 
 int get_token_index_by_addr(const uint8_t *addr) {
-    PRINTF("km_logs [celo.c] (get_token_index_by_addr) - addr: ");
-    for (int i = 0; i < ADDRESS_LENGTH; i++) {
-        PRINTF("%02x", addr[i]);
-    }
-    PRINTF("\n");
-
     for (int i = 0; i < MAX_ASSETS; i++) {
-        PRINTF(
-            "km_logs [celo.c] (get_token_index_by_addr) - "
-            "tmpCtx.transactionContext.extraInfo[%d].token.address: ",
-            i);
         for (int j = 0; j < ADDRESS_LENGTH; j++) {
             PRINTF("%02x", tmpCtx.transactionContext.extraInfo[i].token.address[j]);
         }
         PRINTF("\n");
-        PRINTF(
-            "km_logs [celo.c] (get_token_index_by_addr) - "
-            "tmpCtx.transactionContext.assetSet[%d]: %d\n",
-            i,
-            tmpCtx.transactionContext.assetSet[i]);
+
         if (tmpCtx.transactionContext.assetSet[i] &&
             (memcmp(tmpCtx.transactionContext.extraInfo[i].token.address, addr, ADDRESS_LENGTH) ==
              0)) {
@@ -311,7 +292,6 @@ customStatus_e customProcessor(txContext_t *context) {
 
 void finalizeParsing(bool direct, bool use_standard_ui) {
     PRINTF("km-logs [celo.c] (finalizeParsing) - use_standard_ui: %d\n", use_standard_ui);
-    // ------------------START OF APP-ETHEREUM FINALIZE_PARSING_HELPER -------------------
     uint256_t gasPrice, startGas, uint256;
     uint32_t i;
     uint8_t decimals = WEI_TO_ETHER;
@@ -320,7 +300,7 @@ void finalizeParsing(bool direct, bool use_standard_ui) {
     const char *feeTicker = CHAINID_COINNAME " ";
     uint8_t tickerOffset = 0;
 
-    // ----------- verify chainId in ethereum but not in celo -------------------
+    // ----------- verify chainId in ethereum but done elsewhere in this app -------------------
 
     // Store the hash
     CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
@@ -330,7 +310,6 @@ void finalizeParsing(bool direct, bool use_standard_ui) {
                               tmpCtx.transactionContext.hash,
                               32));
 
-    // km: will this be needed for the generic flow as well ?
     // Display correct currency if fee currency field sent
     if (tmpContent.txContent.feeCurrencyLength != 0) {
         tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
@@ -570,12 +549,8 @@ void finalizeParsing(bool direct, bool use_standard_ui) {
             case PROVISION_CREATE_ACCOUNT:
                 ui_approval_celo_create_account_flow();
                 break;
-            // km_todo: add check, if store_calldata is true, dataPresent and !N_storage.dataAllowed
-            // is false, then show blind signing flow/error ??  -->  this check is at around line
-            // 381 in the last else if the "if (provisionType == PROVISION_TOKEN)"
-            //
+
             default:
-                // km_todo: there might be the need for another ui for the generic flow here
                 if (tmpContent.txContent.gatewayDestinationLength != 0) {
                     if (dataPresent && !N_storage.contractDetails) {
                         ui_approval_celo_data_warning_gateway_tx_flow();

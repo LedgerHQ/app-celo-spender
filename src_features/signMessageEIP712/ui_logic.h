@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "ux.h"
 #include "uint256.h"
-// #include "trusted_name.h"
 
 typedef enum { EIP712_FILTERING_BASIC, EIP712_FILTERING_FULL } e_eip712_filtering_mode;
 typedef enum {
@@ -48,10 +47,7 @@ bool ui_712_show_raw_key(const void *field_ptr);
 bool ui_712_push_new_filter_path(uint32_t path_crc);
 void ui_712_set_discarded_path(const char *path, uint8_t length);
 const char *ui_712_get_discarded_path(uint8_t *length);
-// void ui_712_set_trusted_name_requirements(uint8_t type_count,
-//                                           const e_name_type *types,
-//                                           uint8_t source_count,
-//                                           const e_name_source *sources);
+
 char *get_ui_pairs_buffer(size_t *size);
 
 extern const char g_unknown_ticker[];

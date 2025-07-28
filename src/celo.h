@@ -71,9 +71,4 @@ void initTx(txContext_t *context,
  */
 void finalizeParsing(bool direct, bool use_standard_ui);
 
-// /**
-//  * @brief Forgets the known tokens.
-//  */
-// void forget_known_assets(void);
-
 extern volatile uint8_t appState; /**< The application state. */

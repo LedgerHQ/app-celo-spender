@@ -2,7 +2,6 @@
 #include "hash_bytes.h"
 #include "sw.h"  // APDU return codes
 #include "public_keys.h"
-// #include "manage_asset_info.h"
 #include "context_712.h"
 #include "commands_712.h"
 #include "typed_data.h"
@@ -14,7 +13,6 @@
 #include "constants.h"  // MAX_ASSETS, ADDRESS_LENGTH, INT256_LENGTH
 #include "globals.h"
 #include "celo.h"  // get_token_index_by_addr
-// #include "trusted_name.h"
 // #include "proxy_info.h"
 
 #define FILT_MAGIC_MESSAGE_INFO      183
@@ -334,104 +332,6 @@ bool filtering_discarded_path(const uint8_t *payload, uint8_t length) {
     return true;
 }
 
-// /**
-//  * Command to display a field as a trusted name
-//  *
-//  * @param[in] payload the payload to parse
-//  * @param[in] length the payload length
-//  * @param[in] discarded if the filter targets a field that is does not exist (within an empty
-//  array)
-//  * @param[out] path_crc pointer to the CRC of the filter path
-//  * @return whether it was successful or not
-//  */
-// bool filtering_trusted_name(const uint8_t *payload,
-//                             uint8_t length,
-//                             bool discarded,
-//                             uint32_t *path_crc) {
-//     uint8_t name_len;
-//     const char *name;
-//     uint8_t type_count;
-//     e_name_type *types;
-//     uint8_t source_count;
-//     e_name_source *sources;
-//     uint8_t sig_len;
-//     const uint8_t *sig;
-//     uint8_t offset = 0;
-
-//     if (path_get_root_type() != ROOT_MESSAGE) {
-//         apdu_response_code = APDU_RESPONSE_CONDITION_NOT_SATISFIED;
-//         return false;
-//     }
-
-//     // Parsing
-//     if ((offset + sizeof(name_len)) > length) {
-//         return false;
-//     }
-//     name_len = payload[offset++];
-//     if ((offset + name_len) > length) {
-//         return false;
-//     }
-//     name = (char *) &payload[offset];
-//     offset += name_len;
-//     if ((offset + sizeof(type_count)) > length) {
-//         return false;
-//     }
-//     type_count = payload[offset++];
-//     if (type_count > TN_TYPE_COUNT) {
-//         return false;
-//     }
-//     if ((offset + type_count) > length) {
-//         return false;
-//     }
-//     types = (e_name_type *) &payload[offset];
-//     offset += type_count;
-//     if ((offset + sizeof(source_count)) > length) {
-//         return false;
-//     }
-//     source_count = payload[offset++];
-//     if (source_count > TN_SOURCE_COUNT) {
-//         return false;
-//     }
-//     if ((offset + source_count) > length) {
-//         return false;
-//     }
-//     sources = (e_name_source *) &payload[offset];
-//     offset += source_count;
-//     //
-//     if ((offset + sizeof(sig_len)) > length) {
-//         return false;
-//     }
-//     sig_len = payload[offset++];
-//     if ((offset + sig_len) != length) {
-//         return false;
-//     }
-//     sig = &payload[offset];
-
-//     // Verification
-//     cx_sha256_t hash_ctx;
-//     if (!sig_verif_start(&hash_ctx, FILT_MAGIC_TRUSTED_NAME)) {
-//         return false;
-//     }
-//     hash_filtering_path((cx_hash_t *) &hash_ctx, discarded, path_crc);
-//     hash_nbytes((uint8_t *) name, sizeof(char) * name_len, (cx_hash_t *) &hash_ctx);
-//     hash_nbytes(types, type_count, (cx_hash_t *) &hash_ctx);
-//     hash_nbytes(sources, source_count, (cx_hash_t *) &hash_ctx);
-//     if (!sig_verif_end(&hash_ctx, sig, sig_len)) {
-//         return false;
-//     }
-
-//     // Handling
-//     if (!check_typename("address")) {
-//         return false;
-//     }
-//     if (name_len > 0) {  // don't substitute for an empty name
-//         ui_712_set_title(name, name_len);
-//     }
-//     ui_712_flag_field(true, name_len > 0, false, false, true);
-//     ui_712_set_trusted_name_requirements(type_count, types, source_count, sources);
-//     return true;
-// }
-
 /**
  * Command to display a field as a date-time
  *
@@ -621,10 +521,7 @@ bool filtering_amount_join_value(const uint8_t *payload,
     if (token_idx == TOKEN_IDX_ADDR_IN_DOMAIN) {
         // Permit (ERC-2612)
         int resolved_idx = get_token_index_by_addr(eip712_context->contract_addr);
-        PRINTF("km_logs [filtering.c] (filtering_amount_join_value) - resolved_idx: %d\n",
-               resolved_idx);
         if (resolved_idx == -1) {
-            PRINTF("ERROR: Could not find token info for verifyingContract address!\n");
             return false;
         }
         token_idx = (uint8_t) resolved_idx;
