@@ -36,13 +36,6 @@ void array_hexstr(char *strbuf, const void *bin, size_t len) {
     *strbuf = 0;  // EOS
 }
 
-// void convertUint256BE(const uint8_t *data, size_t length, uint256_t *target) {
-//     uint8_t tmp[32];
-//     memset(tmp, 0, 32);
-//     memcpy(tmp + 32 - length, data, length);
-//     readu256BE(tmp, target);
-// }
-
 uint32_t getV(txContent_t *txContent) {
     uint32_t v = 0;
     if (txContent->vLength == 1) {
@@ -272,73 +265,6 @@ bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_
     return true;
 }
 
-// bool adjustDecimals(const char *src,
-//                     size_t srcLength,
-//                     char *target,
-//                     size_t targetLength,
-//                     uint8_t decimals) {
-//     uint32_t startOffset;
-//     uint32_t lastZeroOffset = 0;
-//     uint32_t offset = 0;
-//     if ((srcLength == 1) && (*src == '0')) {
-//         if (targetLength < 2) {
-//             return false;
-//         }
-//         target[0] = '0';
-//         target[1] = '\0';
-//         return true;
-//     }
-//     if (srcLength <= decimals) {
-//         uint32_t delta = decimals - srcLength;
-//         if (targetLength < srcLength + 1 + 2 + delta) {
-//             return false;
-//         }
-//         target[offset++] = '0';
-//         target[offset++] = '.';
-//         for (uint32_t i = 0; i < delta; i++) {
-//             target[offset++] = '0';
-//         }
-//         startOffset = offset;
-//         for (uint32_t i = 0; i < srcLength; i++) {
-//             target[offset++] = src[i];
-//         }
-//         target[offset] = '\0';
-//     } else {
-//         uint32_t sourceOffset = 0;
-//         uint32_t delta = srcLength - decimals;
-//         if (targetLength < srcLength + 1 + 1) {
-//             return false;
-//         }
-//         while (offset < delta) {
-//             target[offset++] = src[sourceOffset++];
-//         }
-//         if (decimals != 0) {
-//             target[offset++] = '.';
-//         }
-//         startOffset = offset;
-//         while (sourceOffset < srcLength) {
-//             target[offset++] = src[sourceOffset++];
-//         }
-//         target[offset] = '\0';
-//     }
-//     for (uint32_t i = startOffset; i < offset; i++) {
-//         if (target[i] == '0') {
-//             if (lastZeroOffset == 0) {
-//                 lastZeroOffset = i;
-//             }
-//         } else {
-//             lastZeroOffset = 0;
-//         }
-//     }
-//     if (lastZeroOffset != 0) {
-//         target[lastZeroOffset] = '\0';
-//         if (target[lastZeroOffset - 1] == '.') {
-//             target[lastZeroOffset - 1] = '\0';
-//         }
-//     }
-//     return true;
-// }
-
 bool amountToString(const uint8_t *amount,
                     uint8_t amount_size,
                     uint8_t decimals,
@@ -447,7 +373,6 @@ bool check_name(const uint8_t *name, uint16_t len) {
 // km: I hard coded the ticker to CELO, this might need an update to account for other fee
 // currencies possible instead of determining it with chain id
 static void raw_fee_to_string(uint256_t *rawFee, char *displayBuffer, uint32_t displayBufferSize) {
-    // uint64_t chain_id = get_tx_chain_id();
     const char *feeTicker = "CELO";
     uint8_t tickerOffset = 0;
     uint32_t i;

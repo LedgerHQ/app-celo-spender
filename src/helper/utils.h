@@ -54,15 +54,6 @@ static const char HEXDIGITS[] = "0123456789abcdef";
  */
 void array_hexstr(char *strbuf, const void *bin, size_t len);
 
-// /**
-//  * Converts a big-endian byte array to a uint256_t target.
-//  *
-//  * @param data [in] The big-endian byte array to convert.
-//  * @param length [in] The length of the byte array.
-//  * @param target [out] The target uint256_t to store the converted value.
-//  */
-// void convertUint256BE(const uint8_t *data, uint32_t length, uint256_t *target);
-
 /**
  * Retrieves the V value from the transaction content.
  *
@@ -187,52 +178,6 @@ bool u64_to_string(uint64_t src, char *dst, uint8_t dst_size);
 
 //// IMPORTED FROM common_utils.h
 
-/*
- * @brief Converts a binary value to a hexadecimal string representation.
- *
- * This function formats a binary value (represented by `value`) into a
- * hexadecimal string, prefixed with '0x'. The resulting string is stored in the
- * `out` buffer. The buffer should be large enough to accommodate the '0x'
- * prefix and the hexadecimal representation of the binary value.
- *
- * @param out A pointer to the buffer where the hexadecimal string will be
- * stored.
- * @param outl The length of the output buffer.
- * @param value A pointer to the binary value to be converted.
- * @param len The length of the binary value.
- * @return 0 on success, or -1 if an error occurs (e.g., buffer too small).
- */
-// int array_bytes_string(char *out, size_t outl, const void *value, size_t len);
-
-/*
- * @brief Converts a big-endian byte array to a 64-bit unsigned integer.
- *
- * This function interprets the byte array `in` as a big-endian number and
- * converts it to a 64-bit unsigned integer. The conversion stops after `size`
- * bytes or when the input array has been fully processed.
- *
- * @param in A pointer to the byte array representing the big-endian number.
- * @param size The number of bytes to consider from the byte array.
- * @return The 64-bit unsigned integer representation of the byte array.
- */
-// uint64_t u64_from_BE(const uint8_t *in, uint8_t size);
-
-/*
- * @brief Converts a 64-bit unsigned integer to a string.
- *
- * This function converts a 64-bit unsigned integer (`src`) to its decimal
- * string representation, storing the result in the `dst` buffer. The conversion
- * ensures that the resulting string is null-terminated and the buffer size
- * (`dst_size`) is sufficient to hold the result and the null terminator.
- *
- * @param src The 64-bit unsigned integer to convert.
- * @param dst A pointer to the buffer where the decimal string will be stored.
- * @param dst_size The size of the output buffer.
- * @return true if the conversion was successful and the output buffer contains
- * the resulting string, false if the buffer is too small or an error occurs.
- */
-// bool u64_to_string(uint64_t src, char *dst, uint8_t dst_size);
-
 /**
  * @brief Converts a uint256 value to its decimal string representation.
  *
@@ -274,31 +219,6 @@ bool amountToString(const uint8_t *amount,
                     char *out_buffer,
                     size_t out_buffer_size);
 
-// /**
-//  * @brief Adjusts the decimal position of a numeric string based on a specified
-//  * number of decimals.
-//  *
-//  * This function takes a numeric string `src` and adjusts its decimal position
-//  * according to the specified number of `decimals`, storing the result in the
-//  * `target` buffer. If the `src` string is shorter than the number of decimals,
-//  * leading zeros are added. Trailing zeros are removed from the result.
-//  *
-//  * @param src A pointer to the source numeric string.
-//  * @param srcLength The length of the source string.
-//  * @param target A pointer to the buffer where the adjusted string will be
-//  * stored.
-//  * @param targetLength The length of the target buffer.
-//  * @param decimals The number of decimals to adjust to.
-//  * @return true if the adjustment was successful and the target buffer contains
-//  * the resulting string, false if the target buffer is too small or an error
-//  * occurs.
-//  */
-// bool adjustDecimals(const char *src,
-//                     size_t srcLength,
-//                     char *target,
-//                     size_t targetLength,
-//                     uint8_t decimals);
-
 /**
  * @brief Computes the Ethereum address from a raw public key.
  *
@@ -330,62 +250,6 @@ void getEthAddressFromRawKey(const uint8_t raw_pubkey[static 65],
 void getEthAddressStringFromRawKey(const uint8_t raw_pubkey[static 65],
                                    char out[static(ADDRESS_LENGTH * 2) + 1],
                                    uint64_t chainId);
-
-/*
- * @brief Converts a binary Ethereum address to its checksum string
- * representation.
- *
- * This function converts a binary Ethereum address to a hexadecimal string with
- * EIP-55 checksum. It supports EIP-1191 checksumming for specific chain IDs.
- *
- * @param address A pointer to the binary Ethereum address (20 bytes).
- * @param out A pointer to the buffer where the checksum string representation
- * will be stored. The buffer must be at least (ADDRESS_LENGTH * 2) + 1 bytes
- * long.
- * @param chainId The chain ID to be used for EIP-1191 checksum (if applicable).
- * @return true if the conversion was successful and the output buffer contains
- * the resulting string, false if an error occurs.
- */
-// bool getEthAddressStringFromBinary(uint8_t *address,
-//                                    char out[static(ADDRESS_LENGTH * 2) + 1],
-//                                    uint64_t chainId);
-
-/*
- * @brief Converts a binary Ethereum address to its lowercase string
- * representation.
- *
- * This function takes an Ethereum public key in binary format, converts it to a
- * lowercase hexadecimal string, and stores the result in the provided `out`
- * buffer. The resulting string will be null-terminated.
- *
- * @param in A pointer to the binary Ethereum public key.
- * @param out A pointer to the buffer where the lowercase string representation
- * will be stored. The buffer must be at least 43 bytes long.
- * @param out_len The length of the output buffer `out`.
- * @param chainId The chain ID to be used (for future compatibility or other
- * uses).
- * @return true if the conversion was successful and the output buffer contains
- * the resulting string, false if the output buffer is too small or an error
- * occurs.
- *
- * @example
- * uint8_t*:0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB ->
- *      char*:"0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB\0"
- */
-// bool getEthDisplayableAddress(uint8_t *in, char *out, size_t out_len, uint64_t chainId);
-
-/*
- * @brief Checks if a buffer is entirely filled with zeroes.
- *
- * This function examines the first `n` bytes of the buffer pointed to by `buf`
- * to determine if all bytes are zero.
- *
- * @param buf A pointer to the buffer to be checked.
- * @param n The number of bytes to check in the buffer.
- * @return 1 if all bytes in the buffer are zero, 0 otherwise.
- */
-// int allzeroes(const void *buf, size_t n);
-
 /**
  * @brief Checks if a buffer is entirely filled with the maximum byte value
  * (0xff).
@@ -398,15 +262,6 @@ void getEthAddressStringFromRawKey(const uint8_t raw_pubkey[static 65],
  * @return 1 if all bytes in the buffer are 0xff, 0 otherwise.
  */
 int ismaxint(uint8_t *buf, int n);
-
-/*
- * @deprecated
- * See format_hex in main SDK
- */
-// DEPRECATED static inline void array_hexstr(char *strbuf, const void *bin, unsigned int len) {
-//     // Consider the output buffer is sufficiently large!
-//     format_hex(bin, len, strbuf, (2 * len + 1));
-// }
 
 // --8<-- [end:common_utils]
 

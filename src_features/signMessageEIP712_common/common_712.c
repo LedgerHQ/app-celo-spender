@@ -7,12 +7,6 @@
 #include "crypto_helpers.h"
 #include "ui_common.h"
 
-// #include "apdu_constants.h"
-// #include "os_io_seproxyhal.h"
-// #include "crypto_helpers.h"
-// #include "ui_callbacks.h"
-// #include "common_712.h"
-
 static const uint8_t EIP_712_MAGIC[] = {0x19, 0x01};
 
 unsigned int ui_712_approve_cb(void) {

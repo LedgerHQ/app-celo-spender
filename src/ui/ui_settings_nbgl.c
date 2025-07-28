@@ -42,7 +42,6 @@ static const nbgl_contentInfoList_t infoList = {
 };
 
 // settings menu definition
-// KM: was 1 even if there were 2 settings. I added a third one and set it to 3. might be wrong.
 #define SETTING_CONTENTS_NB 1
 static const nbgl_content_t contents[SETTING_CONTENTS_NB] = {
     {.type = SWITCHES_LIST,

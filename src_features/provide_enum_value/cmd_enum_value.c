@@ -1,6 +1,4 @@
 #include "cmd_enum_value.h"
-// #include "apdu_constants.h"
-// #include "constants.h"
 #include "sw.h"
 #include "enum_value.h"
 #include "tlv_apdu.h"

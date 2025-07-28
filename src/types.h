@@ -144,7 +144,6 @@ typedef struct transactionContext_t {
     bip32Path_t derivationPath;
     uint8_t hash[32];
     union extraInfo_t extraInfo[MAX_ASSETS];
-    // tokenDefinition_t tokens[MAX_ASSETS]; // km_todo: remove this
     uint8_t assetSet[MAX_ASSETS];
     uint8_t currentAssetIndex;
 } transactionContext_t;

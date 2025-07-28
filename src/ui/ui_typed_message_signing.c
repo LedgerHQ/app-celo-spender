@@ -3,10 +3,6 @@
 #include "ui_logic.h"
 #include "common_712.h"
 
-// #include "ui_nbgl.h"
-// #include "ui_logic.h"
-// #include "common_712.h"
-
 static void ui_typed_message_review_choice_common(bool confirm,
                                                   unsigned int (*approve_func)(),
                                                   unsigned int (*reject_func)()) {

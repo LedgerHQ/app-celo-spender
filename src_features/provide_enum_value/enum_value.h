@@ -2,10 +2,8 @@
 
 #include <stdbool.h>
 #include "constants.h"  // ADDRESS_LENGTH
-// #include "plugin_utils.h"  // SELECTOR_SIZE
 #include "tlv.h"
 #include "cx.h"
-// #include "signature.h"
 
 typedef struct {
     uint64_t chain_id;

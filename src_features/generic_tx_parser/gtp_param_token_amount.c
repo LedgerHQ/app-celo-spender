@@ -1,6 +1,5 @@
 #include <string.h>
 #include "gtp_param_token_amount.h"
-// #include "network.h"
 #include "utils.h"
 #include "gtp_field_table.h"
 #include "globals.h"
@@ -113,7 +112,6 @@ static bool match_native(const uint8_t *addr, const s_param_token_amount *param)
     }
     return false;
 }
-// km: this might not work as expected
 static bool process_token_amount(const s_param_token_amount *param,
                                  const char *name,
                                  s_parsed_value *value,
@@ -124,8 +122,6 @@ static bool process_token_amount(const s_param_token_amount *param,
     uint256_t zero256 = {0};
     uint256_t val256;
     const tokenDefinition_t *token_def;
-    // uint64_t chain_id = get_tx_chain_id();
-    // uint64_t chain_id = 42220;
     const char *ticker = g_unknown_ticker;
     uint8_t decimals = 0;
 

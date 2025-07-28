@@ -69,10 +69,6 @@ int handler_sign(const command_t *cmd) {
     BEGIN_TRY {
         TRY {
             return handleSign(cmd->p1, cmd->p2, cmd->data, cmd->lc, &flags);
-
-            // if (!(flags & IO_ASYNCH_REPLY)) {
-            //     return io_send_response_pointer(G_io_apdu_buffer, tx, SW_OK);
-            // }
         }
         CATCH_OTHER(e) {
             reset_app_context();
@@ -178,7 +174,3 @@ int handler_get_wallet_id(const command_t *cmd) {
     return 0;
 }
 #endif
-
-// int handler_sign_eip712_message(const command_t *cmd) {
-//     volatile unsigned int flags = 0;
-//     volatile unsigned int tx = 0;

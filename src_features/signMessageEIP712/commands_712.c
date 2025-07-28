@@ -13,19 +13,6 @@
 #include "io.h"
 #include "commands_712.h"
 #include "manage_asset_info.h"
-// #include "ui_callbacks.h"
-
-// #include "apdu_constants.h"  // APDU response codes
-// #include "context_712.h"
-// #include "field_hash.h"
-// #include "path.h"
-// #include "ui_logic.h"
-// #include "typed_data.h"
-// #include "schema_hash.h"
-// #include "filtering.h"
-// #include "common_ui.h"  // ui_idle
-// #include "manage_asset_info.h"
-// #include "ui_callbacks.h"
 
 // APDUs P1
 #define P1_COMPLETE 0x00
@@ -61,9 +48,6 @@ static void apdu_reply(bool success) {
         apdu_response_code = APDU_RESPONSE_OK;
     } else {
         if (apdu_response_code == APDU_RESPONSE_OK) {  // somehow not set
-            PRINTF(
-                "km_logs [commands_712] (apdu_reply) apdu_response_code is still "
-                "APDU_RESPONSE_OK\n");
             apdu_response_code = APDU_RESPONSE_ERROR_NO_INFO;
         }
         if (eip712_context != NULL) {
@@ -153,10 +137,6 @@ uint16_t handle_eip712_struct_impl(uint8_t p1, uint8_t p2, const uint8_t *cdata,
                             reply_apdu = false;
                         }
                     }
-                    PRINTF(
-                        "km_logs [commands_712] (handle_eip712_struct_impl) "
-                        "ui_712_review_struct ret: %d\n",
-                        ret);
                     ui_712_field_flags_reset();
                 }
                 break;
@@ -164,17 +144,9 @@ uint16_t handle_eip712_struct_impl(uint8_t p1, uint8_t p2, const uint8_t *cdata,
                 if ((ret = field_hash(cdata, length, p1 != P1_COMPLETE))) {
                     reply_apdu = false;
                 }
-                PRINTF(
-                    "km_logs [commands_712] (handle_eip712_struct_impl) "
-                    "field_hash ret: %d\n",
-                    ret);
                 break;
             case P2_IMPL_ARRAY:
                 ret = path_new_array_depth(cdata, length);
-                PRINTF(
-                    "km_logs [commands_712] (handle_eip712_struct_impl) "
-                    "path_new_array_depth ret: %d\n",
-                    ret);
                 break;
             default:
                 PRINTF("Unknown P2 0x%x\n", p2);
@@ -185,7 +157,6 @@ uint16_t handle_eip712_struct_impl(uint8_t p1, uint8_t p2, const uint8_t *cdata,
         apdu_reply(ret);
         return io_send_sw(apdu_response_code);
     }
-    // *flags |= IO_ASYNCH_REPLY;
     return 0;
 }
 
@@ -227,9 +198,6 @@ uint16_t handle_eip712_filtering(uint8_t p1, uint8_t p2, const uint8_t *cdata, u
                 reply_apdu = false;
             }
             break;
-        // case P2_FILT_CONTRACT_NAME:
-        //     ret = filtering_trusted_name(cdata, length, p1 == 1, &path_crc);
-        //     break;
         case P2_FILT_DATE_TIME:
             ret = filtering_date_time(cdata, length, p1 == 1, &path_crc);
             break;
@@ -259,7 +227,6 @@ uint16_t handle_eip712_filtering(uint8_t p1, uint8_t p2, const uint8_t *cdata, u
         apdu_reply(ret);
         return io_send_sw(apdu_response_code);
     }
-    // *flags |= IO_ASYNCH_REPLY;
     return 0;
 }
 
@@ -302,6 +269,5 @@ uint16_t handle_eip712_sign(const uint8_t *cdata, uint8_t length) {
         apdu_reply(false);
         return io_send_sw(apdu_response_code);
     }
-    // *flags |= IO_ASYNCH_REPLY;
     return 0;
 }

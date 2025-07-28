@@ -4,14 +4,10 @@
 #include "gtp_field_table.h"
 #include "mem.h"
 #include "mem_utils.h"
-// #include "network.h"
-// #include "ui_callbacks.h"
-// #include "feature_signTx.h"
 #include "constants.h"
 #include "globals.h"
 #include "icons.h"
 #include "validate.h"
-// #include "cmd_get_tx_simulation.h"
 
 static nbgl_contentTagValueList_t *g_pair_list = NULL;
 static char *g_review_title = NULL;
@@ -85,10 +81,7 @@ static void free_pair(const nbgl_contentTagValueList_t *pair_list, int idx) {
     // - the first one, that leads to the contract infos
     // - the second to last one, that shows the Network (optional)
     // - the last one, that shows the TX fees
-    if ((idx == 0) || (idx == (pair_list->nbPairs - 1)) ||
-        // ((get_tx_chain_id() != chainConfig->chainId) &&   // km: not needed for celo, might break
-        // other things.
-        (idx == (pair_list->nbPairs - 2))) {
+    if ((idx == 0) || (idx == (pair_list->nbPairs - 1)) || (idx == (pair_list->nbPairs - 2))) {
         if (pair_list->pairs[idx].item != NULL) app_mem_free((void *) pair_list->pairs[idx].item);
         if (pair_list->pairs[idx].value != NULL) app_mem_free((void *) pair_list->pairs[idx].value);
     }
@@ -213,22 +206,7 @@ static bool prepare_infos(nbgl_contentInfoList_t *infos) {
         if ((extensions[contract_idx].title = _strdup(tmp_buf)) == NULL) {
             return false;
         }
-        // Etherscan only for mainnet
-        // if (get_tx_chain_id() == ETHEREUM_MAINNET_CHAINID) {
-        //     if ((extensions[contract_idx].explanation = _strdup("Scan to view on Etherscan")) ==
-        //         NULL) {
-        //         return false;
-        //     }
-        //     snprintf(tmp_buf,
-        //              tmp_buf_size,
-        //              "https://etherscan.io/address/%s",
-        //              extensions[contract_idx].title);
-        //     if ((extensions[contract_idx].fullValue = _strdup(tmp_buf)) == NULL) {
-        //         return false;
-        //     }
-        // } else {
         extensions[contract_idx].fullValue = extensions[contract_idx].title;
-        // }
         extensions[contract_idx].aliasType = QR_CODE_ALIAS;
     }
 #endif
@@ -263,7 +241,6 @@ bool ui_gcs(void) {
     size_t tmp_buf_size = sizeof(strings.tmp.tmp);
     nbgl_contentTagValue_t *pairs = NULL;
     const s_field_table_entry *field;
-    bool show_network;
     nbgl_contentValueExt_t *ext = NULL;
     nbgl_contentInfoList_t *infolist = NULL;
 
@@ -297,11 +274,6 @@ bool ui_gcs(void) {
     g_pair_list->nbPairs += 1;
     // TX fields
     g_pair_list->nbPairs += field_table_size();
-    show_network = false;  // km: not needed for celo,since there is only one network. might break
-                           // other things.
-    if (show_network) {
-        g_pair_list->nbPairs += 1;
-    }
     // Fees
     g_pair_list->nbPairs += 1;
 
@@ -353,16 +325,6 @@ bool ui_gcs(void) {
         }
         pairs[1 + i].item = field->key;
         pairs[1 + i].value = field->value;
-    }
-
-    if (show_network) {
-        // km: not needed for celo, since there is only one network. might break other things.
-        // pairs[g_pair_list->nbPairs - 2].item = _strdup("Network");
-        // if (get_network_as_string(tmp_buf, tmp_buf_size) != APDU_RESPONSE_OK) {
-        //     ui_gcs_cleanup();
-        //     return false;
-        // }
-        // pairs[g_pair_list->nbPairs - 2].value = _strdup(tmp_buf);
     }
 
     pairs[g_pair_list->nbPairs - 1].item = _strdup("Max fees");

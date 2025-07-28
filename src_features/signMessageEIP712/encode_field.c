@@ -3,7 +3,6 @@
 #include "mem.h"
 #include "sw.h"         // APDU response codes
 #include "constants.h"  // ADDRESS_LENGTH
-// #include "apdu_constants.h"  // APDU response codes
 
 typedef enum { MSB, LSB } e_padding_type;
 

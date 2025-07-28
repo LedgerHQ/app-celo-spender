@@ -21,7 +21,6 @@ int crypto_sign_message(bool confirm) {
     uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
-    // io_seproxyhal_io_heartbeat();
     cx_err_t err = os_derive_bip32_no_throw(CX_CURVE_256K1,
                                             tmpCtx.messageSigningContext.derivationPath.path,
                                             tmpCtx.messageSigningContext.derivationPath.len,
@@ -30,7 +29,6 @@ int crypto_sign_message(bool confirm) {
     if (err != CX_OK) {
         return io_send_sw(err);
     }
-    // io_seproxyhal_io_heartbeat();
     err = cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
     if (err != CX_OK) {
         return io_send_sw(err);
@@ -38,7 +36,6 @@ int crypto_sign_message(bool confirm) {
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     size_t sig_len = sizeof(signature);
-    // io_seproxyhal_io_heartbeat();
     err = cx_ecdsa_sign_no_throw(&privateKey,
                                  CX_RND_RFC6979 | CX_LAST,
                                  CX_SHA256,
@@ -61,7 +58,6 @@ int validate_transaction(bool confirm) {
     uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
-    // io_seproxyhal_io_heartbeat();
     cx_err_t err = os_derive_bip32_no_throw(CX_CURVE_256K1,
                                             tmpCtx.transactionContext.derivationPath.path,
                                             tmpCtx.transactionContext.derivationPath.len,
@@ -77,7 +73,6 @@ int validate_transaction(bool confirm) {
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     size_t sig_len = sizeof(signature);
-    // io_seproxyhal_io_heartbeat();
     err = cx_ecdsa_sign_no_throw(&privateKey,
                                  CX_RND_RFC6979 | CX_LAST,
                                  CX_SHA256,

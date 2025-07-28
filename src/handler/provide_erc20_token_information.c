@@ -94,7 +94,6 @@ void handleProvideErc20TokenInformation(uint8_t p1,
     // Skip chainId
     offset += 4;
     dataLength -= 4;
-    // km_todo: uncomment this and fix the issue when this is launched from gcs
     CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1,
                                               TOKEN_SIGNATURE_PUBLIC_KEY,
                                               sizeof(TOKEN_SIGNATURE_PUBLIC_KEY),

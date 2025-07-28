@@ -8,10 +8,6 @@
 #include "ui_common.h"
 #include "io.h"
 
-// #include "common_utils.h"
-// #include "common_ui.h"
-// #include "common_712.h"
-
 uint16_t handleSignEIP712Message_v0(uint8_t p1, const uint8_t *workBuffer, uint8_t dataLength) {
     if (p1 != 0x00) {
         return io_send_sw(APDU_RESPONSE_INVALID_P1_P2);
@@ -42,6 +38,5 @@ uint16_t handleSignEIP712Message_v0(uint8_t p1, const uint8_t *workBuffer, uint8
 
     ui_sign_712_v0();
 
-    // *flags |= IO_ASYNCH_REPLY;
     return 0;
 }

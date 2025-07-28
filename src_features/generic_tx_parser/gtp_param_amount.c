@@ -1,5 +1,4 @@
 #include "gtp_param_amount.h"
-// #include "network.h"
 #include "utils.h"
 #include "gtp_field_table.h"
 #include "globals.h"
@@ -43,17 +42,15 @@ bool handle_param_amount_struct(const s_tlv_data *data, s_param_amount_context *
 }
 
 // km: I hard coded the ticker to CELO, this might need an update to account for other fee
-// currencies possible.
+// currencies.
 bool format_param_amount(const s_param_amount *param, const char *name) {
     bool ret;
-    // uint64_t chain_id;
     const char *ticker;
     s_parsed_value_collection collec = {0};
     char *buf = strings.tmp.tmp;
     size_t buf_size = sizeof(strings.tmp.tmp);
 
     if ((ret = value_get(&param->value, &collec))) {
-        // chain_id = get_tx_chain_id();
         ticker = "CELO";
         for (int i = 0; i < collec.size; ++i) {
             if (!(ret = amountToString(collec.value[i].ptr,

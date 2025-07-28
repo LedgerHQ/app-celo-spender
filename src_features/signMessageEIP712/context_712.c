@@ -11,10 +11,6 @@
 #include "ui_common.h"  // ui_idle
 #include "celo.h"       // reset_app_context
 
-// #include "apdu_constants.h"  // APDU response codes
-// #include "shared_context.h"  // reset_app_context
-// #include "common_ui.h"       // ui_idle
-
 e_struct_init struct_state = NOT_INITIALIZED;
 s_eip712_context *eip712_context = NULL;
 
