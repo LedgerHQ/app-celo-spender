@@ -136,6 +136,6 @@ void ui_712_switch_to_sign(void) {
         pair_idx = 0;
         nbgl_useCaseReviewStreamingContinueExt(&pairs_list, message_progress, skip_callback);
     } else {
-        nbgl_useCaseReviewStreamingFinish("Sign typed message", ui_typed_message_review_choice);
+        nbgl_useCaseReviewStreamingFinish("Sign message", ui_typed_message_review_choice);
     }
 }
