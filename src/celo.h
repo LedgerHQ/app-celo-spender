@@ -69,6 +69,11 @@ void initTx(txContext_t *context, cx_sha3_t *sha3, txContent_t *content, ustream
  */
 void finalizeParsing(bool direct);
 
+/**
+ * @brief Displays the transaction on the user interface.
+ */
+void ui_display_transaction();
+
 // TODO: this should not be exposed
 /**
  * @brief Enumeration representing the application state.
