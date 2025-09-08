@@ -22,7 +22,7 @@ enum {
 static nbgl_contentSwitch_t switches[NB_SETTINGS_SWITCHES - FIRST_USER_TOKEN];
 
 static const char* const infoTypes[NB_INFO_FIELDS] = {"Version", "Celo App"};
-static const char* const infoContents[NB_INFO_FIELDS] = {APPVERSION, "(c) 2022 Ledger"};
+static const char* const infoContents[NB_INFO_FIELDS] = {APPVERSION, "(c) 2025 Ledger"};
 
 static void onQuitCallback(void) {
     os_sched_exit(-1);
