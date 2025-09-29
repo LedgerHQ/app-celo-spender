@@ -810,11 +810,11 @@ void app_main(void) {
 #endif // HAVE_BLE
 
 #ifdef HAVE_SWAP
-      if (!G_called_from_swap) {
-        ui_idle();    
-      }
+                if (!G_called_from_swap) {
+                    ui_idle();    
+                }
 #else
-      ui_idle();    
+                ui_idle();    
 #endif //HAVE_SWAP
 
                 sample_main();
