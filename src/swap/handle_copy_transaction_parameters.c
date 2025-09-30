@@ -47,7 +47,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t *params) {
     // first copy parameters to stack, and then to global data.
     // We need this "trick" as the input data position can overlap with app globals
     swap_validated_t swap_validated;
-    memset(&swap_validated, 0, sizeof(swap_validated));
+    explicit_bzero(&swap_validated, sizeof(swap_validated));
 
     // Parse config and save decimals and ticker
     // If there is no coin_configuration, consider that we are doing a CELO swap
@@ -76,15 +76,10 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t *params) {
     
     // Save amount
     swap_validated.amount_length = params->amount_length;
-    if (!memcpy(swap_validated.amount, params->amount, params->amount_length)) {
-        return false;
-    }
-    // Save fees
+    memcpy(swap_validated.amount, params->amount, params->amount_length);
     swap_validated.fee_length = params->fee_amount_length;
     
-    if (!memcpy(swap_validated.fee, params->fee_amount, params->fee_amount_length)) {
-        return false;
-    }
+    memcpy(swap_validated.fee, params->fee_amount, params->fee_amount_length);
     swap_validated.initialized = true;
 
     

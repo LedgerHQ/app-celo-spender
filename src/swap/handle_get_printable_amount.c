@@ -119,7 +119,7 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
         }
     }
 
-    memset(params->printable_amount, 0, sizeof(params->printable_amount));
+    explicit_bzero(params->printable_amount, sizeof(params->printable_amount));
     if (params->amount_length > 32) {
         PRINTF("Amount is too big, 32 bytes max but buffer has %u bytes", params->amount_length);
         goto error;
@@ -130,14 +130,14 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
                         ticker,
                         params->printable_amount,
                         sizeof(params->printable_amount))) {
-        memset(params->printable_amount, 0, sizeof(params->printable_amount));
+        PRINTF("Fail to prepare printable amount\n");
         goto error;
     }
 
     PRINTF("Amount %s\n", params->printable_amount);
     return; 
 error:
-    memset(params->printable_amount, '\0', sizeof(params->printable_amount));    
+    explicit_bzero(params->printable_amount, sizeof(params->printable_amount));
 }
 
 #endif // HAVE_SWAP
