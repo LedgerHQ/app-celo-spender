@@ -1,8 +1,7 @@
 from pathlib import Path
 from .apps.celo import CeloClient, StatusCode, INS
-from .apps.celo_utils import ETH_PACKED_DERIVATION_PATH
-from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions, get_stax_review_instructions_with_warning
-from ragger.navigator import NavInsID, NavIns
+from .apps.celo_utils import ETH_PACKED_DERIVATION_PATH, CELO_PACKED_DERIVATION_PATH
+from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions
 
 import pytest
 
@@ -24,6 +23,17 @@ def sign_transaction_with_rawTx(test_name, backend, navigator, instructions, raw
     response: bytes = get_async_response(backend)
     return response
 
+def sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx):
+    celo = CeloClient(backend)
+    # transaction_params.append("") # ADD DONE PARAMETER
+    with celo.sign_transaction_with_rawTx_async(
+            CELO_PACKED_DERIVATION_PATH, rawTx
+        ):
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
+
+    response: bytes = get_async_response(backend)
+    return response
+
 def test_sign_transaction_eip1559_no_data(test_name, backend, firmware, navigator):
     if firmware.device == "nanos":
         instructions = get_nano_review_instructions(6)
@@ -38,15 +48,46 @@ def test_sign_transaction_eip1559_no_data(test_name, backend, firmware, navigato
     assert(response.data[0] == 0x01 or response.data[0] == 0x00)
     assert(response.status == StatusCode.STATUS_OK)
 
-def test_sign_transaction_eip1559_with_data(test_name, backend, firmware):
-    rawTx = "02f8d482a4ec820808839b34b4850fbc63d144830204e094004626a008b1acdc4c74ab51644093b155e59a2380b864ba0876520000000000000000000000000000000000000000000000009458660c5b865f23000000000000000000000000e3b72489968f11c15282514f33df24634440393f000000000000000000000000e3b72489968f11c15282514f33df24634440393fc001a0b0799073a2aa771c5e32b88933ff19982dc30f9e4523fde47137ae504793b880a07014a6e3c32a3b34d4118beb298f2200e858599b5e97766dfaa6fea192cde993"
+def test_add_tether_usdt_token_clabs_sig(test_name, backend, navigator):
     celo = CeloClient(backend)
-    with pytest.raises(Exception) as exc_info:  # Expecting the test to fail
-        with celo.sign_transaction_with_rawTx_async(ETH_PACKED_DERIVATION_PATH, rawTx):
-            pass
-    assert "6a80" in str(exc_info.value), "Expected exception to contain '6a80'"
+    data = "045553445448065fbbe25f71c9282ddf5e1cd6d6a887483d5e000000060000a4ec304402204239b4af138d118b70fa5aea895b5f000a0679077434b2c30257c7a841c027fa02207e76ec1cc7485b4d4545c462b4e4baf8e0fd6ab557019ae974079ab0c51fe28d"
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
+            encoded_data
+        ):
+        pass
 
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
 
+def test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator):
+    celo = CeloClient(backend)
+    data = "045553445448065fbbe25f71c9282ddf5e1cd6d6a887483d5e000000060000a4ec304402204239b4af138d118b70fa5aea895b5f000a0679077434b2c30257c7a841c027fa02207e76ec1cc7485b4d4545c462b4e4baf8e0fd6ab557019ae974079ab0c51fe28d"
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
+            encoded_data
+        ):
+        pass
+
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
+
+def test_sign_transaction_eip1559_with_data(test_name, backend, firmware, navigator):
+    test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator)
+
+    if firmware.device == "nanos":
+        instructions = get_nano_review_instructions(6)
+    elif firmware.device.startswith("nano"):
+        instructions = get_nano_review_instructions(4)
+    else:
+        instructions = get_stax_review_instructions(1)
+    rawTx =  "02f86f82a4ec47830f424085060db884008301cf089448065fbbe25f71c9282ddf5e1cd6d6a887483d5e80b844a9059cbb000000000000000000000000abd5d4575341b5878a1e7cb75dc0d4da91dfafa30000000000000000000000000000000000000000000000000000000000002710c0"
+
+    response = sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx)
+    assert(response.data[0] == 0x01 or response.data[0] == 0x00)
+    assert(response.status == StatusCode.STATUS_OK)
 
 def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
     celo = CeloClient(backend)
