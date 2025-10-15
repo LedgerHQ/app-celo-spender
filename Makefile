@@ -22,7 +22,7 @@ include $(BOLOS_SDK)/Makefile.defines
 
 
 APPVERSION_M=1
-APPVERSION_N=4
+APPVERSION_N=5
 APPVERSION_P=0
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
@@ -125,7 +125,7 @@ ENABLE_NBGL_QRCODE = 1
 ########################################
 #            Swap features             #
 ########################################
-# ENABLE_SWAP = 1
+ENABLE_SWAP = 1
 
 
 ifneq ($(DEBUG),0)

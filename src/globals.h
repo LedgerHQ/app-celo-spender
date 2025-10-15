@@ -13,11 +13,12 @@
 #define SW_NO_APDU_RECEIVED 0x6982
 #define SW_INITIALIZATION_ERROR 0x6985
 #define SW_ERROR_IN_DATA 0x6A80
+#define SW_ERROR_WRONG_ADDRESS 0x6A83
 #define SW_WRONG_P1_OR_P2 0x6b00
 #define SW_OK 0x9000
 #define SW_INS_NOT_SUPPORTED 0x6d00
 #define SW_CLA_NOT_SUPPORTED 0x6e00
-
+#define SW_SWAP_CHECKING_FAIL 0xB00A
 
 
 typedef union {
@@ -29,6 +30,16 @@ extern tmpContent_t tmpContent;
 
 extern txContext_t txContext;
 
+#define MAX_TICKER_LEN 16
+
+#define CELO_PRECISION 18
+
+#define MAX_AMOUNT_STR_LEN 21  // 19 for u64 + 1 for '\0' +1 for '.'
+
+#define ADDRESS_LENGTH  41
+
+// The length of a 256-bit integer in bytes.
+#define INT256_LENGTH 32
 
 #define MAX_TOKEN 2
 
