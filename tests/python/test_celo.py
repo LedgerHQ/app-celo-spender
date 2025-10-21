@@ -12,25 +12,25 @@ TESTS_ROOT_DIR = Path(__file__).parent
 
 @pytest.mark.parametrize("show", [False, True])
 @pytest.mark.parametrize("chaincode", [False, True])
-def test_celo_derive_address(test_name, backend, firmware, show, chaincode, navigator): 
+def test_celo_derive_address(test_name, backend, firmware, show, chaincode, navigator):
     celo = CeloClient(backend)
 
     if firmware.device == "nanos":
         instructions = get_nano_review_instructions(4)
     elif firmware.device.startswith("nano"):
         instructions = get_nano_review_instructions(2)
-    elif firmware.device == "stax":
-        instructions = [
-            NavIns(NavInsID.SWIPE_CENTER_TO_LEFT),
-            NavIns(NavInsID.TOUCH, (64, 521)),
-            NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR),
-            NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM),
-            NavIns(NavInsID.USE_CASE_STATUS_DISMISS)
-        ]
     else:
+
+        if firmware.device == "stax":
+            qr_code_position = (64, 521)
+        elif firmware.device == "flex":
+            qr_code_position = (76, 463)
+        elif firmware.device == "apex_p":
+            qr_code_position = (45, 289)
+
         instructions = [
             NavIns(NavInsID.SWIPE_CENTER_TO_LEFT),
-            NavIns(NavInsID.TOUCH, (76, 463)),
+            NavIns(NavInsID.TOUCH, qr_code_position),
             NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR),
             NavIns(NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM),
             NavIns(NavInsID.USE_CASE_STATUS_DISMISS)
