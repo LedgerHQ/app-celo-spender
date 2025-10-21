@@ -93,7 +93,7 @@ void ui_idle(void) {
 
     nbgl_useCaseHomeAndSettings(
         "Celo",
-        &C_celo_64px,
+        &ICON_APP_HOME,
         NULL,
         INIT_HOME_PAGE,
         &settingContents,
