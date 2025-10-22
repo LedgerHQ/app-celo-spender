@@ -31,7 +31,7 @@ void ui_confirm_selector_flow(void) {
     tagValueList.nbPairs = 1;
     tagValueList.pairs = tagValuePair;
 
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &C_celo_64px, "Verify selector", NULL, "Confirm selector", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Verify selector", NULL, "Confirm selector", confirmationCallback);
 }
 
 void ui_confirm_parameter_flow(void) {
@@ -42,7 +42,7 @@ void ui_confirm_parameter_flow(void) {
     tagValueList.nbPairs = 1;
     tagValueList.pairs = tagValuePair;
 
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &C_celo_64px, "Verify", NULL, "Confirm", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Verify", NULL, "Confirm", confirmationCallback);
 }
 
 #endif // HAVE_NBGL

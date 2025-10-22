@@ -256,7 +256,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
   else {
     // prepare for a UI based reply
     snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress), "0x%.*s", 40, tmpCtx.publicKeyContext.address);
-    
+
     #ifdef HAVE_SWAP
     if (!G_called_from_swap) {
         ui_display_public_flow();
@@ -264,7 +264,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
     #else
         ui_display_public_flow();
     #endif
-    
+
     *flags |= IO_ASYNCH_REPLY;
   }
 #endif // NO_CONSENT
@@ -437,9 +437,9 @@ void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
 #ifndef HAVE_TOKENS_LIST
   G_io_apdu_buffer[0] |= APP_FLAG_EXTERNAL_TOKEN_NEEDED;
 #endif
-  G_io_apdu_buffer[1] = LEDGER_MAJOR_VERSION;
-  G_io_apdu_buffer[2] = LEDGER_MINOR_VERSION;
-  G_io_apdu_buffer[3] = LEDGER_PATCH_VERSION;
+  G_io_apdu_buffer[1] = MAJOR_VERSION;
+  G_io_apdu_buffer[2] = MINOR_VERSION;
+  G_io_apdu_buffer[3] = PATCH_VERSION;
   *tx = 4;
   THROW(SW_OK);
 }
@@ -500,7 +500,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     if (dataLength < 4) {
       PRINTF("Invalid data\n");
       THROW(SW_ERROR_IN_DATA);
-    }    
+    }
     tmpCtx.messageSigningContext.remainingLength = U4BE(workBuffer, 0);
     workBuffer += 4;
     dataLength -= 4;
@@ -554,7 +554,7 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint
     strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 1] = '.';
     strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 2] = '.';
     array_hexstr(strings.common.fullAddress + HASH_LENGTH / 2 * 2 + 3, hashMessage + 32 - HASH_LENGTH / 2, HASH_LENGTH / 2);
-#else 
+#else
 #define HASH_LENGTH 32
     array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH);
 #endif
@@ -745,32 +745,6 @@ void sample_main(void) {
   return;
 }
 
-#ifdef HAVE_BAGL
-/**
- * Display function for the SEPROXYHAL.
- * @param element The element to display.
- */
-void io_seproxyhal_display(const bagl_element_t *element) {
-  io_seproxyhal_display_default((bagl_element_t *)element);
-}
-#endif // HAVE_BAGL
-
-/**	
- * Function to exit the application.	
- */	
-void app_exit(void) {	
-
-  BEGIN_TRY_L(exit) {	
-    TRY_L(exit) {	
-      os_sched_exit(-1);	
-    }	
-    FINALLY_L(exit) {	
-
-    }	
-  }	
-  END_TRY_L(exit);
-}
-
 void app_main(void) {
 
     reset_app_context();
@@ -811,10 +785,10 @@ void app_main(void) {
 
 #ifdef HAVE_SWAP
                 if (!G_called_from_swap) {
-                    ui_idle();    
+                    ui_idle();
                 }
 #else
-                ui_idle();    
+                ui_idle();
 #endif //HAVE_SWAP
 
                 sample_main();
@@ -833,5 +807,4 @@ void app_main(void) {
         }
         END_TRY;
     }
-    app_exit();
 }

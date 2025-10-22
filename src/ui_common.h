@@ -12,9 +12,19 @@ extern nbgl_layoutTagValueList_t tagValueList;
 extern nbgl_pageInfoLongPress_t infoLongPress;
 #endif // HAVE_NBGL
 
+#if defined(TARGET_STAX) || defined(TARGET_FLEX)
+#define ICON_APP_CELO        C_celo_64px
+#define ICON_APP_HOME        ICON_APP_CELO
+#define ICON_APP_WARNING     LARGE_WARNING_ICON
+#elif defined(TARGET_APEX_P)
+#define ICON_APP_CELO        C_celo_48px
+#define ICON_APP_HOME        ICON_APP_CELO
+#define ICON_APP_WARNING     LARGE_WARNING_ICON
+#endif
+
 void ui_idle(void);  // must be implemented by each ui handler
-void ui_display_public_flow(void); 
-void ui_display_sign_flow(void); 
+void ui_display_public_flow(void);
+void ui_display_sign_flow(void);
 void ui_confirm_selector_flow(void);
 void ui_confirm_parameter_flow(void);
 void ui_approval_celo_lock_unlock_flow(void);
