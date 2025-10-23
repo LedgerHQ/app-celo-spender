@@ -27,6 +27,6 @@ void ui_display_sign_flow(void) {
     tagValueList.pairs = tagValuePair;
     tagValueList.smallCaseForValue = false;
 
-    nbgl_useCaseReview(TYPE_MESSAGE, &tagValueList, &C_celo_64px, "Review message", NULL, "Sign message", sign_confirmation);
+    nbgl_useCaseReview(TYPE_MESSAGE, &tagValueList, &ICON_APP_CELO, "Review message", NULL, "Sign message", sign_confirmation);
 }
 #endif // HAVE_NBGL

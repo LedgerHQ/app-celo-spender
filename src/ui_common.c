@@ -85,7 +85,7 @@ unsigned int io_seproxyhal_touch_address_cancel(void) {
     return 0; // do not redraw the widget
 }
 
-unsigned int io_seproxyhal_touch_tx_ok(void) {
+unsigned int io_sign_and_send_tx(void) {
     uint8_t privateKeyData[64];
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
@@ -119,6 +119,11 @@ unsigned int io_seproxyhal_touch_tx_ok(void) {
     reset_app_context();
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+    return 0;
+}
+
+unsigned int io_seproxyhal_touch_tx_ok(void) {
+    io_sign_and_send_tx();
 #ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();

@@ -67,10 +67,8 @@ def sign_transaction_no_gtw(test_name, backend, navigator, instructions, payload
     except Exception as e:
         assert e.status == StatusCode.STATUS_DEPRECATED
 
-def test_sign_transaction_empty(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(14)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_empty(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(6)
     else:
         instructions = get_stax_review_instructions(2)
@@ -79,10 +77,8 @@ def test_sign_transaction_empty(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_token_transfer(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(15)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_token_transfer(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(7)
     else:
         instructions = get_stax_review_instructions_with_warning(2)
@@ -91,10 +87,8 @@ def test_sign_transaction_token_transfer(test_name, backend, firmware, navigator
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_lock(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(6)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_lock(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_stax_review_instructions(1)
@@ -103,10 +97,8 @@ def test_sign_transaction_lock(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_vote(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(14)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_vote(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(6)
     else:
         instructions = get_stax_review_instructions(2)
@@ -115,10 +107,8 @@ def test_sign_transaction_vote(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_activate(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(8)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_activate(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_stax_review_instructions(1)
@@ -127,10 +117,8 @@ def test_sign_transaction_activate(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_revoke(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(14)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_revoke(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(6)
     else:
         instructions = get_stax_review_instructions(2)
@@ -139,10 +127,8 @@ def test_sign_transaction_revoke(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_unlock(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(11)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_unlock(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(5)
     else:
         instructions = get_stax_review_instructions(2)
@@ -151,10 +137,8 @@ def test_sign_transaction_unlock(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_withdraw(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(5)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_withdraw(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(3)
     else:
         instructions = get_stax_review_instructions(1)
@@ -163,10 +147,8 @@ def test_sign_transaction_withdraw(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_relock(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(11)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_relock(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(5)
     else:
         instructions = get_stax_review_instructions(2)
@@ -175,10 +157,8 @@ def test_sign_transaction_relock(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_create(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(5)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_create(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(3)
     else:
         instructions = get_stax_review_instructions(1)
@@ -187,10 +167,8 @@ def test_sign_transaction_create(test_name, backend, firmware, navigator):
     sign_transaction(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_no_gtw(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(8)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_no_gtw(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_stax_review_instructions(1)
@@ -199,10 +177,8 @@ def test_sign_transaction_no_gtw(test_name, backend, firmware, navigator):
     sign_transaction_no_gtw(test_name, backend, navigator, instructions, payload)
 
 
-def test_sign_transaction_no_gtw2(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(9)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_no_gtw2(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(5)
     else:
         instructions = get_stax_review_instructions_with_warning(1)

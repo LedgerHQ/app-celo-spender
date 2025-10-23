@@ -2,6 +2,7 @@ from pathlib import Path
 from .apps.celo import CeloClient, StatusCode, INS
 from .apps.celo_utils import ETH_PACKED_DERIVATION_PATH, CELO_PACKED_DERIVATION_PATH
 from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions
+from ledgered.devices import DeviceType, Device
 
 import pytest
 
@@ -34,10 +35,8 @@ def sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions
     response: bytes = get_async_response(backend)
     return response
 
-def test_sign_transaction_eip1559_no_data(test_name, backend, firmware, navigator):
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(6)
-    elif firmware.device.startswith("nano"):
+def test_sign_transaction_eip1559_no_data(test_name, backend, navigator):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_stax_review_instructions(1)
@@ -74,12 +73,10 @@ def test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator):
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
 
-def test_sign_transaction_eip1559_with_data(test_name, backend, firmware, navigator):
+def test_sign_transaction_eip1559_with_data(test_name, backend, navigator):
     test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator)
 
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(6)
-    elif firmware.device.startswith("nano"):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_stax_review_instructions(1)
@@ -102,12 +99,10 @@ def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
 
-def test_sign_transaction_cip64(test_name, backend, firmware, navigator):
+def test_sign_transaction_cip64(test_name, backend, navigator):
     test_add_cUSD_as_fee_currency(test_name, backend, navigator)
 
-    if firmware.device == "nanos":
-        instructions = get_nano_review_instructions(7)
-    elif firmware.device.startswith("nano"):
+    if backend.device.is_nano:
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_stax_review_instructions(1)

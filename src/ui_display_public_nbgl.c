@@ -21,7 +21,7 @@ static void address_confirmation(bool confirm) {
 void ui_display_public_flow(void) {
     nbgl_useCaseAddressReview(tmpCtx.publicKeyContext.address,
                               NULL,
-                              &C_celo_64px,
+                              &ICON_APP_CELO,
                               "Verify Celo\naddress",
                               NULL,
                               address_confirmation);
