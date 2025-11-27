@@ -299,7 +299,7 @@ UX_STEP_NOCB(
     ux_approval_tx_3_step,
     bnnn_paging,
     {
-      .title = "Address",
+      .title = "To",
       .text = strings.common.fullAddress,
     });
 

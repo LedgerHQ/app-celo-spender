@@ -441,18 +441,39 @@ void finalizeParsing(bool direct) {
   while (G_io_apdu_buffer[100 + i]) {
     i++;
   }
+
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, decimals);
+
   i = 0;
-    tickerOffset = 0;
-    while (ticker[tickerOffset]) {
-        strings.common.fullAmount[tickerOffset] = ticker[tickerOffset];
-        tickerOffset++;
-    }
-    while (G_io_apdu_buffer[i]) {
-        strings.common.fullAmount[tickerOffset + i] = G_io_apdu_buffer[i];
-        i++;
-    }
-  strings.common.fullAmount[tickerOffset + i] = '\0';
+  size_t amount_size = sizeof(strings.common.fullAmount);
+  while (G_io_apdu_buffer[i]
+         && G_io_apdu_buffer[i] != '\0'
+         && i < sizeof(G_io_apdu_buffer)
+         && i < amount_size) {
+      strings.common.fullAmount[i] = G_io_apdu_buffer[i];
+      i++;
+  }
+
+  if (i < amount_size) {
+    strings.common.fullAmount[i] = ' ';
+    i++;
+  }
+
+  tickerOffset = 0;
+  while (ticker[tickerOffset]
+         && ticker[tickerOffset] != '\0'
+         && tickerOffset < sizeof(ticker)
+         && (tickerOffset + i) < amount_size) {
+      strings.common.fullAmount[tickerOffset + i] = ticker[tickerOffset];
+      tickerOffset++;
+  }
+
+  if ((tickerOffset + i) < amount_size) {
+    strings.common.fullAmount[tickerOffset + i] = '\0';
+  } else {
+    strings.common.fullAmount[amount_size - 1] = '\0';
+  }
+
   // Add gateway fee
   convertUint256BE(tmpContent.txContent.gatewayFee.value, tmpContent.txContent.gatewayFee.length, &uint256);
   tostring256(&uint256, 10, (char *)(G_io_apdu_buffer + 100), 100);
@@ -460,18 +481,39 @@ void finalizeParsing(bool direct) {
   while (G_io_apdu_buffer[100 + i]) {
     i++;
   }
+
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
+
+  size_t gw_fee_size = sizeof(strings.common.gatewayFee);
   i = 0;
-    tickerOffset = 0;
-    while (feeTicker[tickerOffset]) {
-        strings.common.gatewayFee[tickerOffset] = feeTicker[tickerOffset];
-        tickerOffset++;
-    }
-    while (G_io_apdu_buffer[i]) {
-        strings.common.gatewayFee[tickerOffset + i] = G_io_apdu_buffer[i];
-        i++;
-    }
-  strings.common.gatewayFee[tickerOffset + i] = '\0';
+  while (G_io_apdu_buffer[i]
+         && G_io_apdu_buffer[i] != '\0'
+         && i < sizeof(G_io_apdu_buffer)
+         && i < gw_fee_size) {
+      strings.common.gatewayFee[i] = G_io_apdu_buffer[i];
+      i++;
+  }
+
+  if (i < gw_fee_size) {
+    strings.common.gatewayFee[i] = ' ';
+    i++;
+  }
+
+  tickerOffset = 0;
+  while (feeTicker[tickerOffset]
+         && feeTicker[tickerOffset] != '\0'
+         && tickerOffset < sizeof(feeTicker)
+         && (tickerOffset + i) < gw_fee_size) {
+      strings.common.gatewayFee[tickerOffset + i] = feeTicker[tickerOffset];
+      tickerOffset++;
+  }
+
+  if ((tickerOffset + i) < gw_fee_size) {
+    strings.common.gatewayFee[tickerOffset + i] = '\0';
+  } else {
+    strings.common.gatewayFee[gw_fee_size - 1] = '\0';
+  }
+
   // Compute maximum fee
   convertUint256BE(tmpContent.txContent.gasprice.value, tmpContent.txContent.gasprice.length, &gasPrice);
   convertUint256BE(tmpContent.txContent.startgas.value, tmpContent.txContent.startgas.length, &startGas);
@@ -481,18 +523,39 @@ void finalizeParsing(bool direct) {
   while (G_io_apdu_buffer[100 + i]) {
     i++;
   }
+
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
+
   i = 0;
-  tickerOffset=0;
-  while (feeTicker[tickerOffset]) {
-      strings.common.maxFee[tickerOffset] = feeTicker[tickerOffset];
-      tickerOffset++;
-  }
-  while (G_io_apdu_buffer[i]) {
-    strings.common.maxFee[tickerOffset + i] = G_io_apdu_buffer[i];
+  size_t fee_size = sizeof(strings.common.maxFee) - 1;
+  while (G_io_apdu_buffer[i]
+         && G_io_apdu_buffer[i] != '\0'
+         && i < sizeof(G_io_apdu_buffer)
+         && i < fee_size) {
+    strings.common.maxFee[i] = G_io_apdu_buffer[i];
     i++;
   }
-  strings.common.maxFee[tickerOffset + i] = '\0';
+
+  // space between fee and ticker
+  if (i < fee_size) {
+    strings.common.maxFee[i] = ' ';
+    i++;
+  }
+
+  tickerOffset=0;
+  while (feeTicker[tickerOffset]
+         && tickerOffset < sizeof(feeTicker)
+         && (tickerOffset + 1) < fee_size
+         && feeTicker[tickerOffset] != '\0') {
+      strings.common.maxFee[tickerOffset + i] = feeTicker[tickerOffset];
+      tickerOffset++;
+  }
+
+  if ((tickerOffset + i) < fee_size) {
+    strings.common.maxFee[tickerOffset + i] = '\0';
+  } else {
+    strings.common.maxFee[fee_size - 1] = '\0';
+  }
 
   switch (provisionType) {
     case PROVISION_LOCK:

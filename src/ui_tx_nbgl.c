@@ -26,7 +26,7 @@ static void confirmationCallback(bool confirm) {
 static void continueCallback(void) {
     tagValueList.pairs = tagValuePair;
 
-    infoLongPress.text = "Approve Transaction";
+    infoLongPress.text = "Sign Transaction?";
     infoLongPress.icon = &ICON_APP_CELO;
     infoLongPress.longPressText = "Hold to sign";
     infoLongPress.longPressToken = 0;
@@ -43,7 +43,7 @@ static void fill_data_tx(void) {
     tagValuePair[0].item = "Amount";
     tagValuePair[0].value = (char*)strings.common.fullAmount;
 
-    tagValuePair[1].item = "Address";
+    tagValuePair[1].item = "To";
     tagValuePair[1].value = (char*)strings.common.fullAddress;
 
     tagValuePair[2].item = "Max Fees";
@@ -57,7 +57,7 @@ static void fill_gateway_tx(void) {
     tagValuePair[0].item = "Amount";
     tagValuePair[0].value = (char*)strings.common.fullAmount;
 
-    tagValuePair[1].item = "Address";
+    tagValuePair[1].item = "To";
     tagValuePair[1].value = (char*)strings.common.fullAddress;
 
     tagValuePair[2].item = "Max Fees";
@@ -131,7 +131,7 @@ static void fill_vote_revoke(void) {
 
 void ui_approval_celo_tx_flow(void) {
     fill_data_tx();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 void ui_approval_celo_data_warning_tx_flow(void) {
@@ -141,7 +141,7 @@ void ui_approval_celo_data_warning_tx_flow(void) {
 
 void ui_approval_celo_gateway_tx_flow(void) {
     fill_gateway_tx();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 void ui_approval_celo_data_warning_gateway_tx_flow(void) {
@@ -151,31 +151,31 @@ void ui_approval_celo_data_warning_gateway_tx_flow(void) {
 
 void ui_approval_celo_lock_unlock_flow(void) {
     fill_lock_relock();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 void ui_approval_celo_relock_flow(void) {
     fill_lock_relock();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 void ui_approval_celo_withdraw_flow(void) {
     fill_withdraw_or_create_account();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 void ui_approval_celo_create_account_flow(void) {
     fill_withdraw_or_create_account();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);}
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);}
 
 void ui_approval_celo_activate_flow(void) {
     fill_activate();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 void ui_approval_celo_vote_revoke_flow(void) {
     fill_vote_revoke();
-    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Approve Transaction", confirmationCallback);
+    nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
 }
 
 #endif // HAVE_NBGL
