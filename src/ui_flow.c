@@ -5,15 +5,15 @@
 #include "globals.h"
 
 void ui_idle(void) {
-    // reserve a display stack slot if none yet
-    if(G_ux.stack_count == 0) {
-        ux_stack_push();
-    }
-    ux_flow_init(0, ux_idle_flow, NULL);
+  // reserve a display stack slot if none yet
+  if(G_ux.stack_count == 0) {
+      ux_stack_push();
+  }
+  ux_flow_init(0, ux_idle_flow, NULL);
 }
 
 void display_settings(void);
-void switch_settings_contract_data(void);
+void switch_settings_blind_signing(void);
 void switch_settings_display_data(void);
 
 //////////////////////////////////////////////////////////////////////
@@ -70,9 +70,9 @@ UX_STEP_CB_INIT(
       const char *text = N_storage.dataAllowed ? "Allowed" : "NOT Allowed";
       strlcpy(g_SettingsText, text, SETTINGS_TEXT_SIZE);
     },
-    switch_settings_contract_data(),
+    switch_settings_blind_signing(),
     {
-      .title = "Contract data",
+      .title = "Blind signing",
       .text = g_SettingsText,
     });
 
@@ -98,11 +98,11 @@ UX_STEP_CB_INIT(
       const char *text = N_storage.dataAllowed ? "Allowed" : "NOT Allowed";
       strlcpy(g_SettingsText, text, SETTINGS_TEXT_SIZE);
     },
-    switch_settings_contract_data(),
+    switch_settings_blind_signing(),
     {
-      "Contract data",
-      "Allow contract data",
-      "in transactions",
+      "Blind signing",
+      "Enable transaction",
+      "blind signing",
       g_SettingsText
     });
 
@@ -121,7 +121,7 @@ UX_STEP_CB_INIT(
       g_SettingsText
     });
 
-#endif
+#endif // defined(TARGET_NANOS)
 
 UX_STEP_CB(
     ux_settings_flow_3_step,
@@ -142,7 +142,7 @@ void display_settings() {
   ux_flow_init(0, ux_settings_flow, NULL);
 }
 
-void switch_settings_contract_data() {
+void switch_settings_blind_signing() {
   uint8_t value = (N_storage.dataAllowed ? 0 : 1);
   nvm_write(&N_storage.dataAllowed, (void*)&value, sizeof(uint8_t));
   display_settings();
@@ -279,6 +279,37 @@ UX_FLOW(ux_confirm_parameter_flow,
 );
 
 //////////////////////////////////////////////////////////////////////
+
+UX_STEP_NOCB(ux_blind_sign_error_1_step,
+    pnn,
+    {
+      &C_icon_warning,
+      "Blind signing must",
+      "be enabled in settings"
+    });
+
+UX_STEP_CB(ux_blind_sign_error_2_step,
+    pb,
+    display_settings(),
+    {
+      &C_icon_eye,
+      "Settings",
+    });
+
+UX_STEP_CB(ux_blind_sign_error_3_step,
+    pb,
+    io_seproxyhal_touch_tx_cancel(),
+    {
+      &C_icon_crossmark,
+      "Reject",
+    });
+
+UX_FLOW(ux_blind_sign_error_flow,
+  &ux_blind_sign_error_1_step,
+  &ux_blind_sign_error_2_step,
+  &ux_blind_sign_error_3_step);
+
+//////////////////////////////////////////////////////////////////////
 UX_STEP_NOCB(ux_approval_tx_1_step,
     pnn,
     {
@@ -365,8 +396,8 @@ UX_STEP_NOCB(ux_approval_tx_data_warning_step,
     pbb,
     {
       &C_icon_warning,
-      "Data",
-      "Present",
+      "Blind signing",
+      "",
     });
 
 UX_FLOW(ux_approval_celo_tx_flow,
@@ -390,7 +421,6 @@ UX_FLOW(ux_approval_celo_gateway_tx_flow,
 );
 
 UX_FLOW(ux_approval_celo_data_warning_tx_flow,
-  &ux_approval_tx_1_step,
   &ux_approval_tx_data_warning_step,
   &ux_approval_tx_2_step,
   &ux_approval_tx_3_step,

@@ -1,10 +1,11 @@
 from pathlib import Path
 from .apps.celo import CeloClient, StatusCode, INS
 from .apps.celo_utils import ETH_PACKED_DERIVATION_PATH, CELO_PACKED_DERIVATION_PATH
-from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions
-from ledgered.devices import DeviceType, Device
+from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions, get_enable_blind_sign_and_return_review_instructions, get_reject_disabled_blind_signing_screen_instructions, get_go_settings_disabled_blind_signing_screen_instructions, get_nano_enable_blind_sign_and_review_instructions, get_nano_go_settings_disabled_blind_signing_screen_instructions, get_nano_reject_disabled_blind_signing_screen_instructions
+from .settings import settings_toggle, SettingID
 
 import pytest
+import ragger
 
 TESTS_ROOT_DIR = Path(__file__).parent
 
@@ -24,6 +25,7 @@ def sign_transaction_with_rawTx(test_name, backend, navigator, instructions, raw
     response: bytes = get_async_response(backend)
     return response
 
+
 def sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx):
     celo = CeloClient(backend)
     # transaction_params.append("") # ADD DONE PARAMETER
@@ -34,6 +36,7 @@ def sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions
 
     response: bytes = get_async_response(backend)
     return response
+
 
 def test_sign_transaction_eip1559_no_data(test_name, backend, navigator):
     if backend.device.is_nano:
@@ -46,6 +49,7 @@ def test_sign_transaction_eip1559_no_data(test_name, backend, navigator):
 
     assert(response.data[0] == 0x01 or response.data[0] == 0x00)
     assert(response.status == StatusCode.STATUS_OK)
+
 
 def test_add_tether_usdt_token_clabs_sig(test_name, backend, navigator):
     celo = CeloClient(backend)
@@ -60,6 +64,7 @@ def test_add_tether_usdt_token_clabs_sig(test_name, backend, navigator):
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
 
+
 def test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator):
     celo = CeloClient(backend)
     data = "045553445448065fbbe25f71c9282ddf5e1cd6d6a887483d5e000000060000a4ec304402204239b4af138d118b70fa5aea895b5f000a0679077434b2c30257c7a841c027fa02207e76ec1cc7485b4d4545c462b4e4baf8e0fd6ab557019ae974079ab0c51fe28d"
@@ -72,6 +77,7 @@ def test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator):
 
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
+
 
 def test_sign_transaction_eip1559_with_data(test_name, backend, navigator):
     test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator)
@@ -86,6 +92,46 @@ def test_sign_transaction_eip1559_with_data(test_name, backend, navigator):
     assert(response.data[0] == 0x01 or response.data[0] == 0x00)
     assert(response.status == StatusCode.STATUS_OK)
 
+
+def test_sign_transaction_eip1559_no_token_desc_blind_enabled(test_name, backend, navigator):
+    settings_toggle(backend.device, navigator, [SettingID.BLIND_SIGNING])
+
+    if backend.device.is_nano:
+        instructions = get_nano_enable_blind_sign_and_review_instructions(4)
+    else:
+        instructions = get_enable_blind_sign_and_return_review_instructions(2)
+    rawTx =  "02f86f82a4ec47830f424085060db884008301cf089448065fbbe25f71c9282ddf5e1cd6d6a887483d5e80b844a9059cbb000000000000000000000000abd5d4575341b5878a1e7cb75dc0d4da91dfafa30000000000000000000000000000000000000000000000000000000000002710c0"
+
+    response = sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx)
+    assert(response.data[0] == 0x01 or response.data[0] == 0x00)
+    assert(response.status == StatusCode.STATUS_OK)
+
+
+def test_try_sign_tx_eip1559_no_token_desc_blind_disabled_rejected(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_reject_disabled_blind_signing_screen_instructions()
+    else:
+        instructions = get_reject_disabled_blind_signing_screen_instructions()
+    rawTx =  "02f86f82a4ec47830f424085060db884008301cf089448065fbbe25f71c9282ddf5e1cd6d6a887483d5e80b844a9059cbb000000000000000000000000abd5d4575341b5878a1e7cb75dc0d4da91dfafa30000000000000000000000000000000000000000000000000000000000002710c0"
+
+    try:
+        sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx)
+        # assert(response.status == StatusCode.STATUS_ERROR_IN_DATA)
+    except ragger.error.ExceptionRAPDU as e:
+        assert(e.status == StatusCode.STATUS_ERROR_IN_DATA)
+
+def test_try_sign_tx_eip1559_no_token_desc_blind_disabled_go_settings(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_go_settings_disabled_blind_signing_screen_instructions()
+    else:
+        instructions = get_go_settings_disabled_blind_signing_screen_instructions()
+    rawTx =  "02f86f82a4ec47830f424085060db884008301cf089448065fbbe25f71c9282ddf5e1cd6d6a887483d5e80b844a9059cbb000000000000000000000000abd5d4575341b5878a1e7cb75dc0d4da91dfafa30000000000000000000000000000000000000000000000000000000000002710c0"
+
+    try:
+        sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx)
+    except ragger.error.ExceptionRAPDU as e:
+        assert(e.status == StatusCode.STATUS_ERROR_IN_DATA)
+
 def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
     celo = CeloClient(backend)
     data = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1"
@@ -98,6 +144,7 @@ def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
 
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
+
 
 def test_sign_transaction_cip64(test_name, backend, navigator):
     test_add_cUSD_as_fee_currency(test_name, backend, navigator)

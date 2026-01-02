@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include "bolos_target.h"
 
 #include "ux.h"
@@ -23,6 +24,8 @@ extern nbgl_pageInfoLongPress_t infoLongPress;
 #endif
 
 void ui_idle(void);  // must be implemented by each ui handler
+void ui_start_page(uint8_t page);
+void ui_settings(void);
 void ui_display_public_flow(void);
 void ui_display_sign_flow(void);
 void ui_confirm_selector_flow(void);
@@ -37,6 +40,7 @@ void ui_approval_celo_data_warning_gateway_tx_flow(void);
 void ui_approval_celo_gateway_tx_flow(void);
 void ui_approval_celo_data_warning_tx_flow(void);
 void ui_approval_celo_tx_flow(void);
+void ui_error_blind_signing(void);
 
 unsigned int io_seproxyhal_touch_data_ok(void);
 unsigned int io_seproxyhal_touch_data_cancel(void);

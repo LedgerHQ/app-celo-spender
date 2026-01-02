@@ -264,7 +264,7 @@ customStatus_e customProcessor(txContext_t *context) {
             if (fieldPos == 0) {
                 if (!N_storage.dataAllowed) {
                   PRINTF("Data field forbidden\n");
-                  return CUSTOM_FAULT;
+                  return CUSTOM_BLIND_SIGNING_OFF;
                 }
                 if (!N_storage.contractDetails) {
                   return CUSTOM_NOT_HANDLED;
@@ -407,7 +407,7 @@ void finalizeParsing(bool direct) {
           }
           else {
             io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-            ui_idle();
+            ui_error_blind_signing();
             return;
           }
       }
@@ -527,7 +527,7 @@ void finalizeParsing(bool direct) {
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
 
   i = 0;
-  size_t fee_size = sizeof(strings.common.maxFee) - 1;
+  size_t fee_size = sizeof(strings.common.maxFee);
   while (G_io_apdu_buffer[i]
          && G_io_apdu_buffer[i] != '\0'
          && i < sizeof(G_io_apdu_buffer)
@@ -536,7 +536,6 @@ void finalizeParsing(bool direct) {
     i++;
   }
 
-  // space between fee and ticker
   if (i < fee_size) {
     strings.common.maxFee[i] = ' ';
     i++;

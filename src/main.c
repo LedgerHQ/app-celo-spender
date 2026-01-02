@@ -405,6 +405,9 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer, uint16_t data
       THROW(SW_OK);
     case USTREAM_FAULT:
       THROW(SW_ERROR_IN_DATA);
+    case USTREAM_BLIND_SIGNING_OFF:
+      ui_error_blind_signing();
+      THROW(SW_ERROR_IN_DATA);
     default:
       PRINTF("Unexpected parser status\n");
       THROW(SW_ERROR_IN_DATA);

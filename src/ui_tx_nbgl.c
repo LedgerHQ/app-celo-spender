@@ -23,22 +23,6 @@ static void confirmationCallback(bool confirm) {
     }
 }
 
-static void continueCallback(void) {
-    tagValueList.pairs = tagValuePair;
-
-    infoLongPress.text = "Sign Transaction?";
-    infoLongPress.icon = &ICON_APP_CELO;
-    infoLongPress.longPressText = "Hold to sign";
-    infoLongPress.longPressToken = 0;
-    infoLongPress.tuneId = TUNE_TAP_CASUAL;
-
-    nbgl_useCaseStaticReview(&tagValueList, &infoLongPress, "Cancel", confirmationCallback);
-}
-
-static void warningCallback(void) {
-    nbgl_useCaseReviewStart(&ICON_APP_WARNING, "WARNING", "Data present", "Cancel", continueCallback, rejectCallback);
-}
-
 static void fill_data_tx(void) {
     tagValuePair[0].item = "Amount";
     tagValuePair[0].value = (char*)strings.common.fullAmount;
@@ -136,7 +120,15 @@ void ui_approval_celo_tx_flow(void) {
 
 void ui_approval_celo_data_warning_tx_flow(void) {
     fill_data_tx();
-    nbgl_useCaseReviewStart(&ICON_APP_CELO, "Review transaction", "", "Cancel", warningCallback, rejectCallback);
+    nbgl_useCaseReviewBlindSigning(TYPE_TRANSACTION,
+                               &tagValueList,
+                               &ICON_APP_CELO,
+                               "Review transaction",
+                               NULL,
+                               "Accept risk and sign\ntransaction?",
+                               NULL,
+                               confirmationCallback);
+
 }
 
 void ui_approval_celo_gateway_tx_flow(void) {
@@ -146,7 +138,14 @@ void ui_approval_celo_gateway_tx_flow(void) {
 
 void ui_approval_celo_data_warning_gateway_tx_flow(void) {
     fill_gateway_tx();
-    nbgl_useCaseReviewStart(&ICON_APP_CELO, "Review transaction", "", "Cancel", warningCallback, rejectCallback);
+    nbgl_useCaseReviewBlindSigning(TYPE_TRANSACTION,
+                               &tagValueList,
+                               &ICON_APP_CELO,
+                               "Review transaction",
+                               NULL,
+                               "Accept risk and sign\ntransaction?",
+                               NULL,
+                               confirmationCallback);
 }
 
 void ui_approval_celo_lock_unlock_flow(void) {
@@ -176,6 +175,23 @@ void ui_approval_celo_activate_flow(void) {
 void ui_approval_celo_vote_revoke_flow(void) {
     fill_vote_revoke();
     nbgl_useCaseReview(TYPE_TRANSACTION, &tagValueList, &ICON_APP_CELO, "Review transaction", NULL, "Sign Transaction?", confirmationCallback);
+}
+
+static void ui_error_blind_signing_choice(bool confirm) {
+    if (confirm) {
+        ui_settings();
+    } else {
+        ui_idle();
+    }
+}
+
+void ui_error_blind_signing(void) {
+    nbgl_useCaseChoice(&ICON_APP_WARNING,
+                       "This transaction cannot be clear-signed",
+                       "Enable blind signing in the settings to sign this transaction.",
+                       "Go to settings",
+                       "Reject transaction",
+                       ui_error_blind_signing_choice);
 }
 
 #endif // HAVE_NBGL
