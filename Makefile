@@ -35,7 +35,7 @@ APP_SOURCE_PATH += src src_common
 CURVE_APP_LOAD_PARAMS = secp256k1
 
 # Application allowed derivation paths
-PATH_APP_LOAD_PARAMS = "44'/52752'" "44'/60'/0'/0/0"  "44'/60'/0'"  "44'/60'/0'/0"
+PATH_APP_LOAD_PARAMS = "44'/52752'" "44'/60'"
 
 # Setting to allow building variant applications
 # - <VARIANT_PARAM> is the name of the parameter which should be set
