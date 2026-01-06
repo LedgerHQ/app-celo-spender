@@ -399,7 +399,7 @@ void finalizeParsing(bool direct) {
       memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
       tmpContent.txContent.value.length = 32;
     } else {
-      if (dataPresent && !N_storage.dataAllowed) {
+      if (dataPresent && !N_storage.dataAllowed && provisionType != PROVISION_LOCK) {
           reset_app_context();
           PRINTF("Data field forbidden\n");
           if (direct) {

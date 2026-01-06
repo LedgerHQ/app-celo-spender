@@ -158,3 +158,66 @@ def test_sign_transaction_cip64(test_name, backend, navigator):
     response = sign_transaction_with_rawTx(test_name, backend, navigator, instructions, rawTx)
     assert(response.data[0] == 0x01 or response.data[0] == 0x00)
     assert(response.status == StatusCode.STATUS_OK)
+
+
+def test_sign_tx_lock_with_data(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_review_instructions(4)
+    else:
+        instructions = get_stax_review_instructions(1)
+
+    data =  "058000002c8000ce1080000001000000000000000002f682a4ec17830f42408506fc32ee4083063bd0946cc083aed9e3ebe302a6336dbc7c921c9f03349e88016345785d8a000084f83d08bac0"
+
+    celo = CeloClient(backend)
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_SIGN,
+            encoded_data
+        ):
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
+
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
+
+
+def test_sign_tx_vote_with_data(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_review_instructions(5)
+    elif backend.device.name == "stax":
+        instructions = get_stax_review_instructions(1)
+    else:
+        instructions = get_stax_review_instructions(2)
+
+    data =  "058000002c8000ce1080000001000000000000000002f8af82a4ec18830f42408506fc32ee40831926e8948d6677192144292870907e3fa8a5527fe55a7ff680b884580d747a0000000000000000000000000861a61bf679a30680510ecc238ee43b82c5e84300000000000000000000000000000000000000000000000002c68af0bb1400000000000000000000000000007c75b0b81a54359e9dccda9cb663ca2e3de6b710000000000000000000000000d72ed2e3db984bac3bb351fe652200de527effcfc0"
+
+    celo = CeloClient(backend)
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_SIGN,
+            encoded_data
+        ):
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
+
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
+
+
+def test_sign_tx_unlock_with_data(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_review_instructions(4)
+    else:
+        instructions = get_stax_review_instructions(1)
+
+    data =  "058000002c8000ce1080000001000000000000000002f84e82a4ec18830f42408506fc32ee4083432c08946cc083aed9e3ebe302a6336dbc7c921c9f03349e80a46198e3390000000000000000000000000000000000000000000000000de0b6b3a7640000c0"
+
+    celo = CeloClient(backend)
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_SIGN,
+            encoded_data
+        ):
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
+
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
+    
