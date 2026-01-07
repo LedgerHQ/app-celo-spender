@@ -336,9 +336,8 @@ void finalizeParsing(bool direct) {
   uint32_t i;
   uint8_t decimals = WEI_TO_ETHER;
   uint8_t feeDecimals = WEI_TO_ETHER;
-  const char *ticker = CHAINID_COINNAME " ";
-  const char *feeTicker = CHAINID_COINNAME " ";
-  uint8_t tickerOffset = 0;
+  const char *ticker = " " CHAINID_COINNAME;
+  const char *feeTicker = " " CHAINID_COINNAME;
 
   // Display correct currency if fee currency field sent
   if (tmpContent.txContent.feeCurrencyLength != 0) {
@@ -444,32 +443,21 @@ void finalizeParsing(bool direct) {
 
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, decimals);
 
-  i = 0;
   size_t amount_size = sizeof(strings.common.fullAmount);
-  while (G_io_apdu_buffer[i]
-         && G_io_apdu_buffer[i] != '\0'
-         && i < sizeof(G_io_apdu_buffer)
-         && i < amount_size) {
-      strings.common.fullAmount[i] = G_io_apdu_buffer[i];
-      i++;
-  }
+  size_t buf_size = MIN(amount_size, strlen((char*)G_io_apdu_buffer));
+  strncpy(strings.common.fullAmount, (char*)G_io_apdu_buffer, buf_size);
+  i = buf_size;
 
-  if (i < amount_size) {
+  if (strlen(ticker) > 0 && ticker[0] != ' ') {
     strings.common.fullAmount[i] = ' ';
     i++;
   }
 
-  tickerOffset = 0;
-  while (ticker[tickerOffset]
-         && ticker[tickerOffset] != '\0'
-         && tickerOffset < sizeof(ticker)
-         && (tickerOffset + i) < amount_size) {
-      strings.common.fullAmount[tickerOffset + i] = ticker[tickerOffset];
-      tickerOffset++;
-  }
+  buf_size = MIN((amount_size - i), strlen(ticker));
+  strncpy(strings.common.fullAmount + i, ticker, buf_size);
 
-  if ((tickerOffset + i) < amount_size) {
-    strings.common.fullAmount[tickerOffset + i] = '\0';
+  if ((buf_size + i) < amount_size) {
+    strings.common.fullAmount[buf_size + i] = '\0';
   } else {
     strings.common.fullAmount[amount_size - 1] = '\0';
   }
@@ -485,31 +473,20 @@ void finalizeParsing(bool direct) {
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
 
   size_t gw_fee_size = sizeof(strings.common.gatewayFee);
-  i = 0;
-  while (G_io_apdu_buffer[i]
-         && G_io_apdu_buffer[i] != '\0'
-         && i < sizeof(G_io_apdu_buffer)
-         && i < gw_fee_size) {
-      strings.common.gatewayFee[i] = G_io_apdu_buffer[i];
-      i++;
-  }
+  buf_size = MIN(gw_fee_size, strlen((char*)G_io_apdu_buffer));
+  strncpy(strings.common.gatewayFee, (char*)G_io_apdu_buffer, buf_size);
+  i = buf_size;
 
-  if (i < gw_fee_size) {
+  if (strlen(feeTicker) > 0 && feeTicker[0] != ' ') {
     strings.common.gatewayFee[i] = ' ';
     i++;
   }
 
-  tickerOffset = 0;
-  while (feeTicker[tickerOffset]
-         && feeTicker[tickerOffset] != '\0'
-         && tickerOffset < sizeof(feeTicker)
-         && (tickerOffset + i) < gw_fee_size) {
-      strings.common.gatewayFee[tickerOffset + i] = feeTicker[tickerOffset];
-      tickerOffset++;
-  }
+  buf_size = MIN((gw_fee_size - i), strlen(feeTicker));
+  strncpy(strings.common.gatewayFee + i, feeTicker, buf_size);
 
-  if ((tickerOffset + i) < gw_fee_size) {
-    strings.common.gatewayFee[tickerOffset + i] = '\0';
+  if ((buf_size + i) < gw_fee_size) {
+    strings.common.gatewayFee[buf_size + i] = '\0';
   } else {
     strings.common.gatewayFee[gw_fee_size - 1] = '\0';
   }
@@ -526,32 +503,21 @@ void finalizeParsing(bool direct) {
 
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
 
-  i = 0;
   size_t fee_size = sizeof(strings.common.maxFee);
-  while (G_io_apdu_buffer[i]
-         && G_io_apdu_buffer[i] != '\0'
-         && i < sizeof(G_io_apdu_buffer)
-         && i < fee_size) {
-    strings.common.maxFee[i] = G_io_apdu_buffer[i];
-    i++;
-  }
+  buf_size = MIN(fee_size, strlen((char*)G_io_apdu_buffer));
+  strncpy(strings.common.maxFee, (char*)G_io_apdu_buffer, buf_size);
+  i = buf_size;
 
-  if (i < fee_size) {
+  if (strlen(feeTicker) > 0 && feeTicker[0] != ' ') {
     strings.common.maxFee[i] = ' ';
     i++;
   }
 
-  tickerOffset=0;
-  while (feeTicker[tickerOffset]
-         && tickerOffset < sizeof(feeTicker)
-         && (tickerOffset + 1) < fee_size
-         && feeTicker[tickerOffset] != '\0') {
-      strings.common.maxFee[tickerOffset + i] = feeTicker[tickerOffset];
-      tickerOffset++;
-  }
+  buf_size = MIN((fee_size - i), strlen(feeTicker));
+  strncpy(strings.common.maxFee + i, feeTicker, buf_size);
 
-  if ((tickerOffset + i) < fee_size) {
-    strings.common.maxFee[tickerOffset + i] = '\0';
+  if ((buf_size + i) < fee_size) {
+    strings.common.maxFee[buf_size + i] = '\0';
   } else {
     strings.common.maxFee[fee_size - 1] = '\0';
   }
