@@ -11,8 +11,47 @@ def get_nano_review_instructions(num_screen_skip):
     return instructions
 
 
+def get_nano_enable_blind_sign_and_review_instructions(num_screen_skip):
+    instructions = [NavIns(NavInsID.RIGHT_CLICK)] * num_screen_skip
+    instructions.append(NavIns(NavInsID.BOTH_CLICK))
+    return instructions
+
+
+def get_nano_reject_disabled_blind_signing_screen_instructions():
+    return [
+        NavInsID(NavInsID.RIGHT_CLICK),
+        NavInsID(NavInsID.RIGHT_CLICK),
+        NavInsID(NavInsID.BOTH_CLICK)]
+
+
+def get_nano_go_settings_disabled_blind_signing_screen_instructions():
+    return [
+        NavInsID(NavInsID.RIGHT_CLICK),
+        NavInsID(NavInsID.BOTH_CLICK)]
+
+
 def get_stax_review_instructions(num_screen_skip):
     instructions = [NavIns(NavInsID.SWIPE_CENTER_TO_LEFT)]
+
+    for i in range(num_screen_skip):
+        instructions.append(NavIns(NavInsID.USE_CASE_REVIEW_TAP))
+
+    instructions.append(NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM))
+    instructions.append(NavIns(NavInsID.USE_CASE_STATUS_DISMISS))
+    return instructions
+
+
+def get_reject_disabled_blind_signing_screen_instructions():
+    return [NavIns(NavInsID.USE_CASE_CHOICE_REJECT)]
+
+
+def get_go_settings_disabled_blind_signing_screen_instructions():
+    return [NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM)]
+
+
+def get_enable_blind_sign_and_return_review_instructions(num_screen_skip):
+    instructions = [
+        NavIns(NavInsID.USE_CASE_CHOICE_REJECT)]
 
     for i in range(num_screen_skip):
         instructions.append(NavIns(NavInsID.USE_CASE_REVIEW_TAP))

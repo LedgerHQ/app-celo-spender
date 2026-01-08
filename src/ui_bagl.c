@@ -58,4 +58,8 @@ void ui_approval_celo_data_warning_tx_flow(void) {
 void ui_approval_celo_tx_flow(void) {
     ux_flow_init(0, ux_approval_celo_tx_flow, NULL);
 }
+
+void ui_error_blind_signing(void) {
+    ux_flow_init(0, ux_blind_sign_error_flow, NULL);
+}
 #endif // HAVE_BAGL

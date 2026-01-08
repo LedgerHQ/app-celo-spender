@@ -18,3 +18,4 @@ extern const ux_flow_step_t* const ux_approval_celo_relock_flow[];
 extern const ux_flow_step_t* const ux_approval_celo_create_account_flow[];
 extern const ux_flow_step_t* const ux_sign_flow[];
 extern const ux_flow_step_t* const ux_idle_flow[];
+extern const ux_flow_step_t* const ux_blind_sign_error_flow[];

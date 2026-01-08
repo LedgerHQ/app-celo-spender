@@ -2,9 +2,9 @@ from pathlib import Path
 
 from .apps.celo import CeloClient, StatusCode
 from .apps.celo_utils import CELO_PACKED_DERIVATION_PATH
-from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions, get_stax_review_instructions_with_warning
+from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions
 from ragger.navigator import NavInsID, NavIns
-from ledgered.devices import DeviceType, Device
+from ledgered.devices import DeviceType
 
 import pytest
 
@@ -67,3 +67,28 @@ def test_sign_data(test_name, backend, navigator):
 
     assert (response.status == StatusCode.STATUS_OK)
     assert (len(response.data) == 65)
+
+def test_show_settings_menu(test_name, backend, navigator):
+    instructions = []
+    if backend.device.is_nano:
+        instructions = [
+            NavInsID(NavInsID.RIGHT_CLICK),
+            NavInsID(NavInsID.RIGHT_CLICK),
+            NavInsID(NavInsID.BOTH_CLICK),
+            NavInsID(NavInsID.RIGHT_CLICK),
+            NavInsID(NavInsID.RIGHT_CLICK),
+            NavInsID(NavInsID.BOTH_CLICK),
+        ]
+    else:
+        instructions = [
+            NavIns(NavInsID.USE_CASE_HOME_SETTINGS),
+            NavIns(NavInsID.USE_CASE_SETTINGS_NEXT),
+            NavIns(NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT),
+        ]
+
+    navigator.navigate_and_compare(
+        TESTS_ROOT_DIR,
+        test_name,
+        instructions,
+        screen_change_before_first_instruction = False
+    )

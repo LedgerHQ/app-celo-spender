@@ -759,6 +759,8 @@ static parserStatus_e processTxInternal(txContext_t *context) {
                 case CUSTOM_FAULT:
                     PRINTF("Custom processor aborted\n");
                     return USTREAM_FAULT;
+                case CUSTOM_BLIND_SIGNING_OFF:
+                    return USTREAM_BLIND_SIGNING_OFF;
                 default:
                     PRINTF("Unhandled custom processor status\n");
                     return USTREAM_FAULT;

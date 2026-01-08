@@ -1,3 +1,4 @@
+#include <stdint.h>
 #ifdef HAVE_NBGL
 #include "globals.h"
 #include "ui_common.h"
@@ -22,7 +23,7 @@ enum {
 static nbgl_contentSwitch_t switches[NB_SETTINGS_SWITCHES - FIRST_USER_TOKEN];
 
 static const char* const infoTypes[NB_INFO_FIELDS] = {"Version", "Celo App"};
-static const char* const infoContents[NB_INFO_FIELDS] = {APPVERSION, "(c) 2025 Ledger"};
+static const char* const infoContents[NB_INFO_FIELDS] = {APPVERSION, "(c) 2026 Ledger"};
 
 static void onQuitCallback(void) {
     os_sched_exit(-1);
@@ -47,7 +48,7 @@ static const nbgl_genericContents_t settingContents = {.callbackCallNeeded = fal
                                                        .contentsList = contents,
                                                        .nbContents = SETTING_CONTENTS_NB};
 
-static void switch_settings_contract_data() {
+static void switch_settings_blind_signing() {
   uint8_t value = (N_storage.dataAllowed ? 0 : 1);
   nvm_write(&N_storage.dataAllowed, (void*)&value, sizeof(uint8_t));
 }
@@ -56,13 +57,14 @@ static void switch_settings_display_data() {
   uint8_t value = (N_storage.contractDetails ? 0 : 1);
   nvm_write(&N_storage.contractDetails, (void*)&value, sizeof(uint8_t));
 }
+
 static void controls_callback(int token, uint8_t index, int page) {
     UNUSED(index);
     initSettingPage = page;
     switch(token)
     {
         case SWITCH_CONTRACT_DATA_SET_TOKEN:
-            switch_settings_contract_data();
+            switch_settings_blind_signing();
             break;
 
         case SWITCH_DEBUG_DATA_SET_TOKEN:
@@ -78,29 +80,37 @@ static void controls_callback(int token, uint8_t index, int page) {
     switches[1].initState = N_storage.contractDetails;
 }
 
-void ui_idle(void) {
-        switches[0].initState = N_storage.dataAllowed;
-        switches[0].text = "Contract data";
-        switches[0].subText = "Allow contract data\nin transactions";
-        switches[0].token = SWITCH_CONTRACT_DATA_SET_TOKEN;
-        switches[0].tuneId = TUNE_TAP_CASUAL;
+void ui_start_page(uint8_t page) {
+    switches[0].initState = N_storage.dataAllowed;
+    switches[0].text = "Blind signing";
+    switches[0].subText = "Enable transaction blind signing.";
+    switches[0].token = SWITCH_CONTRACT_DATA_SET_TOKEN;
+    switches[0].tuneId = TUNE_TAP_CASUAL;
 
-        switches[1].initState = N_storage.contractDetails;
-        switches[1].text = "Debug data";
-        switches[1].subText = "Display contract data details";
-        switches[1].token = SWITCH_DEBUG_DATA_SET_TOKEN;
-        switches[1].tuneId = TUNE_TAP_CASUAL;
+    switches[1].initState = N_storage.contractDetails;
+    switches[1].text = "Debug data";
+    switches[1].subText = "Display contract data details";
+    switches[1].token = SWITCH_DEBUG_DATA_SET_TOKEN;
+    switches[1].tuneId = TUNE_TAP_CASUAL;
 
     nbgl_useCaseHomeAndSettings(
         "Celo",
         &ICON_APP_HOME,
         NULL,
-        INIT_HOME_PAGE,
+        page,
         &settingContents,
         &infoList,
         NULL,
         onQuitCallback
     );
+}
+
+void ui_idle(void) {
+    ui_start_page(INIT_HOME_PAGE);
+}
+
+void ui_settings(void) {
+    ui_start_page(0);
 }
 
 #endif // HAVE_NBGL
