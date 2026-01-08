@@ -32,6 +32,9 @@ unsigned int io_seproxyhal_touch_data_ok(void) {
         ui_idle();
 #endif // HAVE_BAGL
         break;
+    case USTREAM_BLIND_SIGNING_OFF:
+        ui_error_blind_signing();
+        break;
     default:
         PRINTF("Unexpected parser status\n");
         reset_app_context();
@@ -197,3 +200,5 @@ unsigned int io_seproxyhal_touch_signMessage_cancel(void) {
 #endif // HAVE_BAGL
     return 0; // do not redraw the widget
 }
+
+

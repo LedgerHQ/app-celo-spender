@@ -112,7 +112,8 @@ typedef enum customStatus_e {
     CUSTOM_NOT_HANDLED,
     CUSTOM_HANDLED,
     CUSTOM_SUSPENDED,
-    CUSTOM_FAULT
+    CUSTOM_FAULT,
+    CUSTOM_BLIND_SIGNING_OFF,
 } customStatus_e;
 
 typedef customStatus_e (*ustreamProcess_t)(struct txContext_t *context);
@@ -122,7 +123,8 @@ typedef enum parserStatus_e {
     USTREAM_PROCESSING,
     USTREAM_SUSPENDED,
     USTREAM_FINISHED,
-    USTREAM_FAULT
+    USTREAM_FAULT,
+    USTREAM_BLIND_SIGNING_OFF,
 } parserStatus_e;
 
 typedef struct txInt256_t {

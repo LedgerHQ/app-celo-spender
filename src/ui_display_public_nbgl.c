@@ -19,7 +19,7 @@ static void address_confirmation(bool confirm) {
 }
 
 void ui_display_public_flow(void) {
-    nbgl_useCaseAddressReview(tmpCtx.publicKeyContext.address,
+    nbgl_useCaseAddressReview(strings.common.fullAddress,
                               NULL,
                               &ICON_APP_CELO,
                               "Verify Celo\naddress",

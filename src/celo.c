@@ -264,7 +264,7 @@ customStatus_e customProcessor(txContext_t *context) {
             if (fieldPos == 0) {
                 if (!N_storage.dataAllowed) {
                   PRINTF("Data field forbidden\n");
-                  return CUSTOM_FAULT;
+                  return CUSTOM_BLIND_SIGNING_OFF;
                 }
                 if (!N_storage.contractDetails) {
                   return CUSTOM_NOT_HANDLED;
@@ -336,9 +336,8 @@ void finalizeParsing(bool direct) {
   uint32_t i;
   uint8_t decimals = WEI_TO_ETHER;
   uint8_t feeDecimals = WEI_TO_ETHER;
-  const char *ticker = CHAINID_COINNAME " ";
-  const char *feeTicker = CHAINID_COINNAME " ";
-  uint8_t tickerOffset = 0;
+  const char *ticker = " " CHAINID_COINNAME;
+  const char *feeTicker = " " CHAINID_COINNAME;
 
   // Display correct currency if fee currency field sent
   if (tmpContent.txContent.feeCurrencyLength != 0) {
@@ -399,7 +398,7 @@ void finalizeParsing(bool direct) {
       memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
       tmpContent.txContent.value.length = 32;
     } else {
-      if (dataPresent && !N_storage.dataAllowed) {
+      if (dataPresent && !N_storage.dataAllowed && provisionType != PROVISION_LOCK) {
           reset_app_context();
           PRINTF("Data field forbidden\n");
           if (direct) {
@@ -407,7 +406,7 @@ void finalizeParsing(bool direct) {
           }
           else {
             io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-            ui_idle();
+            ui_error_blind_signing();
             return;
           }
       }
@@ -441,18 +440,28 @@ void finalizeParsing(bool direct) {
   while (G_io_apdu_buffer[100 + i]) {
     i++;
   }
+
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, decimals);
-  i = 0;
-    tickerOffset = 0;
-    while (ticker[tickerOffset]) {
-        strings.common.fullAmount[tickerOffset] = ticker[tickerOffset];
-        tickerOffset++;
-    }
-    while (G_io_apdu_buffer[i]) {
-        strings.common.fullAmount[tickerOffset + i] = G_io_apdu_buffer[i];
-        i++;
-    }
-  strings.common.fullAmount[tickerOffset + i] = '\0';
+
+  size_t amount_size = sizeof(strings.common.fullAmount);
+  size_t buf_size = MIN(amount_size, strlen((char*)G_io_apdu_buffer));
+  strncpy(strings.common.fullAmount, (char*)G_io_apdu_buffer, buf_size);
+  i = buf_size;
+
+  if (strlen(ticker) > 0 && ticker[0] != ' ') {
+    strings.common.fullAmount[i] = ' ';
+    i++;
+  }
+
+  buf_size = MIN((amount_size - i), strlen(ticker));
+  strncpy(strings.common.fullAmount + i, ticker, buf_size);
+
+  if ((buf_size + i) < amount_size) {
+    strings.common.fullAmount[buf_size + i] = '\0';
+  } else {
+    strings.common.fullAmount[amount_size - 1] = '\0';
+  }
+
   // Add gateway fee
   convertUint256BE(tmpContent.txContent.gatewayFee.value, tmpContent.txContent.gatewayFee.length, &uint256);
   tostring256(&uint256, 10, (char *)(G_io_apdu_buffer + 100), 100);
@@ -460,18 +469,28 @@ void finalizeParsing(bool direct) {
   while (G_io_apdu_buffer[100 + i]) {
     i++;
   }
+
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
-  i = 0;
-    tickerOffset = 0;
-    while (feeTicker[tickerOffset]) {
-        strings.common.gatewayFee[tickerOffset] = feeTicker[tickerOffset];
-        tickerOffset++;
-    }
-    while (G_io_apdu_buffer[i]) {
-        strings.common.gatewayFee[tickerOffset + i] = G_io_apdu_buffer[i];
-        i++;
-    }
-  strings.common.gatewayFee[tickerOffset + i] = '\0';
+
+  size_t gw_fee_size = sizeof(strings.common.gatewayFee);
+  buf_size = MIN(gw_fee_size, strlen((char*)G_io_apdu_buffer));
+  strncpy(strings.common.gatewayFee, (char*)G_io_apdu_buffer, buf_size);
+  i = buf_size;
+
+  if (strlen(feeTicker) > 0 && feeTicker[0] != ' ') {
+    strings.common.gatewayFee[i] = ' ';
+    i++;
+  }
+
+  buf_size = MIN((gw_fee_size - i), strlen(feeTicker));
+  strncpy(strings.common.gatewayFee + i, feeTicker, buf_size);
+
+  if ((buf_size + i) < gw_fee_size) {
+    strings.common.gatewayFee[buf_size + i] = '\0';
+  } else {
+    strings.common.gatewayFee[gw_fee_size - 1] = '\0';
+  }
+
   // Compute maximum fee
   convertUint256BE(tmpContent.txContent.gasprice.value, tmpContent.txContent.gasprice.length, &gasPrice);
   convertUint256BE(tmpContent.txContent.startgas.value, tmpContent.txContent.startgas.length, &startGas);
@@ -481,18 +500,27 @@ void finalizeParsing(bool direct) {
   while (G_io_apdu_buffer[100 + i]) {
     i++;
   }
+
   adjustDecimals((char *)(G_io_apdu_buffer + 100), i, (char *)G_io_apdu_buffer, 100, feeDecimals);
-  i = 0;
-  tickerOffset=0;
-  while (feeTicker[tickerOffset]) {
-      strings.common.maxFee[tickerOffset] = feeTicker[tickerOffset];
-      tickerOffset++;
-  }
-  while (G_io_apdu_buffer[i]) {
-    strings.common.maxFee[tickerOffset + i] = G_io_apdu_buffer[i];
+
+  size_t fee_size = sizeof(strings.common.maxFee);
+  buf_size = MIN(fee_size, strlen((char*)G_io_apdu_buffer));
+  strncpy(strings.common.maxFee, (char*)G_io_apdu_buffer, buf_size);
+  i = buf_size;
+
+  if (strlen(feeTicker) > 0 && feeTicker[0] != ' ') {
+    strings.common.maxFee[i] = ' ';
     i++;
   }
-  strings.common.maxFee[tickerOffset + i] = '\0';
+
+  buf_size = MIN((fee_size - i), strlen(feeTicker));
+  strncpy(strings.common.maxFee + i, feeTicker, buf_size);
+
+  if ((buf_size + i) < fee_size) {
+    strings.common.maxFee[buf_size + i] = '\0';
+  } else {
+    strings.common.maxFee[fee_size - 1] = '\0';
+  }
 
   switch (provisionType) {
     case PROVISION_LOCK:
