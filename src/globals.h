@@ -4,26 +4,25 @@
 #include "tokens.h"
 #include "cx.h"
 
-#define CHAINID_UPCASE "CELO"
+#define CHAINID_UPCASE   "CELO"
 #define CHAINID_COINNAME "CELO"
-#define CHAIN_ID 0
+#define CHAIN_ID         0
 
 // RETURN CODES
 #define SW_TX_TYPE_NOT_SUPPORTED 0x6501
-#define SW_NO_APDU_RECEIVED 0x6982
-#define SW_INITIALIZATION_ERROR 0x6985
-#define SW_ERROR_IN_DATA 0x6A80
-#define SW_ERROR_WRONG_ADDRESS 0x6A83
-#define SW_WRONG_P1_OR_P2 0x6b00
-#define SW_OK 0x9000
-#define SW_INS_NOT_SUPPORTED 0x6d00
-#define SW_CLA_NOT_SUPPORTED 0x6e00
-#define SW_SWAP_CHECKING_FAIL 0xB00A
-
+#define SW_NO_APDU_RECEIVED      0x6982
+#define SW_INITIALIZATION_ERROR  0x6985
+#define SW_ERROR_IN_DATA         0x6A80
+#define SW_ERROR_WRONG_ADDRESS   0x6A83
+#define SW_WRONG_P1_OR_P2        0x6b00
+#define SW_OK                    0x9000
+#define SW_INS_NOT_SUPPORTED     0x6d00
+#define SW_CLA_NOT_SUPPORTED     0x6e00
+#define SW_SWAP_CHECKING_FAIL    0xB00A
 
 typedef union {
-  txContent_t txContent;
-  cx_sha256_t sha2;
+    txContent_t txContent;
+    cx_sha256_t sha2;
 } tmpContent_t;
 
 extern tmpContent_t tmpContent;
@@ -36,7 +35,7 @@ extern txContext_t txContext;
 
 #define MAX_AMOUNT_STR_LEN 21  // 19 for u64 + 1 for '\0' +1 for '.'
 
-#define ADDRESS_LENGTH  41
+#define ADDRESS_LENGTH 41
 
 // The length of a 256-bit integer in bytes.
 #define INT256_LENGTH 32
@@ -105,9 +104,9 @@ extern volatile uint8_t dataAllowed;
 extern volatile uint8_t contractDetails;
 
 typedef struct internalStorage_t {
-  unsigned char dataAllowed;
-  unsigned char contractDetails;
-  uint8_t initialized;
+    unsigned char dataAllowed;
+    unsigned char contractDetails;
+    uint8_t initialized;
 } internalStorage_t;
 
 extern const internalStorage_t N_storage_real;
@@ -117,16 +116,16 @@ extern char addressSummary[32];
 extern cx_sha3_t sha3;
 
 typedef enum {
-  PROVISION_NONE,
-  PROVISION_TOKEN,
-  PROVISION_LOCK,
-  PROVISION_VOTE,
-  PROVISION_ACTIVATE,
-  PROVISION_REVOKE,
-  PROVISION_UNLOCK,
-  PROVISION_WITHDRAW,
-  PROVISION_RELOCK,
-  PROVISION_CREATE_ACCOUNT
+    PROVISION_NONE,
+    PROVISION_TOKEN,
+    PROVISION_LOCK,
+    PROVISION_VOTE,
+    PROVISION_ACTIVATE,
+    PROVISION_REVOKE,
+    PROVISION_UNLOCK,
+    PROVISION_WITHDRAW,
+    PROVISION_RELOCK,
+    PROVISION_CREATE_ACCOUNT
 } provision_type_t;
 
 extern volatile provision_type_t provisionType;
