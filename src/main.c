@@ -281,14 +281,19 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer, uint16_t da
  * @param tx The transaction buffer
  */
 void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength, volatile unsigned int *flags, volatile unsigned int *tx) {
-  UNUSED(p1);
-  UNUSED(p2);
   UNUSED(flags);
-  UNUSED(tx);
   uint32_t offset = 0;
   uint8_t tickerLength;
+  uint32_t decimals;
   uint8_t hash[32];
   cx_ecfp_public_key_t tokenKey;
+
+  if (p1 != 0) {
+    THROW(SW_WRONG_P1_OR_P2);
+  }
+  if (p2 != 0) {
+    THROW(SW_WRONG_P1_OR_P2);
+  }
 
   tmpCtx.transactionContext.currentTokenIndex = (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKEN;
   tokenDefinition_t* token = &tmpCtx.transactionContext.tokens[tmpCtx.transactionContext.currentTokenIndex];
@@ -300,8 +305,8 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   }
   tickerLength = workBuffer[offset++];
   dataLength--;
-  // We need to make sure we can write the ticker, a space and a zero byte at the end
-  if ((tickerLength + 2) >= sizeof(token->ticker)) {
+  // ticker + null must fit in ticker[]
+  if ((tickerLength + 1) > sizeof(token->ticker)) {
     THROW(SW_ERROR_IN_DATA);
   }
   if (dataLength < tickerLength + 20 + 4 + 4) {
@@ -309,14 +314,17 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
   }
   cx_hash_sha256(workBuffer + offset, tickerLength + 20 + 4 + 4, hash, 32);
   memcpy(token->ticker, workBuffer + offset, tickerLength);
-  token->ticker[tickerLength] = ' ';
-  token->ticker[tickerLength + 1] = '\0';
+  token->ticker[tickerLength] = '\0';
   offset += tickerLength;
   dataLength -= tickerLength;
   memcpy(token->address, workBuffer + offset, 20);
   offset += 20;
   dataLength -= 20;
-  token->decimals = U4BE(workBuffer, offset);
+  decimals = U4BE(workBuffer, offset);
+  if (decimals > UINT8_MAX) {
+    THROW(SW_ERROR_IN_DATA);
+  }
+  token->decimals = (uint8_t) decimals;
   offset += 4;
   dataLength -= 4;
 
@@ -335,6 +343,7 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2, uint8_t *workBuf
     }
   }
   tmpCtx.transactionContext.tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
+  G_io_apdu_buffer[(*tx)++] = tmpCtx.transactionContext.currentTokenIndex;
   THROW(SW_OK);
 }
 

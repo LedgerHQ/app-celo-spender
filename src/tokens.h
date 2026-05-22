@@ -22,7 +22,7 @@
 
 typedef struct tokenDefinition_t {
     uint8_t address[20];
-    char ticker[10];
+    char ticker[51];  // max 50-char ticker + null terminator
     uint8_t decimals;
 } tokenDefinition_t;
 
