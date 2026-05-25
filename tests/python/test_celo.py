@@ -17,8 +17,6 @@ def test_celo_derive_address(test_name, backend, show, chaincode, navigator):
     celo = CeloClient(backend)
 
 
-    
-
     if backend.device.is_nano:
         instructions = get_nano_review_instructions(2)
     else:
