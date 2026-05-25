@@ -54,7 +54,7 @@ _Static_assert(sizeof(((tokenDefinition_t *) 0)->ticker) == TOKEN_TICKER_BUF_LEN
 #define FULL_ADDRESS_LEN (2 + (ADDRESS_LENGTH - 1) + 1)
 
 // decimal amount + space + ticker + null terminator
-#define FULL_AMOUNT_LEN  (AMOUNT_BUF_LEN + 1 + MAX_TICKER_LEN + 1)
+#define FULL_AMOUNT_LEN (AMOUNT_BUF_LEN + 1 + MAX_TICKER_LEN + 1)
 
 // longest staking label is "Create Account" (14 chars) + null terminator
 #define MAX_STAKING_TYPE_LEN 15
@@ -132,7 +132,7 @@ typedef struct internalStorage_t {
 } internalStorage_t;
 
 extern const internalStorage_t N_storage_real;
-#define N_storage (*(internalStorage_t*) PIC(&N_storage_real))
+#define N_storage (*(internalStorage_t *) PIC(&N_storage_real))
 
 extern char addressSummary[32];
 extern cx_sha3_t sha3;

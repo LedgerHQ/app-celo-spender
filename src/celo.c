@@ -358,7 +358,9 @@ void finalizeParsing(bool direct) {
             decimals = currentToken->decimals;
             ticker = currentToken->ticker;
             tmpContent.txContent.destinationLength = EVM_ADDRESS_LEN;
-            memcpy(tmpContent.txContent.destination, dataContext.tokenContext.data + 4 + 12, EVM_ADDRESS_LEN);
+            memcpy(tmpContent.txContent.destination,
+                   dataContext.tokenContext.data + 4 + 12,
+                   EVM_ADDRESS_LEN);
             memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
             tmpContent.txContent.value.length = 32;
         }
