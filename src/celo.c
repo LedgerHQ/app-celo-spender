@@ -85,7 +85,7 @@ tokenDefinition_t *getKnownToken(uint8_t *tokenAddr) {
     for (int i = 0; i < MAX_TOKEN; i++) {
         currentToken = &tmpCtx.transactionContext.tokens[i];
         if (tmpCtx.transactionContext.tokenSet[i] &&
-            (memcmp(currentToken->address, tokenAddr, 20) == 0)) {
+            (memcmp(currentToken->address, tokenAddr, EVM_ADDRESS_LEN) == 0)) {
             PRINTF("Token found at index %d\n", i);
             return currentToken;
         }
@@ -357,8 +357,8 @@ void finalizeParsing(bool direct) {
             dataPresent = false;
             decimals = currentToken->decimals;
             ticker = currentToken->ticker;
-            tmpContent.txContent.destinationLength = 20;
-            memcpy(tmpContent.txContent.destination, dataContext.tokenContext.data + 4 + 12, 20);
+            tmpContent.txContent.destinationLength = EVM_ADDRESS_LEN;
+            memcpy(tmpContent.txContent.destination, dataContext.tokenContext.data + 4 + 12, EVM_ADDRESS_LEN);
             memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
             tmpContent.txContent.value.length = 32;
         }

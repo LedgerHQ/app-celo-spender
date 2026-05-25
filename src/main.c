@@ -327,17 +327,17 @@ void handleProvideErc20TokenInformation(uint8_t p1,
     if ((tickerLength + 1) > sizeof(token->ticker)) {
         THROW(SW_ERROR_IN_DATA);
     }
-    if (dataLength < tickerLength + 20 + 4 + 4) {
+    if (dataLength < tickerLength + EVM_ADDRESS_LEN + 4 + 4) {
         THROW(SW_ERROR_IN_DATA);
     }
-    cx_hash_sha256(workBuffer + offset, tickerLength + 20 + 4 + 4, hash, 32);
+    cx_hash_sha256(workBuffer + offset, tickerLength + EVM_ADDRESS_LEN + 4 + 4, hash, 32);
     memcpy(token->ticker, workBuffer + offset, tickerLength);
     token->ticker[tickerLength] = '\0';
     offset += tickerLength;
     dataLength -= tickerLength;
-    memcpy(token->address, workBuffer + offset, 20);
-    offset += 20;
-    dataLength -= 20;
+    memcpy(token->address, workBuffer + offset, EVM_ADDRESS_LEN);
+    offset += EVM_ADDRESS_LEN;
+    dataLength -= EVM_ADDRESS_LEN;
     decimals = U4BE(workBuffer, offset);
     if (decimals > UINT8_MAX) {
         THROW(SW_ERROR_IN_DATA);
@@ -367,6 +367,10 @@ void handleProvideErc20TokenInformation(uint8_t p1,
         }
     }
     tmpCtx.transactionContext.tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
+
+    if (*tx >= sizeof(G_io_apdu_buffer)) {
+        THROW(SW_INITIALIZATION_ERROR);
+    }
     G_io_apdu_buffer[(*tx)++] = tmpCtx.transactionContext.currentTokenIndex;
     THROW(SW_OK);
 }

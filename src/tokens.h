@@ -20,9 +20,16 @@
 
 #include <stdint.h>
 
+// EVM address size in raw bytes (20 bytes = 160 bits).
+#define EVM_ADDRESS_LEN 20
+
+// Max ticker length + null terminator. Must stay in sync with MAX_TICKER_LEN in globals.h
+// (enforced by a _Static_assert there).
+#define TOKEN_TICKER_BUF_LEN 51
+
 typedef struct tokenDefinition_t {
-    uint8_t address[20];
-    char ticker[51];  // max 50-char ticker + null terminator
+    uint8_t address[EVM_ADDRESS_LEN];
+    char ticker[TOKEN_TICKER_BUF_LEN];
     uint8_t decimals;
 } tokenDefinition_t;
 

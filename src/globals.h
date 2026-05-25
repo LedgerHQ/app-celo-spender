@@ -29,13 +29,35 @@ extern tmpContent_t tmpContent;
 
 extern txContext_t txContext;
 
-#define MAX_TICKER_LEN 16
+// Derived from TOKEN_TICKER_BUF_LEN in tokens.h (buf size = max chars + null).
+#define MAX_TICKER_LEN (TOKEN_TICKER_BUF_LEN - 1)
+_Static_assert(sizeof(((tokenDefinition_t *) 0)->ticker) == TOKEN_TICKER_BUF_LEN,
+               "ticker array size must equal TOKEN_TICKER_BUF_LEN");
 
 #define CELO_PRECISION 18
 
 #define MAX_AMOUNT_STR_LEN 21  // 19 for u64 + 1 for '\0' +1 for '.'
 
 #define ADDRESS_LENGTH 41
+
+// Maximum decimal digits in a uint256 value (2^256-1 has 78 decimal digits).
+#define U256_DEC_DIGITS 78
+
+// Maximum output of adjustDecimals() when srcLength > decimals (the common case):
+// U256_DEC_DIGITS digits + 1 decimal point + null terminator.
+// Note: when srcLength <= decimals (tiny amount, many decimal places), the output
+// is "0." + (decimals - srcLength) zeros + srcLength digits, which can exceed this
+// for large decimals values — adjustDecimals() returns false in that case.
+#define AMOUNT_BUF_LEN (U256_DEC_DIGITS + 1 + 1)  // digits + decimal point + null = 80
+
+// "0x" prefix + 40 hex address chars + null terminator
+#define FULL_ADDRESS_LEN (2 + (ADDRESS_LENGTH - 1) + 1)
+
+// decimal amount + space + ticker + null terminator
+#define FULL_AMOUNT_LEN  (AMOUNT_BUF_LEN + 1 + MAX_TICKER_LEN + 1)
+
+// longest staking label is "Create Account" (14 chars) + null terminator
+#define MAX_STAKING_TYPE_LEN 15
 
 // The length of a 256-bit integer in bytes.
 #define INT256_LENGTH 32
@@ -79,12 +101,12 @@ typedef union {
 extern tmpCtx_t tmpCtx;
 
 typedef struct strData_t {
-    char fullAddress[43];
-    char fullGatewayAddress[43];
-    char fullAmount[50];
-    char maxFee[50];
-    char gatewayFee[50];
-    char stakingType[20];
+    char fullAddress[FULL_ADDRESS_LEN];
+    char fullGatewayAddress[FULL_ADDRESS_LEN];
+    char fullAmount[FULL_AMOUNT_LEN];
+    char maxFee[FULL_AMOUNT_LEN];
+    char gatewayFee[FULL_AMOUNT_LEN];
+    char stakingType[MAX_STAKING_TYPE_LEN];
 } strData_t;
 
 typedef struct strDataTmp_t {
