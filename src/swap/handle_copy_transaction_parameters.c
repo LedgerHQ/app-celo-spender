@@ -143,8 +143,13 @@ bool swap_check_validity() {
 
 void swap_finalize_exchange_sign_transaction(bool is_success) {
     PRINTF("Returning to Exchange with status %d\n", is_success);
-    *G_swap_sign_return_value_address = is_success ? 1 : 0;
+    // reset_app_context() must be called BEFORE writing the result.
+    // On our BSS layout, tmpContent (cleared by reset_app_context) overlaps
+    // Exchange's lib_in_out_params->result in shared SRAM. Writing result=1
+    // first and then zeroing tmpContent would overwrite the flag with 0,
+    // causing Exchange to see a failed swap even after a successful sign.
     reset_app_context();
+    *G_swap_sign_return_value_address = is_success ? 1 : 0;
     os_lib_end();
 }
 #endif  // HAVE_SWAP
