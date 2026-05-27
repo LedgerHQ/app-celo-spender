@@ -51,10 +51,12 @@ def test_sign_transaction_eip1559_no_data(test_name, backend, navigator):
     assert(response.status == StatusCode.STATUS_OK)
 
 
+USDT_TOKEN_DATA = "045553445448065fbbe25f71c9282ddf5e1cd6d6a887483d5e000000060000a4ec304402204239b4af138d118b70fa5aea895b5f000a0679077434b2c30257c7a841c027fa02207e76ec1cc7485b4d4545c462b4e4baf8e0fd6ab557019ae974079ab0c51fe28d"
+
+
 def test_add_tether_usdt_token_clabs_sig(test_name, backend, navigator):
     celo = CeloClient(backend)
-    data = "045553445448065fbbe25f71c9282ddf5e1cd6d6a887483d5e000000060000a4ec304402204239b4af138d118b70fa5aea895b5f000a0679077434b2c30257c7a841c027fa02207e76ec1cc7485b4d4545c462b4e4baf8e0fd6ab557019ae974079ab0c51fe28d"
-    encoded_data = bytes.fromhex(data)
+    encoded_data = bytes.fromhex(USDT_TOKEN_DATA)
     with celo.send_in_chunk_async(
             INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
             encoded_data
@@ -62,13 +64,14 @@ def test_add_tether_usdt_token_clabs_sig(test_name, backend, navigator):
         pass
 
     response: bytes = get_async_response(backend)
-    assert (response.status == StatusCode.STATUS_OK)
+    assert response.status == StatusCode.STATUS_OK
+    assert len(response.data) == 1
+    assert response.data[0] in (0, 1)
 
 
 def test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator):
     celo = CeloClient(backend)
-    data = "045553445448065fbbe25f71c9282ddf5e1cd6d6a887483d5e000000060000a4ec304402204239b4af138d118b70fa5aea895b5f000a0679077434b2c30257c7a841c027fa02207e76ec1cc7485b4d4545c462b4e4baf8e0fd6ab557019ae974079ab0c51fe28d"
-    encoded_data = bytes.fromhex(data)
+    encoded_data = bytes.fromhex(USDT_TOKEN_DATA)
     with celo.send_in_chunk_async(
             INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
             encoded_data
@@ -76,7 +79,9 @@ def test_add_tether_usdt_token_ledger_sig(test_name, backend, navigator):
         pass
 
     response: bytes = get_async_response(backend)
-    assert (response.status == StatusCode.STATUS_OK)
+    assert response.status == StatusCode.STATUS_OK
+    assert len(response.data) == 1
+    assert response.data[0] in (0, 1)
 
 
 def test_sign_transaction_eip1559_with_data(test_name, backend, navigator):
@@ -143,7 +148,9 @@ def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
         pass
 
     response: bytes = get_async_response(backend)
-    assert (response.status == StatusCode.STATUS_OK)
+    assert response.status == StatusCode.STATUS_OK
+    assert len(response.data) == 1
+    assert response.data[0] in (0, 1)
 
 
 def test_sign_transaction_cip64(test_name, backend, navigator):
@@ -220,4 +227,57 @@ def test_sign_tx_unlock_with_data(test_name, backend, navigator):
 
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
-    
+
+
+# "Celo Dollar" token descriptor payload (11-char ticker, cUSD address, decimals=18, chainId=42220).
+# Previously rejected by ticker[10] (11+2 >= 10); accepted after expanding to ticker[51].
+CELO_DOLLAR_TOKEN_DATA = "0b43656c6f20446f6c6c6172765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec30440220071b4e984b14f78b96ec3d8d7c294b8b18e72ee966b1c299f6f66a2dea30345002200fc9cd21d86c3e328c25cbc376882a00d1ef1a834f69ad4fdcebbbf7c493b2c6"
+
+
+def test_add_celo_dollar_token(test_name, backend, navigator):
+    celo = CeloClient(backend)
+    response = celo.provide_token_information(bytes.fromhex(CELO_DOLLAR_TOKEN_DATA))
+    assert response.status == StatusCode.STATUS_OK
+    assert len(response.data) == 1
+    assert response.data[0] in (0, 1)
+
+
+def test_sign_transaction_with_celo_dollar_token(test_name, backend, navigator):
+    celo = CeloClient(backend)
+    data = bytes.fromhex(CELO_DOLLAR_TOKEN_DATA)
+    response = celo.provide_token_information(data)
+    assert response.status == StatusCode.STATUS_OK
+
+    if backend.device.is_nano:
+        instructions = get_nano_review_instructions(4)
+    else:
+        instructions = get_stax_review_instructions(1)
+
+    # EIP-1559 transfer of 10000 base units to the cUSD contract (same structure as USDT test)
+    rawTx = "02f86f82a4ec47830f424085060db884008301cf0894765de816845861e75a25fca122bb6898b8b1282a80b844a9059cbb000000000000000000000000abd5d4575341b5878a1e7cb75dc0d4da91dfafa30000000000000000000000000000000000000000000000000000000000002710c0"
+    response = sign_transaction_with_rawTx_celo(test_name, backend, navigator, instructions, rawTx)
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_provide_erc20_returns_token_index(test_name, backend, navigator):
+    celo = CeloClient(backend)
+    response = celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA))
+    assert response.status == StatusCode.STATUS_OK
+    assert len(response.data) == 1
+    assert response.data[0] in (0, 1)
+
+
+def test_provide_erc20_rejects_nonzero_p1(test_name, backend, navigator):
+    celo = CeloClient(backend)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA), p1=0x01)
+    assert exc.value.status == StatusCode.STATUS_WRONG_P1_OR_P2
+
+
+def test_provide_erc20_rejects_nonzero_p2(test_name, backend, navigator):
+    celo = CeloClient(backend)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA), p2=0x01)
+    assert exc.value.status == StatusCode.STATUS_WRONG_P1_OR_P2
+

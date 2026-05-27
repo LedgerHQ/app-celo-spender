@@ -11,16 +11,16 @@
 extern nbgl_layoutTagValue_t tagValuePair[5];
 extern nbgl_layoutTagValueList_t tagValueList;
 extern nbgl_pageInfoLongPress_t infoLongPress;
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL
 
 #if defined(TARGET_STAX) || defined(TARGET_FLEX)
-#define ICON_APP_CELO        C_celo_64px
-#define ICON_APP_HOME        ICON_APP_CELO
-#define ICON_APP_WARNING     LARGE_WARNING_ICON
+#define ICON_APP_CELO    C_celo_64px
+#define ICON_APP_HOME    ICON_APP_CELO
+#define ICON_APP_WARNING LARGE_WARNING_ICON
 #elif defined(TARGET_APEX_P)
-#define ICON_APP_CELO        C_celo_48px
-#define ICON_APP_HOME        ICON_APP_CELO
-#define ICON_APP_WARNING     LARGE_WARNING_ICON
+#define ICON_APP_CELO    C_celo_48px
+#define ICON_APP_HOME    ICON_APP_CELO
+#define ICON_APP_WARNING LARGE_WARNING_ICON
 #endif
 
 void ui_idle(void);  // must be implemented by each ui handler
