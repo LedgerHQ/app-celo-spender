@@ -25,6 +25,7 @@ class StatusCode(IntEnum):
     STATUS_OK = 0x9000
     STATUS_DEPRECATED = 0x6501
     STATUS_ERROR_IN_DATA = 0x6A80
+    STATUS_WRONG_P1_OR_P2 = 0x6B00
 
 class Param(IntEnum):
     P1_DirectlyFetchAddress     = 0x00 # Return address directly from the wallet
@@ -48,6 +49,9 @@ class CeloClient:
                                                   Param.P1_UNUSED, Param.P2_UNUSED)
         return version
 
+
+    def provide_token_information(self, data: bytes, p1: int = 0x00, p2: int = 0x00) -> RAPDU:
+        return self._client.exchange(CLA, INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION, p1, p2, data)
 
     @contextmanager
     def send_in_chunk_async(self, instruction: int, payload: bytes) -> Generator[None, None, None]:

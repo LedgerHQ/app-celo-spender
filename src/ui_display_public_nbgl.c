@@ -12,8 +12,7 @@ static void address_confirmation(bool confirm) {
     if (confirm) {
         nbgl_useCaseReviewStatus(STATUS_TYPE_ADDRESS_VERIFIED, ui_idle);
         io_seproxyhal_touch_address_ok();
-    }
-    else {
+    } else {
         address_cancel();
     }
 }
@@ -27,4 +26,4 @@ void ui_display_public_flow(void) {
                               address_confirmation);
 }
 
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL

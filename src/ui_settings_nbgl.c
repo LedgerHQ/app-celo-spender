@@ -5,10 +5,10 @@
 #include "nbgl_use_case.h"
 #include "bolos_target.h"
 
-#define NB_INFO_FIELDS 2
-#define PAGE_START 0
+#define NB_INFO_FIELDS  2
+#define PAGE_START      0
 #define NB_PAGE_SETTING 2
-#define IS_TOUCHABLE false
+#define IS_TOUCHABLE    false
 
 // Forward declaration
 static uint8_t initSettingPage;
@@ -35,7 +35,6 @@ static const nbgl_contentInfoList_t infoList = {
     .infoContents = (const char**) infoContents,
 };
 
-
 // settings menu definition
 #define SETTING_CONTENTS_NB 1
 static const nbgl_content_t contents[SETTING_CONTENTS_NB] = {
@@ -49,20 +48,19 @@ static const nbgl_genericContents_t settingContents = {.callbackCallNeeded = fal
                                                        .nbContents = SETTING_CONTENTS_NB};
 
 static void switch_settings_blind_signing() {
-  uint8_t value = (N_storage.dataAllowed ? 0 : 1);
-  nvm_write(&N_storage.dataAllowed, (void*)&value, sizeof(uint8_t));
+    uint8_t value = (N_storage.dataAllowed ? 0 : 1);
+    nvm_write(&N_storage.dataAllowed, (void*) &value, sizeof(uint8_t));
 }
 
 static void switch_settings_display_data() {
-  uint8_t value = (N_storage.contractDetails ? 0 : 1);
-  nvm_write(&N_storage.contractDetails, (void*)&value, sizeof(uint8_t));
+    uint8_t value = (N_storage.contractDetails ? 0 : 1);
+    nvm_write(&N_storage.contractDetails, (void*) &value, sizeof(uint8_t));
 }
 
 static void controls_callback(int token, uint8_t index, int page) {
     UNUSED(index);
     initSettingPage = page;
-    switch(token)
-    {
+    switch (token) {
         case SWITCH_CONTRACT_DATA_SET_TOKEN:
             switch_settings_blind_signing();
             break;
@@ -93,16 +91,14 @@ void ui_start_page(uint8_t page) {
     switches[1].token = SWITCH_DEBUG_DATA_SET_TOKEN;
     switches[1].tuneId = TUNE_TAP_CASUAL;
 
-    nbgl_useCaseHomeAndSettings(
-        "Celo",
-        &ICON_APP_HOME,
-        NULL,
-        page,
-        &settingContents,
-        &infoList,
-        NULL,
-        onQuitCallback
-    );
+    nbgl_useCaseHomeAndSettings("Celo",
+                                &ICON_APP_HOME,
+                                NULL,
+                                page,
+                                &settingContents,
+                                &infoList,
+                                NULL,
+                                onQuitCallback);
 }
 
 void ui_idle(void) {
@@ -113,4 +109,4 @@ void ui_settings(void) {
     ui_start_page(0);
 }
 
-#endif // HAVE_NBGL
+#endif  // HAVE_NBGL
