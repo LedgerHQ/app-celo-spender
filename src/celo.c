@@ -397,6 +397,11 @@ void finalizeParsing(bool direct) {
     } else if (provisionType == PROVISION_RELOCK) {
       memcpy(tmpContent.txContent.value.value, dataContext.relockContext.data + 4 + 32, 32);
       tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_WITHDRAW) {
+      memcpy(tmpContent.txContent.value.value, dataContext.withdrawContext.data + 4, 32);
+      tmpContent.txContent.value.length = 32;
+    } else if (provisionType == PROVISION_CREATE_ACCOUNT) {
+      // no parameters to extract; selector only
     } else {
       if (dataPresent && !N_storage.dataAllowed && provisionType != PROVISION_LOCK) {
           reset_app_context();

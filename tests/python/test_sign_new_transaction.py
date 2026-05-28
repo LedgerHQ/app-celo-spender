@@ -220,4 +220,49 @@ def test_sign_tx_unlock_with_data(test_name, backend, navigator):
 
     response: bytes = get_async_response(backend)
     assert (response.status == StatusCode.STATUS_OK)
-    
+
+
+def test_sign_tx_withdraw(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_review_instructions(3)
+    else:
+        instructions = get_stax_review_instructions(1)
+
+    # EIP-1559 withdraw(uint256 index=0) on Celo, path 44'/52752'/1'/0/0
+    # Same structure as unlock; selector 2e1a7d4d triggers PROVISION_WITHDRAW.
+    data = "058000002c8000ce1080000001000000000000000002f84e82a4ec18830f42408506fc32ee4083432c08946cc083aed9e3ebe302a6336dbc7c921c9f03349e80a42e1a7d4d0000000000000000000000000000000000000000000000000000000000000000c0"
+
+    celo = CeloClient(backend)
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_SIGN,
+            encoded_data
+        ):
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
+
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
+
+
+def test_sign_tx_create_account(test_name, backend, navigator):
+    if backend.device.is_nano:
+        instructions = get_nano_review_instructions(3)
+    else:
+        instructions = get_stax_review_instructions(1)
+
+    # EIP-1559 createAccount() on Celo (chainId 42220), path 44'/60'/0'/0'/0'
+    # Reproduces the 6a80 bug: selector 9dca362f matched as PROVISION_CREATE_ACCOUNT
+    # but finalizeParsing() fell through to the blind-signing guard before the fix.
+    data = "058000002c8000003c80000000800000008000000002ee82a4ec80830f42408537ed77e359830441c4947d21685c17607338b313a7174bab6620bad0aab780849dca362fc0"
+
+    celo = CeloClient(backend)
+    encoded_data = bytes.fromhex(data)
+    with celo.send_in_chunk_async(
+            INS.INS_SIGN,
+            encoded_data
+        ):
+        navigator.navigate_and_compare(TESTS_ROOT_DIR, test_name, instructions)
+
+    response: bytes = get_async_response(backend)
+    assert (response.status == StatusCode.STATUS_OK)
+

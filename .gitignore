@@ -6,3 +6,5 @@ src/glyphs.h
 tests/python/snapshots-tmp/
 __pycache__
 build/
+
+/.vscode/
