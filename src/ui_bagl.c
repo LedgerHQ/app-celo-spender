@@ -62,4 +62,4 @@ void ui_approval_celo_tx_flow(void) {
 void ui_error_blind_signing(void) {
     ux_flow_init(0, ux_blind_sign_error_flow, NULL);
 }
-#endif // HAVE_BAGL
+#endif  // HAVE_BAGL

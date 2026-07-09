@@ -5,7 +5,6 @@
 #include "swap_utils.h"
 #include "ethUtils.h"
 
-
 int allzeroes(const void *buf, size_t n) {
     uint8_t *p = (uint8_t *) buf;
     for (size_t i = 0; i < n; ++i) {
@@ -16,10 +15,7 @@ int allzeroes(const void *buf, size_t n) {
     return 1;
 }
 
-bool uint256_to_decimal(const uint8_t *value,
-                        size_t value_len,
-                        char *out,
-                        size_t out_len) {
+bool uint256_to_decimal(const uint8_t *value, size_t value_len, char *out, size_t out_len) {
     if (value_len > INT256_LENGTH) {
         // value len is bigger than INT256_LENGTH ?!
         return false;
@@ -70,10 +66,7 @@ bool amountToString(const uint8_t *amount,
                     size_t out_buffer_size) {
     char tmp_buffer[100] = {0};
 
-    if (uint256_to_decimal(amount,
-                           amount_size,
-                           tmp_buffer,
-                           sizeof(tmp_buffer)) == false) {
+    if (uint256_to_decimal(amount, amount_size, tmp_buffer, sizeof(tmp_buffer)) == false) {
         return false;
     }
 
@@ -101,7 +94,7 @@ bool amountToString(const uint8_t *amount,
 }
 
 /* Set empty printable_amount on error, printable amount otherwise */
-void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params) {    
+void swap_handle_get_printable_amount(get_printable_amount_parameters_t *params) {
     uint8_t decimals;
     char ticker[MAX_TICKER_LEN] = {0};
 
@@ -135,9 +128,9 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
     }
 
     PRINTF("Amount %s\n", params->printable_amount);
-    return; 
+    return;
 error:
     explicit_bzero(params->printable_amount, sizeof(params->printable_amount));
 }
 
-#endif // HAVE_SWAP
+#endif  // HAVE_SWAP
