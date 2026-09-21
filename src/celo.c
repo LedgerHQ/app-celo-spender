@@ -442,6 +442,18 @@ static void refuseTransaction(bool direct) {
     ui_idle();
 }
 
+// Renders "<amount> <ticker>" into a review buffer. Tickers that carry their own leading
+// space get no separator. Refuses rather than truncating: a clipped amount or ticker would
+// misrepresent what is about to be signed.
+static bool formatAmountWithTicker(char *out,
+                                   size_t outSize,
+                                   const char *amount,
+                                   const char *ticker) {
+    const char *separator = ((ticker[0] != '\0') && (ticker[0] != ' ')) ? " " : "";
+    int written = snprintf(out, outSize, "%s%s%s", amount, separator, ticker);
+    return (written >= 0) && ((size_t) written < outSize);
+}
+
 void finalizeParsing(bool direct) {
     uint256_t gasPrice, startGas, uint256;
     uint32_t i;
@@ -568,23 +580,13 @@ void finalizeParsing(bool direct) {
         return;
     }
 
-    size_t amount_size = sizeof(strings.common.fullAmount);
-    size_t buf_size = MIN(amount_size, strlen((char *) G_io_apdu_buffer));
-    strncpy(strings.common.fullAmount, (char *) G_io_apdu_buffer, buf_size);
-    i = buf_size;
-
-    if (strlen(ticker) > 0 && ticker[0] != ' ') {
-        strings.common.fullAmount[i] = ' ';
-        i++;
-    }
-
-    buf_size = MIN((amount_size - i), strlen(ticker));
-    strncpy(strings.common.fullAmount + i, ticker, buf_size);
-
-    if ((buf_size + i) < amount_size) {
-        strings.common.fullAmount[buf_size + i] = '\0';
-    } else {
-        strings.common.fullAmount[amount_size - 1] = '\0';
+    if (!formatAmountWithTicker(strings.common.fullAmount,
+                                sizeof(strings.common.fullAmount),
+                                (char *) G_io_apdu_buffer,
+                                ticker)) {
+        PRINTF("Amount does not fit the review buffer\n");
+        refuseTransaction(direct);
+        return;
     }
 
     // Add gateway fee
@@ -607,23 +609,13 @@ void finalizeParsing(bool direct) {
         return;
     }
 
-    size_t gw_fee_size = sizeof(strings.common.gatewayFee);
-    buf_size = MIN(gw_fee_size, strlen((char *) G_io_apdu_buffer));
-    strncpy(strings.common.gatewayFee, (char *) G_io_apdu_buffer, buf_size);
-    i = buf_size;
-
-    if (strlen(feeTicker) > 0 && feeTicker[0] != ' ') {
-        strings.common.gatewayFee[i] = ' ';
-        i++;
-    }
-
-    buf_size = MIN((gw_fee_size - i), strlen(feeTicker));
-    strncpy(strings.common.gatewayFee + i, feeTicker, buf_size);
-
-    if ((buf_size + i) < gw_fee_size) {
-        strings.common.gatewayFee[buf_size + i] = '\0';
-    } else {
-        strings.common.gatewayFee[gw_fee_size - 1] = '\0';
+    if (!formatAmountWithTicker(strings.common.gatewayFee,
+                                sizeof(strings.common.gatewayFee),
+                                (char *) G_io_apdu_buffer,
+                                feeTicker)) {
+        PRINTF("Gateway fee does not fit the review buffer\n");
+        refuseTransaction(direct);
+        return;
     }
 
     // Compute maximum fee
@@ -650,23 +642,13 @@ void finalizeParsing(bool direct) {
         return;
     }
 
-    size_t fee_size = sizeof(strings.common.maxFee);
-    buf_size = MIN(fee_size, strlen((char *) G_io_apdu_buffer));
-    strncpy(strings.common.maxFee, (char *) G_io_apdu_buffer, buf_size);
-    i = buf_size;
-
-    if (strlen(feeTicker) > 0 && feeTicker[0] != ' ') {
-        strings.common.maxFee[i] = ' ';
-        i++;
-    }
-
-    buf_size = MIN((fee_size - i), strlen(feeTicker));
-    strncpy(strings.common.maxFee + i, feeTicker, buf_size);
-
-    if ((buf_size + i) < fee_size) {
-        strings.common.maxFee[buf_size + i] = '\0';
-    } else {
-        strings.common.maxFee[fee_size - 1] = '\0';
+    if (!formatAmountWithTicker(strings.common.maxFee,
+                                sizeof(strings.common.maxFee),
+                                (char *) G_io_apdu_buffer,
+                                feeTicker)) {
+        PRINTF("Max fee does not fit the review buffer\n");
+        refuseTransaction(direct);
+        return;
     }
 
     switch (provisionType) {
