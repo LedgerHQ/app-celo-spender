@@ -113,8 +113,7 @@ static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
 }
 
 // Number of bytes an ABI string of `length` bytes occupies, including its zero padding.
-#define ABI_PADDED_LEN(length) \
-    ((((length) + (INT256_LENGTH - 1)) / INT256_LENGTH) * INT256_LENGTH)
+#define ABI_PADDED_LEN(length) ((((length) + (INT256_LENGTH - 1)) / INT256_LENGTH) * INT256_LENGTH)
 
 // Reads a 32-byte ABI word as a uint32_t. The words read this way are a string offset and
 // a string length, both bounded by the APDU transport, so a word with anything set outside
@@ -768,8 +767,8 @@ void ui_display_transaction() {
             bool needsDataWarning =
                 dataPresent && (isContractCreation || !N_storage.contractDetails);
             // dataContext is a union, so the comment only exists for a token transfer.
-            bool hasComment = (provisionType == PROVISION_TOKEN) &&
-                              (dataContext.tokenContext.comment[0] != '\0');
+            bool hasComment =
+                (provisionType == PROVISION_TOKEN) && (dataContext.tokenContext.comment[0] != '\0');
 
             if (tmpContent.txContent.gatewayDestinationLength != 0) {
                 if (needsDataWarning) {

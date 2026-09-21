@@ -140,10 +140,13 @@ def test_try_sign_tx_eip1559_no_token_desc_blind_disabled_go_settings(test_name,
     except ragger.error.ExceptionRAPDU as e:
         assert(e.status == StatusCode.STATUS_ERROR_IN_DATA)
 
+# "cUSD" descriptor for the same cUSD contract, signed for use as a fee currency.
+CUSD_FEE_CURRENCY_TOKEN_DATA = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1"
+
+
 def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
     celo = CeloClient(backend)
-    data = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1"
-    encoded_data = bytes.fromhex(data)
+    encoded_data = bytes.fromhex(CUSD_FEE_CURRENCY_TOKEN_DATA)
     with celo.send_in_chunk_async(
             INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
             encoded_data
@@ -385,6 +388,29 @@ def build_eip1559_tx(data: bytes, to: bytes = USDT_CONTRACT, value: int = 0) -> 
     return (bytes([TX_TYPE_EIP1559]) + rlp.encode(fields)).hex()
 
 
+def navigate_to_approval_and_compare(test_name, backend, navigator, blind_signing=False):
+    """Navigates a review to its approval screen, looking for it by name.
+
+    The number of review screens depends on the comment length and on the device, so these
+    tests must not count clicks to the approval screen.
+    """
+    if backend.device.is_nano:
+        navigate_instruction = NavInsID.RIGHT_CLICK
+        validation_instructions = [NavInsID.BOTH_CLICK]
+        approval_text = "Accept"
+    else:
+        navigate_instruction = NavInsID.SWIPE_CENTER_TO_LEFT
+        validation_instructions = [NavInsID.USE_CASE_REVIEW_CONFIRM,
+                                   NavInsID.USE_CASE_STATUS_DISMISS]
+        approval_text = "Accept risk" if blind_signing else "Sign Transaction?"
+
+    navigator.navigate_until_text_and_compare(navigate_instruction,
+                                              validation_instructions,
+                                              approval_text,
+                                              TESTS_ROOT_DIR,
+                                              test_name)
+
+
 def provision_usdt_and_sign(test_name, backend, navigator, comment_data):
     """Signs a transferWithComment payload, navigating to the approval screen by name.
 
@@ -395,23 +421,9 @@ def provision_usdt_and_sign(test_name, backend, navigator, comment_data):
     response = celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA))
     assert response.status == StatusCode.STATUS_OK
 
-    if backend.device.is_nano:
-        navigate_instruction = NavInsID.RIGHT_CLICK
-        validation_instructions = [NavInsID.BOTH_CLICK]
-        approval_text = "Accept"
-    else:
-        navigate_instruction = NavInsID.SWIPE_CENTER_TO_LEFT
-        validation_instructions = [NavInsID.USE_CASE_REVIEW_CONFIRM,
-                                   NavInsID.USE_CASE_STATUS_DISMISS]
-        approval_text = "Sign Transaction?"
-
     rawTx = build_eip1559_tx(comment_data)
     with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
-        navigator.navigate_until_text_and_compare(navigate_instruction,
-                                                  validation_instructions,
-                                                  approval_text,
-                                                  TESTS_ROOT_DIR,
-                                                  test_name)
+        navigate_to_approval_and_compare(test_name, backend, navigator)
     return get_async_response(backend)
 
 
@@ -504,3 +516,67 @@ def test_transfer_with_comment_length_beyond_field_is_refused(test_name, backend
     # declared length has to be checked even though no comment bytes follow.
     provision_usdt_and_expect_refusal(
         backend, build_transfer_with_comment_data(b"", declared_length=1000))
+
+
+# Init code for a contract creation; its content is irrelevant, only that it is non-empty
+# data signed with an empty destination.
+CONTRACT_CREATION_BYTECODE = bytes.fromhex("60806040523480156100105760006000fd5b50")
+
+# selector + to + value: the part of the calldata the parser needs to recognise a token
+# transfer. See TOKEN_TRANSFER_DATA_LEN in src/globals.h.
+TRANSFER_PREFIX_LEN = 4 + 2 * ABI_WORD_LEN
+
+
+def test_transfer_refused_when_token_metadata_is_evicted(test_name, backend, navigator):
+    """Token metadata taken away after the calldata was classified must refuse.
+
+    Blind signing is enabled on purpose: it removes every other reason to refuse this
+    transaction, so a pass here can only come from the evicted-metadata check. Without it
+    the transaction is signed with no token amount ever having been resolved.
+    """
+    settings_toggle(backend.device, navigator, [SettingID.BLIND_SIGNING])
+
+    celo = CeloClient(backend)
+    assert celo.provide_token_information(
+        bytes.fromhex(USDT_TOKEN_DATA)).status == StatusCode.STATUS_OK
+
+    data = build_transfer_with_comment_data(b"Coffee money")
+    payload = CELO_PACKED_DERIVATION_PATH + bytes.fromhex(build_eip1559_tx(data))
+
+    # Split inside the data field, past the selector and the transfer prefix, so the parser
+    # has already latched PROVISION_TOKEN when the metadata disappears.
+    split = payload.index(TRANSFER_WITH_COMMENT_SELECTOR) + TRANSFER_PREFIX_LEN
+    assert celo.send_sign_chunk(payload[:split], first=True).status == StatusCode.STATUS_OK
+
+    # MAX_TOKEN is 2 and the slots are filled round-robin, so two more descriptors
+    # overwrite the USDT entry this transaction was classified against.
+    assert celo.provide_token_information(
+        bytes.fromhex(CELO_DOLLAR_TOKEN_DATA)).status == StatusCode.STATUS_OK
+    assert celo.provide_token_information(
+        bytes.fromhex(CUSD_FEE_CURRENCY_TOKEN_DATA)).status == StatusCode.STATUS_OK
+
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.send_sign_chunk(payload[split:], first=False)
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_contract_creation_warns_even_with_contract_details_enabled(test_name, backend,
+                                                                    navigator):
+    """Contract creation must show the blind-signing warning whatever the settings say.
+
+    Init code never reaches the per-field review, so the contract-details setting is not
+    evidence that it was seen. With both settings on, the review used to look like an
+    ordinary clear-signed transfer.
+    """
+    settings_toggle(backend.device, navigator,
+                    [SettingID.BLIND_SIGNING, SettingID.DEBUG_DATA])
+
+    celo = CeloClient(backend)
+    rawTx = build_eip1559_tx(CONTRACT_CREATION_BYTECODE, to=b"")
+
+    with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+        navigate_to_approval_and_compare(test_name, backend, navigator, blind_signing=True)
+
+    response = get_async_response(backend)
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK

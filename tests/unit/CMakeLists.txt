@@ -25,3 +25,10 @@ add_executable(test_tx_parser
     )
 target_link_libraries(test_tx_parser PRIVATE cmocka)
 add_test(NAME test_tx_parser COMMAND test_tx_parser)
+
+add_executable(test_eth_utils
+    test_eth_utils.c
+    ${COMMON_SRC}/ethUtils.c
+    )
+target_link_libraries(test_eth_utils PRIVATE cmocka)
+add_test(NAME test_eth_utils COMMAND test_eth_utils)

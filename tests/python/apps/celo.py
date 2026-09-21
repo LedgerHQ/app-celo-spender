@@ -97,6 +97,16 @@ class CeloClient:
         with self.send_in_chunk_async(INS.INS_SIGN, payload):
             yield
 
+    def send_sign_chunk(self, payload: bytes, first: bool) -> RAPDU:
+        """Sends a single INS_SIGN APDU.
+
+        send_in_chunk_async yields once per chunk, so it cannot drive a multi-APDU
+        transaction from a single `with` block. This sends one chunk at a time instead,
+        which lets a test do something else between two chunks of the same transaction.
+        """
+        p1 = Param.P1_InitTransactionData if first else Param.P1_ContTransactionData
+        return self._client.exchange(CLA, INS.INS_SIGN, p1, Param.P2_UNUSED, payload)
+
     @contextmanager
     def sign_transaction_with_rawTx_async(self, derivation_path : bytes, rawTx: str) -> Generator[None, None, None]:
         encoded = bytes.fromhex(rawTx)
