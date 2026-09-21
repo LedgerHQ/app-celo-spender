@@ -388,11 +388,13 @@ def build_eip1559_tx(data: bytes, to: bytes = USDT_CONTRACT, value: int = 0) -> 
     return (bytes([TX_TYPE_EIP1559]) + rlp.encode(fields)).hex()
 
 
-def navigate_to_approval_and_compare(test_name, backend, navigator, blind_signing=False):
-    """Navigates a review to its approval screen, looking for it by name.
+def navigate_to_approval_and_compare(test_name, backend, navigator):
+    """Navigates a clear-signed review to its approval screen, looking for it by name.
 
     The number of review screens depends on the comment length and on the device, so these
-    tests must not count clicks to the approval screen.
+    tests must not count clicks to the approval screen. This only drives the ordinary
+    review: the blind-signing flow opens on a choice page that no repeated navigation
+    instruction can get past.
     """
     if backend.device.is_nano:
         navigate_instruction = NavInsID.RIGHT_CLICK
@@ -402,7 +404,7 @@ def navigate_to_approval_and_compare(test_name, backend, navigator, blind_signin
         navigate_instruction = NavInsID.SWIPE_CENTER_TO_LEFT
         validation_instructions = [NavInsID.USE_CASE_REVIEW_CONFIRM,
                                    NavInsID.USE_CASE_STATUS_DISMISS]
-        approval_text = "Accept risk" if blind_signing else "Sign Transaction?"
+        approval_text = "Sign Transaction?"
 
     navigator.navigate_until_text_and_compare(navigate_instruction,
                                               validation_instructions,
@@ -571,12 +573,18 @@ def test_contract_creation_warns_even_with_contract_details_enabled(test_name, b
     settings_toggle(backend.device, navigator,
                     [SettingID.BLIND_SIGNING, SettingID.DEBUG_DATA])
 
-    celo = CeloClient(backend)
+    # Same flow as test_sign_transaction_eip1559_no_token_desc_blind_enabled: on the
+    # touchscreens the blind-signing warning is a choice page whose second button
+    # ("Continue anyway") is USE_CASE_CHOICE_REJECT, so it takes these instructions rather
+    # than a repeated swipe.
+    if backend.device.is_nano:
+        instructions = get_nano_enable_blind_sign_and_review_instructions(4)
+    else:
+        instructions = get_enable_blind_sign_and_return_review_instructions(2)
+
     rawTx = build_eip1559_tx(CONTRACT_CREATION_BYTECODE, to=b"")
+    response = sign_transaction_with_rawTx_celo(test_name, backend, navigator,
+                                                instructions, rawTx)
 
-    with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
-        navigate_to_approval_and_compare(test_name, backend, navigator, blind_signing=True)
-
-    response = get_async_response(backend)
     assert response.data[0] in (0, 1)
     assert response.status == StatusCode.STATUS_OK
