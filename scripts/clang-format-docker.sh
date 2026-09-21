@@ -5,21 +5,28 @@
 #   ./scripts/clang-format-docker.sh          # format in place
 #   ./scripts/clang-format-docker.sh --check  # fail if any file would change
 #
-# The clang-format version must match .github/workflows/coding_style_checks.yml: the style
-# rules drift between releases, and the image ships a much newer clang-format than CI pins,
-# which reports violations on sources CI considers clean. The pinned version is installed from
-# PyPI into the image venv, so this needs network on the first run of each container.
+# This runs the same clang-format CI runs, which is the one shipped in the builder image.
+#
+# The `version: 12` input in .github/workflows/coding_style_checks.yml does NOT select a
+# clang-format release: reusable_lint.yml@v1 prints "Deprecated 'version' input" and ignores
+# it, then invokes plain `clang-format` from the job container. Because that container is the
+# mutable `:latest` tag, the effective version moves whenever the image is rebuilt, and the
+# style rules drift between releases. Pinning a version here would report "clean" on sources
+# CI rejects, so don't: to reproduce CI, `docker pull` the image first so the local copy is
+# the one CI uses.
 #
 # Overrides:
 #   FORMAT_DIRS="src src_common"   directories to format (default: src, what CI gates)
-#   CLANG_FORMAT_VERSION=12        clang-format release to pin
+#   CLANG_FORMAT_VERSION=12.0.1    install this clang-format from PyPI instead of the
+#                                  image's own; needs network, and does NOT match CI
 #   CLANG_FORMAT_IMAGE=...         builder image to run in
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="${CLANG_FORMAT_IMAGE:-ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest}"
-VERSION="${CLANG_FORMAT_VERSION:-12.0.1}"
+# The image CI's lint job uses, so that `--check` here means what it means in CI.
+IMAGE="${CLANG_FORMAT_IMAGE:-ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest}"
+VERSION="${CLANG_FORMAT_VERSION:-}"
 
 # src_common is not linted by CI and is not clang-format clean; pass it explicitly via
 # FORMAT_DIRS when you intend to reformat it.
@@ -42,8 +49,10 @@ docker run --rm \
     bash -c '
 set -euo pipefail
 
-source /opt/venv/bin/activate
-pip install --quiet "clang-format==${CLANG_FORMAT_VERSION}"
+if [[ -n "${CLANG_FORMAT_VERSION}" ]]; then
+    source /opt/venv/bin/activate
+    pip install --quiet "clang-format==${CLANG_FORMAT_VERSION}"
+fi
 clang-format --version
 
 run_fmt() {

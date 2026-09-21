@@ -9,3 +9,4 @@ build/
 /.vscode/
 /scripts_local/
 /tmp/
+/build_dry_run_output.txt

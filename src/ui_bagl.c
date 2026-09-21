@@ -1,15 +1,13 @@
 #ifdef HAVE_BAGL
+#include "globals.h"
 #include "ui_common.h"
 #include "ui_flow.h"
-#include "globals.h"
 
 void ui_display_public_flow(void) {
     ux_flow_init(0, ux_display_public_flow, NULL);
 }
 
-void ui_display_sign_flow(void) {
-    ux_flow_init(0, ux_sign_flow, NULL);
-}
+void ui_display_sign_flow(void) { ux_flow_init(0, ux_sign_flow, NULL); }
 
 void ui_confirm_selector_flow(void) {
     ux_flow_init(0, ux_confirm_selector_flow, NULL);

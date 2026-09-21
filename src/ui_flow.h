@@ -3,21 +3,21 @@
 #include "ux.h"
 #include "ui_common.h"
 
-extern const ux_flow_step_t* const ux_confirm_selector_flow[];
-extern const ux_flow_step_t* const ux_confirm_parameter_flow[];
-extern const ux_flow_step_t* const ux_display_public_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_data_warning_gateway_tx_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_gateway_tx_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_gateway_tx_comment_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_data_warning_tx_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_tx_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_tx_comment_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_lock_unlock_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_withdraw_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_vote_revoke_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_activate_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_relock_flow[];
-extern const ux_flow_step_t* const ux_approval_celo_create_account_flow[];
-extern const ux_flow_step_t* const ux_sign_flow[];
-extern const ux_flow_step_t* const ux_idle_flow[];
-extern const ux_flow_step_t* const ux_blind_sign_error_flow[];
+extern const ux_flow_step_t *const ux_confirm_selector_flow[];
+extern const ux_flow_step_t *const ux_confirm_parameter_flow[];
+extern const ux_flow_step_t *const ux_display_public_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_data_warning_gateway_tx_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_gateway_tx_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_gateway_tx_comment_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_data_warning_tx_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_tx_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_tx_comment_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_lock_unlock_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_withdraw_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_vote_revoke_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_activate_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_relock_flow[];
+extern const ux_flow_step_t *const ux_approval_celo_create_account_flow[];
+extern const ux_flow_step_t *const ux_sign_flow[];
+extern const ux_flow_step_t *const ux_idle_flow[];
+extern const ux_flow_step_t *const ux_blind_sign_error_flow[];
