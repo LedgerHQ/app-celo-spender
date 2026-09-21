@@ -6,6 +6,9 @@ from .settings import settings_toggle, SettingID
 
 import pytest
 import ragger
+import rlp
+
+from ragger.navigator import NavInsID
 
 TESTS_ROOT_DIR = Path(__file__).parent
 
@@ -324,3 +327,180 @@ def test_provide_erc20_rejects_nonzero_p2(test_name, backend, navigator):
         celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA), p2=0x01)
     assert exc.value.status == StatusCode.STATUS_WRONG_P1_OR_P2
 
+
+
+# transferWithComment(address to, uint256 value, string comment) — the Celo token method
+# that carries a payment memo alongside the transfer.
+TRANSFER_WITH_COMMENT_SELECTOR = bytes.fromhex("e1d6aceb")
+
+CELO_CHAIN_ID = 42220
+# Contract address inside USDT_TOKEN_DATA, i.e. the token the descriptor above provisions.
+USDT_CONTRACT = bytes.fromhex("48065fbbe25f71c9282ddf5e1cd6d6a887483d5e")
+TRANSFER_RECIPIENT = bytes.fromhex("abd5d4575341b5878a1e7cb75dc0d4da91dfafa3")
+
+ABI_WORD_LEN = 32
+# The comment is the third of three arguments, so the ABI fixes where its bytes start:
+# to (32) + value (32) + the offset word itself (32).
+ABI_STRING_OFFSET = 96
+# Longest comment the app displays in full; see TOKEN_COMMENT_MAX_LEN in src/globals.h.
+COMMENT_MAX_LEN = 64
+
+
+def encode_abi_word(value: int) -> bytes:
+    return value.to_bytes(ABI_WORD_LEN, byteorder="big")
+
+
+def build_transfer_with_comment_data(comment: bytes,
+                                     recipient: bytes = TRANSFER_RECIPIENT,
+                                     amount: int = 10000,
+                                     string_offset: int = ABI_STRING_OFFSET,
+                                     declared_length: int = None,
+                                     padding_len: int = None) -> bytes:
+    """Builds transferWithComment calldata.
+
+    string_offset, declared_length and padding_len are overridable so that tests can
+    produce the malformed encodings the signer is required to refuse.
+    """
+    if declared_length is None:
+        declared_length = len(comment)
+    if padding_len is None:
+        padding_len = (-len(comment)) % ABI_WORD_LEN
+    return (TRANSFER_WITH_COMMENT_SELECTOR
+            + encode_abi_word(int.from_bytes(recipient, byteorder="big"))
+            + encode_abi_word(amount)
+            + encode_abi_word(string_offset)
+            + encode_abi_word(declared_length)
+            + comment
+            + bytes(padding_len))
+
+
+def build_eip1559_tx(data: bytes, to: bytes = USDT_CONTRACT, value: int = 0) -> str:
+    nonce = 0x47
+    max_priority_fee_per_gas = 0x0f4240
+    max_fee_per_gas = 0x060db88400
+    gas_limit = 0x01cf08
+    access_list = []
+    fields = [CELO_CHAIN_ID, nonce, max_priority_fee_per_gas, max_fee_per_gas,
+              gas_limit, to, value, data, access_list]
+    return (bytes([TX_TYPE_EIP1559]) + rlp.encode(fields)).hex()
+
+
+def provision_usdt_and_sign(test_name, backend, navigator, comment_data):
+    """Signs a transferWithComment payload, navigating to the approval screen by name.
+
+    A comment changes how many review screens there are, and by how much per device, so
+    these tests look for the approval screen instead of counting clicks to it.
+    """
+    celo = CeloClient(backend)
+    response = celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA))
+    assert response.status == StatusCode.STATUS_OK
+
+    if backend.device.is_nano:
+        navigate_instruction = NavInsID.RIGHT_CLICK
+        validation_instructions = [NavInsID.BOTH_CLICK]
+        approval_text = "Accept"
+    else:
+        navigate_instruction = NavInsID.SWIPE_CENTER_TO_LEFT
+        validation_instructions = [NavInsID.USE_CASE_REVIEW_CONFIRM,
+                                   NavInsID.USE_CASE_STATUS_DISMISS]
+        approval_text = "Sign Transaction?"
+
+    rawTx = build_eip1559_tx(comment_data)
+    with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+        navigator.navigate_until_text_and_compare(navigate_instruction,
+                                                  validation_instructions,
+                                                  approval_text,
+                                                  TESTS_ROOT_DIR,
+                                                  test_name)
+    return get_async_response(backend)
+
+
+def provision_usdt_and_expect_refusal(backend, comment_data):
+    celo = CeloClient(backend)
+    response = celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA))
+    assert response.status == StatusCode.STATUS_OK
+
+    rawTx = build_eip1559_tx(comment_data)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+            pass
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_sign_transfer_with_comment_displays_comment(test_name, backend, navigator):
+    # The comment is signed, so the review must show it.
+    data = build_transfer_with_comment_data(b"Coffee money")
+    response = provision_usdt_and_sign(test_name, backend, navigator, data)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_sign_transfer_with_empty_comment(test_name, backend, navigator):
+    # An empty comment is well-formed and has nothing to show, so the review carries no
+    # Comment field at all.
+    data = build_transfer_with_comment_data(b"")
+    response = provision_usdt_and_sign(test_name, backend, navigator, data)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_sign_transfer_with_max_length_comment(test_name, backend, navigator):
+    # The longest comment the app accepts; it spans several pages on the small screens.
+    data = build_transfer_with_comment_data(b"C" * COMMENT_MAX_LEN)
+    response = provision_usdt_and_sign(test_name, backend, navigator, data)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_transfer_with_oversized_comment_is_refused(test_name, backend, navigator):
+    # Regression test for the unbounded copy into tokenContext.data: this payload used to
+    # write 200 bytes of attacker-controlled data into a 68-byte buffer.
+    provision_usdt_and_expect_refusal(backend, build_transfer_with_comment_data(b"A" * 200))
+
+
+def test_transfer_with_comment_one_byte_too_long_is_refused(test_name, backend, navigator):
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"B" * (COMMENT_MAX_LEN + 1)))
+
+
+def test_transfer_with_non_printable_comment_is_refused(test_name, backend, navigator):
+    # A comment that cannot be rendered as its own bytes cannot be clear-signed.
+    provision_usdt_and_expect_refusal(backend, build_transfer_with_comment_data(b"Pay\x1b[2Jme"))
+
+
+def test_transfer_with_embedded_nul_comment_is_refused(test_name, backend, navigator):
+    # A NUL would end the displayed string while the bytes after it stay in the preimage.
+    provision_usdt_and_expect_refusal(backend, build_transfer_with_comment_data(b"Pay\x00hidden"))
+
+
+def test_transfer_with_non_canonical_string_offset_is_refused(test_name, backend, navigator):
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"Coffee", string_offset=128))
+
+
+def test_transfer_with_understated_comment_length_is_refused(test_name, backend, navigator):
+    # Declared length shorter than the bytes actually present: the tail would be signed
+    # without being shown.
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"C" * 40, declared_length=8))
+
+
+def test_transfer_with_overstated_comment_length_is_refused(test_name, backend, navigator):
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"C" * 8, declared_length=40))
+
+
+def test_transfer_with_unpadded_comment_is_refused(test_name, backend, navigator):
+    # The ABI pads the string to a 32-byte multiple; a short field means undeclared bytes.
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"C" * 8, padding_len=0))
+
+
+def test_transfer_with_comment_length_beyond_field_is_refused(test_name, backend, navigator):
+    # Calldata that stops at the end of the ABI header while declaring a comment: the
+    # declared length has to be checked even though no comment bytes follow.
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"", declared_length=1000))

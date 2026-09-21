@@ -36,6 +36,14 @@ static void fill_data_tx(void) {
     tagValueList.pairs = tagValuePair;
 }
 
+// The comment is part of the signed calldata, so it is appended to the review rather than
+// shown on a screen of its own.
+static void fill_comment(void) {
+    tagValuePair[tagValueList.nbPairs].item = "Comment";
+    tagValuePair[tagValueList.nbPairs].value = (char*) dataContext.tokenContext.comment;
+    tagValueList.nbPairs++;
+}
+
 static void fill_gateway_tx(void) {
     tagValuePair[0].item = "Amount";
     tagValuePair[0].value = (char*) strings.common.fullAmount;
@@ -123,6 +131,18 @@ void ui_approval_celo_tx_flow(void) {
                        confirmationCallback);
 }
 
+void ui_approval_celo_tx_comment_flow(void) {
+    fill_data_tx();
+    fill_comment();
+    nbgl_useCaseReview(TYPE_TRANSACTION,
+                       &tagValueList,
+                       &ICON_APP_CELO,
+                       "Review transaction",
+                       NULL,
+                       "Sign Transaction?",
+                       confirmationCallback);
+}
+
 void ui_approval_celo_data_warning_tx_flow(void) {
     fill_data_tx();
     nbgl_useCaseReviewBlindSigning(TYPE_TRANSACTION,
@@ -137,6 +157,18 @@ void ui_approval_celo_data_warning_tx_flow(void) {
 
 void ui_approval_celo_gateway_tx_flow(void) {
     fill_gateway_tx();
+    nbgl_useCaseReview(TYPE_TRANSACTION,
+                       &tagValueList,
+                       &ICON_APP_CELO,
+                       "Review transaction",
+                       NULL,
+                       "Sign Transaction?",
+                       confirmationCallback);
+}
+
+void ui_approval_celo_gateway_tx_comment_flow(void) {
+    fill_gateway_tx();
+    fill_comment();
     nbgl_useCaseReview(TYPE_TRANSACTION,
                        &tagValueList,
                        &ICON_APP_CELO,

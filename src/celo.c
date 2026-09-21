@@ -112,6 +112,115 @@ static uint32_t splitBinaryParameterPart(char *result, uint8_t *parameter) {
     }
 }
 
+// Number of bytes an ABI string of `length` bytes occupies, including its zero padding.
+#define ABI_PADDED_LEN(length) \
+    ((((length) + (INT256_LENGTH - 1)) / INT256_LENGTH) * INT256_LENGTH)
+
+// Reads a 32-byte ABI word as a uint32_t. The words read this way are a string offset and
+// a string length, both bounded by the APDU transport, so a word with anything set outside
+// its low four bytes is malformed rather than merely large.
+static bool readAbiWord(const uint8_t *word, uint32_t *value) {
+    for (size_t i = 0; i < INT256_LENGTH - 4; i++) {
+        if (word[i] != 0) {
+            return false;
+        }
+    }
+    *value = U4BE(word, INT256_LENGTH - 4);
+    return true;
+}
+
+// Validates the comment's ABI header and yields its length. Every deviation from the
+// canonical encoding is refused rather than accommodated: a payload whose layout cannot be
+// determined exactly is a payload that cannot be shown to the user.
+static bool getTokenCommentLength(const txContext_t *context, uint32_t *commentLength) {
+    uint32_t offset;
+    uint32_t length;
+
+    if (!readAbiWord(dataContext.tokenContext.commentHeader, &offset) ||
+        (offset != TOKEN_COMMENT_ABI_OFFSET)) {
+        PRINTF("Non-canonical comment offset\n");
+        return false;
+    }
+    if (!readAbiWord(dataContext.tokenContext.commentHeader + INT256_LENGTH, &length) ||
+        (length > TOKEN_COMMENT_MAX_LEN)) {
+        PRINTF("Comment too long to display\n");
+        return false;
+    }
+    // The comment's padded length fixes the length of the whole data field; a mismatch
+    // means the field carries bytes the ABI layout does not account for.
+    if (context->currentFieldLength != TOKEN_COMMENT_DATA_POS + ABI_PADDED_LEN(length)) {
+        PRINTF("Comment length does not match data field length\n");
+        return false;
+    }
+    *commentLength = length;
+    return true;
+}
+
+// A comment is only clear-signed if the user reads exactly what was signed. Control
+// characters and non-ASCII bytes can render as something other than themselves, and an
+// embedded NUL would hide every byte after it, so they are refused rather than displayed.
+static bool isDisplayableComment(const uint8_t *bytes, uint32_t length) {
+    for (uint32_t i = 0; i < length; i++) {
+        if ((bytes[i] < 0x20) || (bytes[i] > 0x7e)) {
+            PRINTF("Comment is not printable ASCII\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+// Splits an incoming chunk of token transfer calldata across the fixed regions of its ABI
+// layout: the transfer prefix, the comment header, the comment bytes, then the trailing
+// padding. Each region is copied only into its own buffer, and regions this signer does not
+// parse are hashed without being stored, so calldata longer than the layout cannot write
+// past any buffer.
+static bool copyTokenTransferData(txContext_t *context, uint32_t copySize) {
+    while (copySize != 0) {
+        uint32_t pos = context->currentFieldPos;
+        uint32_t commentLength;
+        uint32_t chunk;
+        uint8_t *dest;
+        bool isComment = false;
+
+        if (pos < TOKEN_TRANSFER_DATA_LEN) {
+            chunk = MIN(copySize, TOKEN_TRANSFER_DATA_LEN - pos);
+            dest = dataContext.tokenContext.data + pos;
+        } else if (pos < TOKEN_COMMENT_DATA_POS) {
+            chunk = MIN(copySize, TOKEN_COMMENT_DATA_POS - pos);
+            dest = dataContext.tokenContext.commentHeader + (pos - TOKEN_TRANSFER_DATA_LEN);
+        } else if (!getTokenCommentLength(context, &commentLength)) {
+            return false;
+        } else if (pos < TOKEN_COMMENT_DATA_POS + commentLength) {
+            chunk = MIN(copySize, TOKEN_COMMENT_DATA_POS + commentLength - pos);
+            dest = (uint8_t *) dataContext.tokenContext.comment + (pos - TOKEN_COMMENT_DATA_POS);
+            isComment = true;
+        } else {
+            // Zero padding after the comment: hashed as part of the preimage, but there is
+            // nothing in it to show.
+            chunk = copySize;
+            dest = NULL;
+        }
+
+        if (copyTxData(context, dest, chunk) != 0) {
+            return false;
+        }
+        if (isComment && !isDisplayableComment(dest, chunk)) {
+            return false;
+        }
+        copySize -= chunk;
+    }
+    // A payload that stops at the end of the header declares a comment the field has no
+    // room for, so the header is validated here too rather than only when comment bytes
+    // are reached.
+    if (context->currentFieldPos >= TOKEN_COMMENT_DATA_POS) {
+        uint32_t commentLength;
+        if (!getTokenCommentLength(context, &commentLength)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 customStatus_e customProcessor(txContext_t *context) {
     if (((context->txType == CELO_LEGACY && context->currentField == CELO_LEGACY_RLP_DATA) ||
          (context->txType == CIP64 && context->currentField == CIP64_RLP_DATA) ||
@@ -129,13 +238,19 @@ customStatus_e customProcessor(txContext_t *context) {
                 PRINTF("Missing function selector\n");
                 return CUSTOM_FAULT;
             }
-            // Initial check to see if the token content can be processed
-            if ((((context->currentFieldLength == sizeof(dataContext.tokenContext.data)) &&
+            // Initial check to see if the token content can be processed. Both methods are
+            // accepted only at the exact length their ABI layout implies; transferWithComment
+            // additionally carries a comment, whose length is checked against the field
+            // length once its header has been read.
+            if ((((context->currentFieldLength == TOKEN_TRANSFER_DATA_LEN) &&
                   (memcmp(context->workBuffer, TOKEN_TRANSFER_ID, 4) == 0)) ||
-                 ((context->currentFieldLength >= sizeof(dataContext.tokenContext.data)) &&
+                 ((context->currentFieldLength >= TOKEN_COMMENT_DATA_POS) &&
                   (memcmp(context->workBuffer, TOKEN_TRANSFER_WITH_COMMENT_ID, 4) == 0))) &&
                 (getKnownToken(tmpContent.txContent.destination) != NULL)) {
                 provisionType = PROVISION_TOKEN;
+                // The comment is NUL-terminated by this wipe, not by the parser: a
+                // transaction with no comment must not inherit the previous one's.
+                explicit_bzero(&dataContext.tokenContext, sizeof(dataContext.tokenContext));
             }
             // Initial check to see if the lock content can be processed
             if ((context->currentFieldLength == sizeof(dataContext.lockContext.data)) &&
@@ -188,9 +303,9 @@ customStatus_e customProcessor(txContext_t *context) {
                          : context->currentFieldLength - context->currentFieldPos);
                 switch (provisionType) {
                     case PROVISION_TOKEN:
-                        copyTxData(context,
-                                   dataContext.tokenContext.data + context->currentFieldPos,
-                                   copySize);
+                        if (!copyTokenTransferData(context, copySize)) {
+                            return CUSTOM_FAULT;
+                        }
                         break;
                     case PROVISION_LOCK:
                         copyTxData(context,
@@ -316,6 +431,18 @@ customStatus_e customProcessor(txContext_t *context) {
     return CUSTOM_NOT_HANDLED;
 }
 
+// Refuses the transaction being parsed. `direct` selects how the caller was reached: from
+// the APDU handler, which expects an exception, or from a deferred UI callback, which
+// expects the status on the wire. Callers must return immediately afterwards.
+static void refuseTransaction(bool direct) {
+    reset_app_context();
+    if (direct) {
+        THROW(SW_ERROR_IN_DATA);
+    }
+    io_seproxyhal_send_status(SW_ERROR_IN_DATA);
+    ui_idle();
+}
+
 void finalizeParsing(bool direct) {
     uint256_t gasPrice, startGas, uint256;
     uint32_t i;
@@ -328,19 +455,12 @@ void finalizeParsing(bool direct) {
     if (tmpContent.txContent.feeCurrencyLength != 0) {
         tokenDefinition_t *feeCurrencyToken = getKnownToken(tmpContent.txContent.feeCurrency);
         if (feeCurrencyToken == NULL) {
-            reset_app_context();
-            PRINTF("Invalid fee currency");
-            if (direct) {
-                THROW(SW_ERROR_IN_DATA);
-            } else {
-                io_seproxyhal_send_status(SW_ERROR_IN_DATA);
-                ui_idle();
-                return;
-            }
-        } else {
-            feeTicker = feeCurrencyToken->ticker;
-            feeDecimals = feeCurrencyToken->decimals;
+            PRINTF("Invalid fee currency\n");
+            refuseTransaction(direct);
+            return;
         }
+        feeTicker = feeCurrencyToken->ticker;
+        feeDecimals = feeCurrencyToken->decimals;
     }
 
     // Store the hash
@@ -353,17 +473,24 @@ void finalizeParsing(bool direct) {
     // If there is a token to process, check if it is well known
     if (provisionType == PROVISION_TOKEN) {
         tokenDefinition_t *currentToken = getKnownToken(tmpContent.txContent.destination);
-        if (currentToken != NULL) {
-            dataPresent = false;
-            decimals = currentToken->decimals;
-            ticker = currentToken->ticker;
-            tmpContent.txContent.destinationLength = EVM_ADDRESS_LEN;
-            memcpy(tmpContent.txContent.destination,
-                   dataContext.tokenContext.data + 4 + 12,
-                   EVM_ADDRESS_LEN);
-            memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
-            tmpContent.txContent.value.length = 32;
+        if (currentToken == NULL) {
+            // The metadata that made this calldata clear-signable was evicted after it was
+            // classified, so the amount and recipient below cannot be labelled. Refusing is
+            // the only safe outcome: the calldata has already bypassed the blind-signing
+            // gate by virtue of being a recognised token transfer.
+            PRINTF("Token metadata no longer known\n");
+            refuseTransaction(direct);
+            return;
         }
+        dataPresent = false;
+        decimals = currentToken->decimals;
+        ticker = currentToken->ticker;
+        tmpContent.txContent.destinationLength = EVM_ADDRESS_LEN;
+        memcpy(tmpContent.txContent.destination,
+               dataContext.tokenContext.data + 4 + 12,
+               EVM_ADDRESS_LEN);
+        memcpy(tmpContent.txContent.value.value, dataContext.tokenContext.data + 4 + 32, 32);
+        tmpContent.txContent.value.length = 32;
     } else if (provisionType == PROVISION_VOTE) {
         tmpContent.txContent.destinationLength = 20;
         memcpy(tmpContent.txContent.destination, dataContext.voteContext.data + 4 + 12, 20);
@@ -432,7 +559,15 @@ void finalizeParsing(bool direct) {
         i++;
     }
 
-    adjustDecimals((char *) (G_io_apdu_buffer + 100), i, (char *) G_io_apdu_buffer, 100, decimals);
+    if (!adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                        i,
+                        (char *) G_io_apdu_buffer,
+                        100,
+                        decimals)) {
+        PRINTF("Cannot format amount\n");
+        refuseTransaction(direct);
+        return;
+    }
 
     size_t amount_size = sizeof(strings.common.fullAmount);
     size_t buf_size = MIN(amount_size, strlen((char *) G_io_apdu_buffer));
@@ -463,11 +598,15 @@ void finalizeParsing(bool direct) {
         i++;
     }
 
-    adjustDecimals((char *) (G_io_apdu_buffer + 100),
-                   i,
-                   (char *) G_io_apdu_buffer,
-                   100,
-                   feeDecimals);
+    if (!adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                        i,
+                        (char *) G_io_apdu_buffer,
+                        100,
+                        feeDecimals)) {
+        PRINTF("Cannot format gateway fee\n");
+        refuseTransaction(direct);
+        return;
+    }
 
     size_t gw_fee_size = sizeof(strings.common.gatewayFee);
     buf_size = MIN(gw_fee_size, strlen((char *) G_io_apdu_buffer));
@@ -502,11 +641,15 @@ void finalizeParsing(bool direct) {
         i++;
     }
 
-    adjustDecimals((char *) (G_io_apdu_buffer + 100),
-                   i,
-                   (char *) G_io_apdu_buffer,
-                   100,
-                   feeDecimals);
+    if (!adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                        i,
+                        (char *) G_io_apdu_buffer,
+                        100,
+                        feeDecimals)) {
+        PRINTF("Cannot format max fee\n");
+        refuseTransaction(direct);
+        return;
+    }
 
     size_t fee_size = sizeof(strings.common.maxFee);
     buf_size = MIN(fee_size, strlen((char *) G_io_apdu_buffer));
@@ -618,20 +761,34 @@ void ui_display_transaction() {
         case PROVISION_CREATE_ACCOUNT:
             ui_approval_celo_create_account_flow();
             break;
-        default:
+        default: {
+            // Contract creation never reaches the per-field review, so the contractDetails
+            // setting is not evidence that its init code was seen: warn regardless of it.
+            bool isContractCreation = (tmpContent.txContent.destinationLength == 0);
+            bool needsDataWarning =
+                dataPresent && (isContractCreation || !N_storage.contractDetails);
+            // dataContext is a union, so the comment only exists for a token transfer.
+            bool hasComment = (provisionType == PROVISION_TOKEN) &&
+                              (dataContext.tokenContext.comment[0] != '\0');
+
             if (tmpContent.txContent.gatewayDestinationLength != 0) {
-                if (dataPresent && !N_storage.contractDetails) {
+                if (needsDataWarning) {
                     ui_approval_celo_data_warning_gateway_tx_flow();
+                } else if (hasComment) {
+                    ui_approval_celo_gateway_tx_comment_flow();
                 } else {
                     ui_approval_celo_gateway_tx_flow();
                 }
             } else {
-                if (dataPresent && !N_storage.contractDetails) {
+                if (needsDataWarning) {
                     ui_approval_celo_data_warning_tx_flow();
+                } else if (hasComment) {
+                    ui_approval_celo_tx_comment_flow();
                 } else {
                     ui_approval_celo_tx_flow();
                 }
             }
+        }
     }
 #endif  // NO_CONSENT
 }

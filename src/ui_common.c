@@ -6,7 +6,7 @@
 #include "utils.h"
 
 #ifdef HAVE_NBGL
-nbgl_layoutTagValue_t tagValuePair[5];
+nbgl_layoutTagValue_t tagValuePair[6];
 nbgl_layoutTagValueList_t tagValueList;
 nbgl_pageInfoLongPress_t infoLongPress;
 #endif  // HAVE_NBGL

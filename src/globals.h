@@ -152,8 +152,32 @@ typedef enum {
 
 extern volatile provision_type_t provisionType;
 
+// ABI layout of the two token transfer methods this app clear-signs:
+//   transfer(address to, uint256 value)
+//   transferWithComment(address to, uint256 value, string comment)
+//
+//   [0]   selector                                4 bytes
+//   [4]   to, left-padded                        32
+//   [36]  value                                  32   <- end of transfer(), TOKEN_TRANSFER_DATA_LEN
+//   [68]  offset of the comment string           32
+//   [100] comment length in bytes                32   <- TOKEN_COMMENT_DATA_POS
+//   [132] comment bytes, zero-padded to a multiple of 32
+#define TOKEN_TRANSFER_DATA_LEN  (4 + INT256_LENGTH + INT256_LENGTH)
+#define TOKEN_COMMENT_HEADER_LEN (INT256_LENGTH + INT256_LENGTH)
+#define TOKEN_COMMENT_DATA_POS   (TOKEN_TRANSFER_DATA_LEN + TOKEN_COMMENT_HEADER_LEN)
+
+// The comment is the third of three arguments, so the ABI fixes where its bytes start.
+#define TOKEN_COMMENT_ABI_OFFSET 96
+
+// Longest comment that can be shown in full on every supported device. A longer one is
+// refused rather than truncated: a partially displayed comment is not clear-signed.
+#define TOKEN_COMMENT_MAX_LEN 64
+
 typedef struct tokenContext_t {
-    uint8_t data[4 + 32 + 32];
+    uint8_t data[TOKEN_TRANSFER_DATA_LEN];
+    uint8_t commentHeader[TOKEN_COMMENT_HEADER_LEN];
+    // NUL-terminated and printable ASCII only, so it can be handed straight to the UI.
+    char comment[TOKEN_COMMENT_MAX_LEN + 1];
 } tokenContext_t;
 
 typedef struct lockContext_t {

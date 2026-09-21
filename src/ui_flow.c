@@ -285,6 +285,13 @@ UX_STEP_NOCB(ux_approval_tx_4_step,
                  .text = strings.common.maxFee,
              });
 
+UX_STEP_NOCB(ux_celo_approval_tx_comment_step,
+             bnnn_paging,
+             {
+                 .title = "Comment",
+                 .text = dataContext.tokenContext.comment,
+             });
+
 UX_STEP_NOCB(ux_celo_approval_tx_gateway_fee_step,
              bnnn_paging,
              {
@@ -345,6 +352,15 @@ UX_FLOW(ux_approval_celo_tx_flow,
         &ux_approval_tx_5_step,
         &ux_approval_tx_6_step);
 
+UX_FLOW(ux_approval_celo_tx_comment_flow,
+        &ux_approval_tx_1_step,
+        &ux_approval_tx_2_step,
+        &ux_approval_tx_3_step,
+        &ux_approval_tx_4_step,
+        &ux_celo_approval_tx_comment_step,
+        &ux_approval_tx_5_step,
+        &ux_approval_tx_6_step);
+
 UX_FLOW(ux_approval_celo_gateway_tx_flow,
         &ux_approval_tx_1_step,
         &ux_approval_tx_2_step,
@@ -352,6 +368,17 @@ UX_FLOW(ux_approval_celo_gateway_tx_flow,
         &ux_approval_tx_4_step,
         &ux_celo_approval_tx_gateway_fee_step,
         &ux_celo_approval_tx_gateway_address_step,
+        &ux_approval_tx_5_step,
+        &ux_approval_tx_6_step);
+
+UX_FLOW(ux_approval_celo_gateway_tx_comment_flow,
+        &ux_approval_tx_1_step,
+        &ux_approval_tx_2_step,
+        &ux_approval_tx_3_step,
+        &ux_approval_tx_4_step,
+        &ux_celo_approval_tx_gateway_fee_step,
+        &ux_celo_approval_tx_gateway_address_step,
+        &ux_celo_approval_tx_comment_step,
         &ux_approval_tx_5_step,
         &ux_approval_tx_6_step);
 
