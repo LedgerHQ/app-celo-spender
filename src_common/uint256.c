@@ -479,6 +479,10 @@ void divmod256(uint256_t *l, uint256_t *r, uint256_t *div,
 
 static void reverseString(char *str, uint32_t length) {
     uint32_t i, j;
+    if (length == 0) {
+        // j would underflow below and index the whole address space.
+        return;
+    }
     for (i = 0, j = length - 1; i < j; i++, j--) {
         uint8_t c;
         c = str[i];
@@ -501,7 +505,10 @@ bool tostring128(const uint128_t *number, uint32_t base, char *out,
         return false;
     }
     do {
-        if (offset > (outLength - 1)) {
+        // Room is needed for this digit and for the terminator that follows the
+        // last one. Written as an addition so that outLength 0 rejects instead
+        // of underflowing.
+        if (offset + 1 >= outLength) {
             return false;
         }
         divmod128(&rDiv, &outputBase, &rDiv, &rMod);
@@ -527,7 +534,10 @@ bool tostring256(const uint256_t *number, uint32_t base, char *out,
         return false;
     }
     do {
-        if (offset > (outLength - 1)) {
+        // Room is needed for this digit and for the terminator that follows the
+        // last one. Written as an addition so that outLength 0 rejects instead
+        // of underflowing.
+        if (offset + 1 >= outLength) {
             return false;
         }
         divmod256(&rDiv, &outputBase, &rDiv, &rMod);

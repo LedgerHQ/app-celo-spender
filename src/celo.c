@@ -497,9 +497,37 @@ static bool formatAmountWithTicker(char* out, size_t outSize,
     return (written >= 0) && ((size_t)written < outSize);
 }
 
+// finalizeParsing() formats every amount through G_io_apdu_buffer:
+// tostring256() writes the decimal digits into the upper half and
+// adjustDecimals() scales them into the lower half. The two halves are the same
+// size, so one constant names both the bound and the offset.
+// tests/unit/test_eth_utils.c pins which decimals this bound admits.
+#define AMOUNT_SCRATCH_LEN 100
+
+// Renders a value as "<amount> <ticker>" into a review buffer. Refuses at every
+// step rather than displaying a value that misrepresents what is being signed.
+static bool formatAmountForReview(char* out, size_t outSize,
+                                  const uint256_t* value, uint8_t decimals,
+                                  const char* ticker) {
+    char* digits = (char*)(G_io_apdu_buffer + AMOUNT_SCRATCH_LEN);
+    uint32_t digitCount = 0;
+
+    if (!tostring256(value, 10, digits, AMOUNT_SCRATCH_LEN)) {
+        return false;
+    }
+    while (digits[digitCount] != '\0') {
+        digitCount++;
+    }
+    if (!adjustDecimals(digits, digitCount, (char*)G_io_apdu_buffer,
+                        AMOUNT_SCRATCH_LEN, decimals)) {
+        return false;
+    }
+    return formatAmountWithTicker(out, outSize, (char*)G_io_apdu_buffer,
+                                  ticker);
+}
+
 void finalizeParsing(bool direct) {
     uint256_t gasPrice, startGas, uint256;
-    uint32_t i;
     uint8_t decimals = WEI_TO_ETHER;
     uint8_t feeDecimals = WEI_TO_ETHER;
     const char* ticker = " " CHAINID_COINNAME;
@@ -616,23 +644,10 @@ void finalizeParsing(bool direct) {
     // Add amount in ethers or tokens
     convertUint256BE(tmpContent.txContent.value.value,
                      tmpContent.txContent.value.length, &uint256);
-    tostring256(&uint256, 10, (char*)(G_io_apdu_buffer + 100), 100);
-    i = 0;
-    while (G_io_apdu_buffer[100 + i]) {
-        i++;
-    }
-
-    if (!adjustDecimals((char*)(G_io_apdu_buffer + 100), i,
-                        (char*)G_io_apdu_buffer, 100, decimals)) {
-        PRINTF("Cannot format amount\n");
-        refuseTransaction(direct);
-        return;
-    }
-
-    if (!formatAmountWithTicker(strings.common.fullAmount,
-                                sizeof(strings.common.fullAmount),
-                                (char*)G_io_apdu_buffer, ticker)) {
-        PRINTF("Amount does not fit the review buffer\n");
+    if (!formatAmountForReview(strings.common.fullAmount,
+                               sizeof(strings.common.fullAmount), &uint256,
+                               decimals, ticker)) {
+        PRINTF("Cannot display amount\n");
         refuseTransaction(direct);
         return;
     }
@@ -640,23 +655,10 @@ void finalizeParsing(bool direct) {
     // Add gateway fee
     convertUint256BE(tmpContent.txContent.gatewayFee.value,
                      tmpContent.txContent.gatewayFee.length, &uint256);
-    tostring256(&uint256, 10, (char*)(G_io_apdu_buffer + 100), 100);
-    i = 0;
-    while (G_io_apdu_buffer[100 + i]) {
-        i++;
-    }
-
-    if (!adjustDecimals((char*)(G_io_apdu_buffer + 100), i,
-                        (char*)G_io_apdu_buffer, 100, feeDecimals)) {
-        PRINTF("Cannot format gateway fee\n");
-        refuseTransaction(direct);
-        return;
-    }
-
-    if (!formatAmountWithTicker(strings.common.gatewayFee,
-                                sizeof(strings.common.gatewayFee),
-                                (char*)G_io_apdu_buffer, feeTicker)) {
-        PRINTF("Gateway fee does not fit the review buffer\n");
+    if (!formatAmountForReview(strings.common.gatewayFee,
+                               sizeof(strings.common.gatewayFee), &uint256,
+                               feeDecimals, feeTicker)) {
+        PRINTF("Cannot display gateway fee\n");
         refuseTransaction(direct);
         return;
     }
@@ -667,23 +669,10 @@ void finalizeParsing(bool direct) {
     convertUint256BE(tmpContent.txContent.startgas.value,
                      tmpContent.txContent.startgas.length, &startGas);
     mul256(&gasPrice, &startGas, &uint256);
-    tostring256(&uint256, 10, (char*)(G_io_apdu_buffer + 100), 100);
-    i = 0;
-    while (G_io_apdu_buffer[100 + i]) {
-        i++;
-    }
-
-    if (!adjustDecimals((char*)(G_io_apdu_buffer + 100), i,
-                        (char*)G_io_apdu_buffer, 100, feeDecimals)) {
-        PRINTF("Cannot format max fee\n");
-        refuseTransaction(direct);
-        return;
-    }
-
-    if (!formatAmountWithTicker(strings.common.maxFee,
-                                sizeof(strings.common.maxFee),
-                                (char*)G_io_apdu_buffer, feeTicker)) {
-        PRINTF("Max fee does not fit the review buffer\n");
+    if (!formatAmountForReview(strings.common.maxFee,
+                               sizeof(strings.common.maxFee), &uint256,
+                               feeDecimals, feeTicker)) {
+        PRINTF("Cannot display max fee\n");
         refuseTransaction(direct);
         return;
     }

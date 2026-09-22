@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <cmocka.h>
 
+#include <string.h>
+
 #include "uint256.h"
 
 #define assert_uint256_equal(a, b) assert_memory_equal((a), (b), sizeof(uint256_t))
@@ -243,6 +245,116 @@ static void test_external_multiply(void **state) {
   assert_uint256_equal(&r7, &expected_r7);
 }
 
+
+// The tostring helpers write the digits and then a terminator, so a buffer that
+// fits the digits exactly used to have its terminator written one byte past the
+// end. The canaries below are what makes that visible.
+
+#define CANARY 0x7f
+
+static void assert_untouched_from(const char *buf, size_t from, size_t size) {
+  for (size_t i = from; i < size; i++) {
+    assert_int_equal((unsigned char) buf[i], CANARY);
+  }
+}
+
+static void test_tostring256_exact_fit_is_refused(void **state) {
+  (void) state;
+  uint256_t n;
+  uint256_from_uint(&n, 1234);  // four digits
+  char out[8];
+
+  memset(out, CANARY, sizeof(out));
+  // Four digits need five bytes with the terminator, so four must be refused.
+  assert_false(tostring256(&n, 10, out, 4));
+  assert_untouched_from(out, 4, sizeof(out));
+
+  memset(out, CANARY, sizeof(out));
+  assert_true(tostring256(&n, 10, out, 5));
+  assert_string_equal(out, "1234");
+  assert_untouched_from(out, 5, sizeof(out));
+}
+
+static void test_tostring256_zero_length_is_refused(void **state) {
+  (void) state;
+  uint256_t n;
+  uint256_from_uint(&n, 7);
+  char out[4];
+
+  memset(out, CANARY, sizeof(out));
+  // outLength 0 used to underflow the bound check and write regardless.
+  assert_false(tostring256(&n, 10, out, 0));
+  assert_untouched_from(out, 0, sizeof(out));
+
+  memset(out, CANARY, sizeof(out));
+  // Length 1 holds the terminator alone, so there is no room for a digit.
+  assert_false(tostring256(&n, 10, out, 1));
+  assert_untouched_from(out, 1, sizeof(out));
+}
+
+static void test_tostring256_smallest_and_largest(void **state) {
+  (void) state;
+  char out[80];
+
+  uint256_t zero;
+  uint256_from_uint(&zero, 0);
+  memset(out, CANARY, sizeof(out));
+  assert_true(tostring256(&zero, 10, out, sizeof(out)));
+  assert_string_equal(out, "0");
+
+  // 2^256-1 is 78 decimal digits, the widest value these buffers ever hold.
+  const uint256_t max = {0xffffffffffffffffULL, 0xffffffffffffffffULL,
+                         0xffffffffffffffffULL, 0xffffffffffffffffULL};
+  memset(out, CANARY, sizeof(out));
+  assert_true(tostring256(&max, 10, out, sizeof(out)));
+  assert_string_equal(
+      out,
+      "115792089237316195423570985008687907853269984665640564039457584007913129639935");
+  assert_int_equal(strlen(out), 78);
+  // 78 digits plus a terminator, and not one byte more.
+  assert_untouched_from(out, 79, sizeof(out));
+
+  // The buffer the app actually passes must still hold the widest value.
+  memset(out, CANARY, sizeof(out));
+  assert_true(tostring256(&max, 10, out, 79));
+  assert_false(tostring256(&max, 10, out, 78));
+}
+
+static void test_tostring256_rejects_bad_base(void **state) {
+  (void) state;
+  uint256_t n;
+  uint256_from_uint(&n, 255);
+  char out[16];
+
+  assert_false(tostring256(&n, 1, out, sizeof(out)));
+  assert_false(tostring256(&n, 17, out, sizeof(out)));
+  assert_true(tostring256(&n, 16, out, sizeof(out)));
+  assert_string_equal(out, "ff");
+}
+
+static void test_tostring128_has_the_same_bounds(void **state) {
+  (void) state;
+  // tostring128 has no caller in the app, so nothing else would notice if it
+  // kept the off-by-one its sibling had.
+  uint128_t n;
+  n.elements[0] = 0;
+  n.elements[1] = 1234;
+  char out[8];
+
+  memset(out, CANARY, sizeof(out));
+  assert_false(tostring128(&n, 10, out, 4));
+  assert_untouched_from(out, 4, sizeof(out));
+
+  memset(out, CANARY, sizeof(out));
+  assert_false(tostring128(&n, 10, out, 0));
+  assert_untouched_from(out, 0, sizeof(out));
+
+  memset(out, CANARY, sizeof(out));
+  assert_true(tostring128(&n, 10, out, 5));
+  assert_string_equal(out, "1234");
+  assert_untouched_from(out, 5, sizeof(out));
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
       cmocka_unit_test(test_bitshift_right),
@@ -251,6 +363,11 @@ int main(void) {
       cmocka_unit_test(test_external_shift_left),
       cmocka_unit_test(test_arithmetic_multiply),
       cmocka_unit_test(test_external_multiply),
+      cmocka_unit_test(test_tostring256_exact_fit_is_refused),
+      cmocka_unit_test(test_tostring256_zero_length_is_refused),
+      cmocka_unit_test(test_tostring256_smallest_and_largest),
+      cmocka_unit_test(test_tostring256_rejects_bad_base),
+      cmocka_unit_test(test_tostring128_has_the_same_bounds),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
