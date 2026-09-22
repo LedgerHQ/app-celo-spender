@@ -186,17 +186,30 @@ void handleGetWalletId(volatile unsigned int* tx) {
     unsigned char t[64];
     cx_ecfp_256_private_key_t priv;
     cx_ecfp_256_public_key_t pub;
-    // seed => priv key
-    CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2,
-                                      t, NULL));
-    // priv key => pubkey
-    CX_THROW(cx_ecdsa_init_private_key(CX_CURVE_256K1, t, 32, &priv));
-    CX_THROW(cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &pub, &priv, 1));
-    // pubkey -> sha512
+    cx_err_t error;
+
+    // The wallet ID is derived from the seed, so no exit from here may leave
+    // derived key material on the stack. Failures are collected rather than
+    // thrown, because a throw would jump past the wipe below.
+    error = os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2,
+                                     t, NULL);
+    if (error == CX_OK) {
+        error = cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, t, 32, &priv);
+    }
+    if (error == CX_OK) {
+        error = cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &pub, &priv, 1);
+    }
+    explicit_bzero(&priv, sizeof(priv));
+    explicit_bzero(t, sizeof(t));
+    if (error != CX_OK) {
+        THROW(error);
+    }
+
+    // The wallet ID itself is public, so t may be reused to hold it.
     cx_hash_sha512(pub.W, sizeof(pub.W), t, sizeof(t));
     // ! cookie !
-    memcpy(G_io_apdu_buffer, t, 64);
-    *tx = 64;
+    memcpy(G_io_apdu_buffer, t, sizeof(t));
+    *tx = sizeof(t);
     THROW(SW_OK);
 }
 
@@ -235,19 +248,27 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t* dataBuffer,
 
     tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
     io_seproxyhal_io_heartbeat();
-    CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, derivationPath.path,
-                                      derivationPath.len, privateKeyData,
-                                      (tmpCtx.publicKeyContext.getChaincode
-                                           ? tmpCtx.publicKeyContext.chainCode
-                                           : NULL)));
-
-    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData,
-                                               32, &privateKey));
-    io_seproxyhal_io_heartbeat();
-    CX_THROW(cx_ecfp_generate_pair_no_throw(
-        CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1));
+    // Failures are collected rather than thrown: a throw here would jump past
+    // the wipes below and leave the derived key on the stack.
+    cx_err_t error = os_derive_bip32_no_throw(
+        CX_CURVE_256K1, derivationPath.path, derivationPath.len, privateKeyData,
+        (tmpCtx.publicKeyContext.getChaincode
+             ? tmpCtx.publicKeyContext.chainCode
+             : NULL));
+    if (error == CX_OK) {
+        error = cx_ecfp_init_private_key_no_throw(
+            CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+    }
+    if (error == CX_OK) {
+        io_seproxyhal_io_heartbeat();
+        error = cx_ecfp_generate_pair_no_throw(
+            CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1);
+    }
     explicit_bzero(&privateKey, sizeof(privateKey));
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
+    if (error != CX_OK) {
+        THROW(error);
+    }
     io_seproxyhal_io_heartbeat();
     getEthAddressStringFromKey(&tmpCtx.publicKeyContext.publicKey,
                                tmpCtx.publicKeyContext.address, CHAIN_ID,

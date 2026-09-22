@@ -93,21 +93,32 @@ unsigned int io_sign_and_send_tx(void) {
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
-    io_seproxyhal_io_heartbeat();
-    CX_THROW(os_derive_bip32_no_throw(
-        CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
-        tmpCtx.transactionContext.derivationPath.len, privateKeyData, NULL));
-    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData,
-                                               32, &privateKey));
-    explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     size_t sig_len = sizeof(signature);
+    cx_err_t error;
+
     io_seproxyhal_io_heartbeat();
-    CX_THROW(cx_ecdsa_sign_no_throw(&privateKey, CX_RND_RFC6979 | CX_LAST,
-                                    CX_SHA256, tmpCtx.transactionContext.hash,
-                                    sizeof(tmpCtx.transactionContext.hash),
-                                    signature, &sig_len, &info));
+    // Failures are collected rather than thrown: a throw here would jump past
+    // the wipes below and leave the signing key on the stack.
+    error = os_derive_bip32_no_throw(
+        CX_CURVE_256K1, tmpCtx.transactionContext.derivationPath.path,
+        tmpCtx.transactionContext.derivationPath.len, privateKeyData, NULL);
+    if (error == CX_OK) {
+        error = cx_ecfp_init_private_key_no_throw(
+            CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+    }
+    explicit_bzero(privateKeyData, sizeof(privateKeyData));
+    if (error == CX_OK) {
+        io_seproxyhal_io_heartbeat();
+        error = cx_ecdsa_sign_no_throw(
+            &privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
+            tmpCtx.transactionContext.hash,
+            sizeof(tmpCtx.transactionContext.hash), signature, &sig_len, &info);
+    }
     explicit_bzero(&privateKey, sizeof(privateKey));
+    if (error != CX_OK) {
+        THROW(error);
+    }
 
     // For EIP1559 and CIP64 transactions, the Ledger SDK expects v to be
     // the parity: 0 | 1
@@ -153,23 +164,34 @@ unsigned int io_seproxyhal_touch_signMessage_ok(void) {
     uint8_t signature[100];
     cx_ecfp_private_key_t privateKey;
     uint32_t tx = 0;
-    io_seproxyhal_io_heartbeat();
-    CX_THROW(os_derive_bip32_no_throw(
-        CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
-        tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL));
-
-    io_seproxyhal_io_heartbeat();
-    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData,
-                                               32, &privateKey));
-    explicit_bzero(privateKeyData, sizeof(privateKeyData));
     unsigned int info = 0;
     size_t sig_len = sizeof(signature);
+    cx_err_t error;
+
     io_seproxyhal_io_heartbeat();
-    CX_THROW(cx_ecdsa_sign_no_throw(
-        &privateKey, CX_RND_RFC6979 | CX_LAST, CX_SHA256,
-        tmpCtx.messageSigningContext.hash,
-        sizeof(tmpCtx.messageSigningContext.hash), signature, &sig_len, &info));
+    // Failures are collected rather than thrown: a throw here would jump past
+    // the wipes below and leave the signing key on the stack.
+    error = os_derive_bip32_no_throw(
+        CX_CURVE_256K1, tmpCtx.messageSigningContext.derivationPath.path,
+        tmpCtx.messageSigningContext.derivationPath.len, privateKeyData, NULL);
+    if (error == CX_OK) {
+        io_seproxyhal_io_heartbeat();
+        error = cx_ecfp_init_private_key_no_throw(
+            CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+    }
+    explicit_bzero(privateKeyData, sizeof(privateKeyData));
+    if (error == CX_OK) {
+        io_seproxyhal_io_heartbeat();
+        error =
+            cx_ecdsa_sign_no_throw(&privateKey, CX_RND_RFC6979 | CX_LAST,
+                                   CX_SHA256, tmpCtx.messageSigningContext.hash,
+                                   sizeof(tmpCtx.messageSigningContext.hash),
+                                   signature, &sig_len, &info);
+    }
     explicit_bzero(&privateKey, sizeof(privateKey));
+    if (error != CX_OK) {
+        THROW(error);
+    }
     G_io_apdu_buffer[0] = 27;
     if (info & CX_ECCINFO_PARITY_ODD) {
         G_io_apdu_buffer[0]++;
