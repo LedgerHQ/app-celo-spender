@@ -588,3 +588,37 @@ def test_contract_creation_warns_even_with_contract_details_enabled(test_name, b
 
     assert response.data[0] in (0, 1)
     assert response.status == StatusCode.STATUS_OK
+
+
+def test_sign_first_chunk_without_tx_type_is_refused(test_name, backend, navigator):
+    """A first chunk that stops at the end of the derivation path must be refused.
+
+    The transaction type byte was read from beyond the received data: a stale
+    G_io_apdu_buffer byte of 0x02 or 0x7b was accepted as the type, hashed into the
+    preimage, and left the remaining length wrapped to 65535 for the parser to read.
+    """
+    celo = CeloClient(backend)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.send_sign_chunk(CELO_PACKED_DERIVATION_PATH, first=True)
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_sign_first_chunk_with_unsupported_tx_type_is_refused(test_name, backend,
+                                                              navigator):
+    # One byte past the path is enough to reach the type check, so the length guard must
+    # not turn an unsupported type into a generic data error.
+    celo = CeloClient(backend)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.send_sign_chunk(CELO_PACKED_DERIVATION_PATH + bytes([0x01]), first=True)
+    assert exc.value.status == StatusCode.STATUS_DEPRECATED
+
+
+def test_sign_first_chunk_with_tx_type_only_is_accepted(test_name, backend, navigator):
+    # The smallest legitimate first chunk: path plus the type byte, nothing else. The
+    # parser has to be left waiting for the rest rather than refused.
+    celo = CeloClient(backend)
+    response = celo.send_sign_chunk(CELO_PACKED_DERIVATION_PATH + bytes([TX_TYPE_EIP1559]),
+                                    first=True)
+    assert response.status == StatusCode.STATUS_OK
+
+

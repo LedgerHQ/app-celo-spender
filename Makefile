@@ -63,6 +63,13 @@ ENABLE_BLUETOOTH = 1
 ENABLE_NBGL_QRCODE = 1
 
 ########################################
+#          Compiler hardening          #
+########################################
+# The SDK defaults this to 0, which drops -fstack-protector-strong and the
+# randomized canary entry point.
+ENABLE_STACK_PROTECTOR = 1
+
+########################################
 #            Swap features             #
 ########################################
 ENABLE_SWAP = 1

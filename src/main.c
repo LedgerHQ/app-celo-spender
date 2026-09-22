@@ -399,10 +399,17 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t* workBuffer,
             PRINTF("Invalid path\n");
             THROW(SW_ERROR_IN_DATA);
         }
-        workBuffer +=
+        size_t pathLength =
             1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
-        dataLength -=
-            1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
+        // The transaction type byte must be present in this same APDU: reading
+        // it from beyond the received data would hash a stale G_io_apdu_buffer
+        // byte and wrap dataLength below zero.
+        if (dataLength < pathLength + 1) {
+            PRINTF("Missing transaction type\n");
+            THROW(SW_ERROR_IN_DATA);
+        }
+        workBuffer += pathLength;
+        dataLength -= pathLength;
 
         appState = APP_STATE_SIGNING_TX;
         dataPresent = false;

@@ -23,9 +23,14 @@ MAX_CHUNK_SIZE = 255
 
 class StatusCode(IntEnum):
     STATUS_OK = 0x9000
+    # SW_TX_TYPE_NOT_SUPPORTED: also what a legacy (non-typed) transaction gets.
     STATUS_DEPRECATED = 0x6501
+    STATUS_INITIALIZATION_ERROR = 0x6985
     STATUS_ERROR_IN_DATA = 0x6A80
     STATUS_WRONG_P1_OR_P2 = 0x6B00
+
+    def __repr__(self) -> str:
+        return f"{self.name}(0x{self.value:04X})"
 
 class Param(IntEnum):
     P1_DirectlyFetchAddress     = 0x00 # Return address directly from the wallet
