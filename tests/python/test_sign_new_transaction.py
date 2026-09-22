@@ -621,4 +621,66 @@ def test_sign_first_chunk_with_tx_type_only_is_accepted(test_name, backend, navi
                                     first=True)
     assert response.status == StatusCode.STATUS_OK
 
+# Celo core contracts on mainnet; the staking decode is bound to these, so the
+# same calldata sent anywhere else must not be relabelled as an official action.
+# An address that is not a Celo core contract.
+ARBITRARY_DESTINATION = bytes.fromhex("da52c9ffebd4d54c94a072776126069d43e74f9e")
+LOCKED_GOLD_CONTRACT = bytes.fromhex("6cc083aed9e3ebe302a6336dbc7c921c9f03349e")
+ELECTION_CONTRACT = bytes.fromhex("8d6677192144292870907e3fa8a5527fe55a7ff6")
 
+WITHDRAW_SELECTOR = bytes.fromhex("2e1a7d4d")
+VOTE_SELECTOR = bytes.fromhex("580d747a")
+
+
+def expect_not_clear_signed(backend, data, to):
+    """Asserts a transaction is refused as unrecognised calldata.
+
+    Blind signing is off, so calldata the parser does not recognise is refused
+    outright. A transaction that still gets clear-signed would instead reach a
+    review and return OK, which is the regression these tests guard.
+    """
+    celo = CeloClient(backend)
+    rawTx = build_eip1559_tx(data, to=to)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+            pass
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_withdraw_selector_on_other_contract_is_not_staking(test_name, backend,
+                                                            navigator):
+    # withdraw(uint256) is one of the most widely deployed signatures in DeFi --
+    # WETH unwraps and countless vaults use it -- so matching on the selector
+    # alone labelled any of them as a Celo withdrawal.
+    data = WITHDRAW_SELECTOR + encode_abi_word(0)
+    expect_not_clear_signed(backend, data, ARBITRARY_DESTINATION)
+
+
+def test_withdraw_selector_on_election_is_not_staking(test_name, backend,
+                                                      navigator):
+    # A real core contract, but not the one that implements withdraw.
+    data = WITHDRAW_SELECTOR + encode_abi_word(0)
+    expect_not_clear_signed(backend, data, ELECTION_CONTRACT)
+
+
+def test_vote_selector_on_other_contract_is_not_staking(test_name, backend,
+                                                        navigator):
+    # The payload layout of Election.vote on an attacker-chosen contract: this
+    # used to be presented as "Type: Vote" with an address taken from the
+    # calldata, and the contract really being called was never displayed.
+    data = (VOTE_SELECTOR
+            + encode_abi_word(int.from_bytes(TRANSFER_RECIPIENT, byteorder="big"))
+            + encode_abi_word(10 ** 18)
+            + encode_abi_word(0)
+            + encode_abi_word(0))
+    expect_not_clear_signed(backend, data, ARBITRARY_DESTINATION)
+
+
+def test_vote_selector_on_locked_gold_is_not_staking(test_name, backend,
+                                                     navigator):
+    data = (VOTE_SELECTOR
+            + encode_abi_word(int.from_bytes(TRANSFER_RECIPIENT, byteorder="big"))
+            + encode_abi_word(10 ** 18)
+            + encode_abi_word(0)
+            + encode_abi_word(0))
+    expect_not_clear_signed(backend, data, LOCKED_GOLD_CONTRACT)

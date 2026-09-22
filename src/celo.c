@@ -10,16 +10,6 @@
 #include "ui_common.h"
 #include "utils.h"
 
-static const uint8_t LOCK_METHOD_ID[] = {0xf8, 0x3d, 0x08, 0xba};
-static const uint8_t VOTE_METHOD_ID[] = {0x58, 0x0d, 0x74, 0x7a};
-static const uint8_t ACTIVATE_METHOD_ID[] = {0x1c, 0x5a, 0x9d, 0x9c};
-static const uint8_t REVOKE_PENDING_METHOD_ID[] = {0x9d, 0xfb, 0x60, 0x81};
-static const uint8_t REVOKE_ACTIVE_METHOD_ID[] = {0x6e, 0x19, 0x84, 0x75};
-static const uint8_t UNLOCK_METHOD_ID[] = {0x61, 0x98, 0xe3, 0x39};
-static const uint8_t WITHDRAW_METHOD_ID[] = {0x2e, 0x1a, 0x7d, 0x4d};
-static const uint8_t RELOCK_METHOD_ID[] = {0xb2, 0xfb, 0x30, 0xcb};
-static const uint8_t CREATE_ACCOUNT_METHOD_ID[] = {0x9d, 0xca, 0x36, 0x2f};
-
 void io_seproxyhal_send_status(uint32_t sw) {
     G_io_apdu_buffer[0] = ((sw >> 8) & 0xff);
     G_io_apdu_buffer[1] = (sw & 0xff);
@@ -231,6 +221,146 @@ static bool copyTokenTransferData(txContext_t* context, uint32_t copySize) {
     return true;
 }
 
+// Celo core contracts, per network. A recognised staking selector makes
+// finalizeParsing() replace the displayed destination with an address taken
+// from the calldata and relabel the review as an official operation, so the
+// decode must be bound to the contracts that actually implement these methods.
+// The addresses are the Registry-resolved proxies, which implementation
+// upgrades do not move; a governance repoint would cost clear-signing, not the
+// ability to transact. Alfajores and Baklava are absent because both networks
+// were retired and their addresses are no longer resolvable.
+typedef enum {
+    CELO_LOCKED_GOLD,
+    CELO_ELECTION,
+    CELO_ACCOUNTS,
+    CELO_CONTRACT_COUNT
+} celo_contract_t;
+
+typedef struct celoNetwork_t {
+    uint32_t chainId;
+    uint8_t contracts[CELO_CONTRACT_COUNT][EVM_ADDRESS_LEN];
+} celoNetwork_t;
+
+static const celoNetwork_t CELO_NETWORKS[] = {
+    {42220,  // Mainnet
+     {       // LockedGold
+      {0x6c, 0xc0, 0x83, 0xae, 0xd9, 0xe3, 0xeb, 0xe3, 0x02, 0xa6,
+       0x33, 0x6d, 0xbc, 0x7c, 0x92, 0x1c, 0x9f, 0x03, 0x34, 0x9e},
+      // Election
+      {0x8d, 0x66, 0x77, 0x19, 0x21, 0x44, 0x29, 0x28, 0x70, 0x90,
+       0x7e, 0x3f, 0xa8, 0xa5, 0x52, 0x7f, 0xe5, 0x5a, 0x7f, 0xf6},
+      // Accounts
+      {0x7d, 0x21, 0x68, 0x5c, 0x17, 0x60, 0x73, 0x38, 0xb3, 0x13,
+       0xa7, 0x17, 0x4b, 0xab, 0x66, 0x20, 0xba, 0xd0, 0xaa, 0xb7}}},
+    {11142220,  // Celo Sepolia
+     {          // LockedGold
+      {0x3d, 0xb0, 0xf0, 0x85, 0x0c, 0x5b, 0x5f, 0x42, 0xfe, 0x30,
+       0xd6, 0x87, 0x78, 0xc8, 0x95, 0x8f, 0xc5, 0xee, 0x79, 0x51},
+      // Election
+      {0xeb, 0x8b, 0x62, 0x6f, 0x3a, 0x76, 0x17, 0x4f, 0x45, 0x76,
+       0xbb, 0x47, 0x42, 0x9c, 0x47, 0xef, 0xde, 0xd7, 0xc2, 0x11},
+      // Accounts
+      {0x44, 0x95, 0x72, 0x32, 0x69, 0x9c, 0xa0, 0x60, 0xb6, 0x07,
+       0xe7, 0x70, 0x83, 0xbd, 0xac, 0xd3, 0x50, 0xd6, 0xb6, 0xd1}}},
+};
+
+// Each staking call this app clear-signs, bound to the contract implementing it
+// and to the exact calldata length its ABI implies. The selectors alone are not
+// enough: withdraw(uint256) in particular is one of the most widely deployed
+// signatures in DeFi, so without the contract binding an honest unwrap on an
+// unrelated contract would be presented as a Celo withdrawal.
+typedef struct stakingMethod_t {
+    // Held inline rather than as a pointer: a pointer stored in a const
+    // structure is a link-time address, and BOLOS relocates the app.
+    uint8_t selector[SELECTOR_LEN];
+    celo_contract_t contract;
+    uint32_t dataLength;
+    provision_type_t provision;
+} stakingMethod_t;
+
+static const stakingMethod_t STAKING_METHODS[] = {
+    {{0xf8, 0x3d, 0x08, 0xba},  // lock
+     CELO_LOCKED_GOLD,
+     sizeof(dataContext.lockContext.data),
+     PROVISION_LOCK},
+    {{0x61, 0x98, 0xe3, 0x39},  // unlock
+     CELO_LOCKED_GOLD,
+     sizeof(dataContext.unlockContext.data),
+     PROVISION_UNLOCK},
+    {{0xb2, 0xfb, 0x30, 0xcb},  // relock
+     CELO_LOCKED_GOLD,
+     sizeof(dataContext.relockContext.data),
+     PROVISION_RELOCK},
+    {{0x2e, 0x1a, 0x7d, 0x4d},  // withdraw
+     CELO_LOCKED_GOLD,
+     sizeof(dataContext.withdrawContext.data),
+     PROVISION_WITHDRAW},
+    {{0x58, 0x0d, 0x74, 0x7a},  // vote
+     CELO_ELECTION,
+     sizeof(dataContext.voteContext.data),
+     PROVISION_VOTE},
+    {{0x1c, 0x5a, 0x9d, 0x9c},  // activate
+     CELO_ELECTION,
+     sizeof(dataContext.activateContext.data),
+     PROVISION_ACTIVATE},
+    {{0x9d, 0xfb, 0x60, 0x81},  // revoke_pending
+     CELO_ELECTION,
+     sizeof(dataContext.revokeContext.data),
+     PROVISION_REVOKE},
+    {{0x6e, 0x19, 0x84, 0x75},  // revoke_active
+     CELO_ELECTION,
+     sizeof(dataContext.revokeContext.data),
+     PROVISION_REVOKE},
+    {{0x9d, 0xca, 0x36, 0x2f},  // create_account
+     CELO_ACCOUNTS,
+     sizeof(dataContext.createAccountContext.data),
+     PROVISION_CREATE_ACCOUNT},
+};
+
+// The chain ID was parsed before the data field, so the network is known by the
+// time the calldata is classified.
+static const celoNetwork_t* currentCeloNetwork(void) {
+    uint32_t chainId = 0;
+    if ((tmpContent.txContent.vLength == 0) ||
+        (tmpContent.txContent.vLength > sizeof(chainId))) {
+        return NULL;
+    }
+    for (uint8_t i = 0; i < tmpContent.txContent.vLength; i++) {
+        chainId = (chainId << 8) | tmpContent.txContent.v[i];
+    }
+    for (size_t i = 0; i < sizeof(CELO_NETWORKS) / sizeof(CELO_NETWORKS[0]);
+         i++) {
+        if (CELO_NETWORKS[i].chainId == chainId) {
+            return &CELO_NETWORKS[i];
+        }
+    }
+    return NULL;
+}
+
+// Recognises a staking call only when the selector, the calldata length and the
+// destination contract on this network all agree.
+static provision_type_t classifyStakingCall(const txContext_t* context) {
+    const celoNetwork_t* network = currentCeloNetwork();
+
+    if ((network == NULL) ||
+        (tmpContent.txContent.destinationLength != EVM_ADDRESS_LEN)) {
+        return PROVISION_NONE;
+    }
+    for (size_t i = 0; i < sizeof(STAKING_METHODS) / sizeof(STAKING_METHODS[0]);
+         i++) {
+        const stakingMethod_t* method = &STAKING_METHODS[i];
+        if ((context->currentFieldLength == method->dataLength) &&
+            (memcmp(context->workBuffer, method->selector, SELECTOR_LEN) ==
+             0) &&
+            (memcmp(tmpContent.txContent.destination,
+                    network->contracts[method->contract],
+                    EVM_ADDRESS_LEN) == 0)) {
+            return method->provision;
+        }
+    }
+    return PROVISION_NONE;
+}
+
 customStatus_e customProcessor(txContext_t* context) {
     if (((context->txType == CELO_LEGACY &&
           context->currentField == CELO_LEGACY_RLP_DATA) ||
@@ -270,58 +400,11 @@ customStatus_e customProcessor(txContext_t* context) {
                 explicit_bzero(&dataContext.tokenContext,
                                sizeof(dataContext.tokenContext));
             }
-            // Initial check to see if the lock content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.lockContext.data)) &&
-                (memcmp(context->workBuffer, LOCK_METHOD_ID, 4) == 0)) {
-                provisionType = PROVISION_LOCK;
-            }
-            // Initial check to see if the vote content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.voteContext.data)) &&
-                (memcmp(context->workBuffer, VOTE_METHOD_ID, 4) == 0)) {
-                provisionType = PROVISION_VOTE;
-            }
-            // Initial check to see if the activate content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.activateContext.data)) &&
-                (memcmp(context->workBuffer, ACTIVATE_METHOD_ID, 4) == 0)) {
-                provisionType = PROVISION_ACTIVATE;
-            }
-            // Initial check to see if the revoke content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.revokeContext.data)) &&
-                ((memcmp(context->workBuffer, REVOKE_PENDING_METHOD_ID, 4) ==
-                  0) ||
-                 (memcmp(context->workBuffer, REVOKE_ACTIVE_METHOD_ID, 4) ==
-                  0))) {
-                provisionType = PROVISION_REVOKE;
-            }
-            // Initial check to see if the unlock content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.unlockContext.data)) &&
-                (memcmp(context->workBuffer, UNLOCK_METHOD_ID, 4) == 0)) {
-                provisionType = PROVISION_UNLOCK;
-            }
-            // Initial check to see if the withdraw content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.withdrawContext.data)) &&
-                (memcmp(context->workBuffer, WITHDRAW_METHOD_ID, 4) == 0)) {
-                provisionType = PROVISION_WITHDRAW;
-            }
-            // Initial check to see if the relock content can be processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.relockContext.data)) &&
-                (memcmp(context->workBuffer, RELOCK_METHOD_ID, 4) == 0)) {
-                provisionType = PROVISION_RELOCK;
-            }
-            // Initial check to see if the create account content can be
-            // processed
-            if ((context->currentFieldLength ==
-                 sizeof(dataContext.createAccountContext.data)) &&
-                (memcmp(context->workBuffer, CREATE_ACCOUNT_METHOD_ID, 4) ==
-                 0)) {
-                provisionType = PROVISION_CREATE_ACCOUNT;
+            // The staking decode hides the real contract behind a
+            // friendly label, so it is applied only to the Celo core contracts.
+            provision_type_t staking = classifyStakingCall(context);
+            if (staking != PROVISION_NONE) {
+                provisionType = staking;
             }
         }
         if (provisionType != PROVISION_NONE) {
