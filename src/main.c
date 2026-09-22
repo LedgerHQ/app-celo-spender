@@ -24,6 +24,7 @@
 #include "ethUstream.h"
 #include "ethUtils.h"
 #include "globals.h"
+#include "handle_copy_transaction_parameters.h"
 #include "os.h"
 #include "os_io_seproxyhal.h"
 #include "swap_utils.h"
@@ -855,6 +856,15 @@ void app_main(void) {
             CATCH(EXCEPTION_IO_RESET) {
                 // reset IO and UX before continuing
                 CLOSE_TRY;
+#ifdef HAVE_SWAP
+                if (G_called_from_swap) {
+                    // The approved parameters live in BSS and survive this
+                    // loop, so continuing would keep auto-signing against an
+                    // approval whose session is gone. Report failure to
+                    // Exchange instead; this does not return.
+                    swap_finalize_exchange_sign_transaction(false);
+                }
+#endif  // HAVE_SWAP
                 continue;
             }
             CATCH_ALL {

@@ -4,6 +4,7 @@
 #include "celo.h"
 #include "ethUtils.h"
 #include "globals.h"
+#include "swap_validation.h"
 #include "utils.h"
 
 typedef struct swap_validated_s {
@@ -92,14 +93,15 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     return true;
 }
 
-bool swap_check_validity() {
+bool swap_check_validity(const char* ticker, uint8_t decimals) {
     PRINTF("Inside CELO swap_check_validity\n");
     if (!G_swap_validated.initialized) {
         PRINTF("Swap Validated data not initialized.\n");
         return false;
     }
 
-    // recipient
+    // The address comparison is done on the checksummed string, so it has to be
+    // rendered before the decision can be made.
     char address[ADDRESS_LENGTH];
     char fullAddress[ADDRESS_LENGTH + 2];
     getEthAddressStringFromBinary(tmpContent.txContent.destination, address,
@@ -108,34 +110,32 @@ bool swap_check_validity() {
     fullAddress[1] = 'x';
     memcpy(fullAddress + 2, address, 40);
     fullAddress[42] = '\0';
-    if (_strcasecmp(fullAddress, G_swap_validated.recipient) != 0) {
-        PRINTF("Recipient address does not match\n");
-        return false;
-    }
 
-    // amount
-    if (tmpContent.txContent.value.length != G_swap_validated.amount_length) {
-        PRINTF("Amount length does not match \n");
-        return false;
-    }
-    if (memcmp(tmpContent.txContent.value.value, G_swap_validated.amount,
-               G_swap_validated.amount_length) != 0) {
-        PRINTF("Amount does not match \n");
-        return false;
-    }
-    // fee
-    uint256_t gasPrice, startGas, feesRes, feesValidatedRes;
-    convertUint256BE(tmpContent.txContent.gasprice.value,
-                     tmpContent.txContent.gasprice.length, &gasPrice);
-    convertUint256BE(tmpContent.txContent.startgas.value,
-                     tmpContent.txContent.startgas.length, &startGas);
-    mul256(&gasPrice, &startGas, &feesRes);
+    const swap_tx_t tx = {
+        .ticker = ticker,
+        .decimals = decimals,
+        .provisionType = provisionType,
+        .selector = dataContext.tokenContext.data,
+        .dataPresent = dataPresent,
+        .destination = fullAddress,
+        .destinationLength = tmpContent.txContent.destinationLength,
+        .value = &tmpContent.txContent.value,
+        .gasprice = &tmpContent.txContent.gasprice,
+        .startgas = &tmpContent.txContent.startgas,
+        .feeCurrencyLength = tmpContent.txContent.feeCurrencyLength,
+    };
+    const swap_approved_t approved = {
+        .ticker = G_swap_validated.ticker,
+        .decimals = G_swap_validated.decimals,
+        .recipient = G_swap_validated.recipient,
+        .amount = G_swap_validated.amount,
+        .amount_length = G_swap_validated.amount_length,
+        .fee = G_swap_validated.fee,
+        .fee_length = G_swap_validated.fee_length,
+    };
 
-    convertUint256BE(G_swap_validated.fee, G_swap_validated.fee_length,
-                     &feesValidatedRes);
-
-    if (gt256(&feesRes, &feesValidatedRes)) {
-        PRINTF("Fee does not match \n ");
+    if (!swap_tx_matches_approval(&tx, &approved)) {
+        PRINTF("Transaction does not match what Exchange approved\n");
         return false;
     }
     return true;

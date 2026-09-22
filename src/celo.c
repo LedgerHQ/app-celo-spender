@@ -10,9 +10,6 @@
 #include "ui_common.h"
 #include "utils.h"
 
-static const uint8_t TOKEN_TRANSFER_ID[] = {0xa9, 0x05, 0x9c, 0xbb};
-static const uint8_t TOKEN_TRANSFER_WITH_COMMENT_ID[] = {0xe1, 0xd6, 0xac,
-                                                         0xeb};
 static const uint8_t LOCK_METHOD_ID[] = {0xf8, 0x3d, 0x08, 0xba};
 static const uint8_t VOTE_METHOD_ID[] = {0x58, 0x0d, 0x74, 0x7a};
 static const uint8_t ACTIVATE_METHOD_ID[] = {0x1c, 0x5a, 0x9d, 0x9c};
@@ -742,7 +739,7 @@ void finalizeParsing(bool direct) {
             // return to exchange
             G_swap_response_ready = true;
         }
-        if (swap_check_validity()) {
+        if (swap_check_validity(ticker, decimals)) {
             PRINTF("Swap response validated\n");
             io_sign_and_send_tx();
             swap_finalize_exchange_sign_transaction(true);

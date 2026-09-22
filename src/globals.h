@@ -145,21 +145,6 @@ extern const internalStorage_t N_storage_real;
 extern char addressSummary[32];
 extern cx_sha3_t sha3;
 
-typedef enum {
-    PROVISION_NONE,
-    PROVISION_TOKEN,
-    PROVISION_LOCK,
-    PROVISION_VOTE,
-    PROVISION_ACTIVATE,
-    PROVISION_REVOKE,
-    PROVISION_UNLOCK,
-    PROVISION_WITHDRAW,
-    PROVISION_RELOCK,
-    PROVISION_CREATE_ACCOUNT
-} provision_type_t;
-
-extern volatile provision_type_t provisionType;
-
 // ABI layout of the two token transfer methods this app clear-signs:
 //   transfer(address to, uint256 value)
 //   transferWithComment(address to, uint256 value, string comment)

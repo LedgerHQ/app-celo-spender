@@ -15,7 +15,6 @@
  *  limitations under the License.
  ********************************************************************************/
 
-#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -34,13 +33,6 @@ void array_hexstr(char* strbuf, const void* bin, size_t len) {
     *strbuf = 0;  // EOS
 }
 
-void convertUint256BE(const uint8_t* data, size_t length, uint256_t* target) {
-    uint8_t tmp[32];
-    memset(tmp, 0, 32);
-    memcpy(tmp + 32 - length, data, length);
-    readu256BE(tmp, target);
-}
-
 uint32_t getV(txContent_t* txContent) {
     uint32_t v = 0;
     if (txContent->vLength == 1) {
@@ -57,14 +49,4 @@ uint32_t getV(txContent_t* txContent) {
         THROW(EXCEPTION);
     }
     return v;
-}
-
-int _strcasecmp(const char* s1, const char* s2) {
-    const unsigned char* p1 = (const unsigned char*)s1;
-    const unsigned char* p2 = (const unsigned char*)s2;
-    int result = 0;
-    if (p1 == p2) return 0;
-    while ((result = toupper(*p1) - toupper(*p2++)) == 0)
-        if (*p1++ == '\0') break;
-    return result;
 }

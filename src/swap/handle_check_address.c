@@ -6,6 +6,7 @@
 #include "cx_errors.h"
 #include "ethUtils.h"
 #include "globals.h"
+#include "strcase.h"
 #include "swap_lib_calls.h"
 #include "utils.h"
 

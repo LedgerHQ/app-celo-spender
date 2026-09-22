@@ -20,8 +20,9 @@
 #ifndef _UINT256_H_
 #define _UINT256_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct uint128_t { uint64_t elements[2]; } uint128_t;
 
@@ -66,5 +67,14 @@ bool tostring128(const uint128_t *number, uint32_t base, char *out,
                  uint32_t outLength);
 bool tostring256(const uint256_t *number, uint32_t base, char *out,
                  uint32_t outLength);
+
+/**
+ * @brief Reads a big-endian value of arbitrary length into a uint256_t.
+ *
+ * @param data   Big-endian bytes, at most 32 of them.
+ * @param length How many bytes to read.
+ * @param target Where to store the result.
+ */
+void convertUint256BE(const uint8_t *data, size_t length, uint256_t *target);
 
 #endif /* _UINT256_H_ */

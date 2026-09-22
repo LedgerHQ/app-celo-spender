@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "uint256.h"
 
@@ -535,4 +536,11 @@ bool tostring256(const uint256_t *number, uint32_t base, char *out,
     out[offset] = '\0';
     reverseString(out, offset);
     return true;
+}
+
+void convertUint256BE(const uint8_t *data, size_t length, uint256_t *target) {
+    uint8_t tmp[32];
+    memset(tmp, 0, sizeof(tmp));
+    memcpy(tmp + sizeof(tmp) - length, data, length);
+    readu256BE(tmp, target);
 }

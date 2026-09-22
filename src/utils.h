@@ -38,7 +38,6 @@ void array_hexstr(char *strbuf, const void *bin, size_t len);
  * @param length [in] The length of the byte array.
  * @param target [out] The target uint256_t to store the converted value.
  */
-void convertUint256BE(const uint8_t *data, uint32_t length, uint256_t *target);
 
 /**
  * Retrieves the V value from the transaction content.
@@ -65,6 +64,5 @@ uint32_t getV(txContent_t *txContent);
  * @return 0 if the strings are equal, less or greater than if s1 is lexicographically less or
  * greater than s2
  */
-int _strcasecmp(const char *s1, const char *s2);
 
 #endif /* _UTILS_H_ */
