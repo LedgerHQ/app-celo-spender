@@ -251,15 +251,10 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t* dataBuffer,
     getEthAddressStringFromKey(&tmpCtx.publicKeyContext.publicKey,
                                tmpCtx.publicKeyContext.address, CHAIN_ID,
                                &sha3);
-#ifndef NO_CONSENT
-    if (p1 == P1_NON_CONFIRM)
-#endif  // NO_CONSENT
-    {
+    if (p1 == P1_NON_CONFIRM) {
         *tx = set_result_get_publicKey();
         THROW(SW_OK);
-    }
-#ifndef NO_CONSENT
-    else {
+    } else {
         // prepare for a UI based reply
         snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress),
                  "0x%.*s", 40, tmpCtx.publicKeyContext.address);
@@ -274,7 +269,6 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t* dataBuffer,
 
         *flags |= IO_ASYNCH_REPLY;
     }
-#endif  // NO_CONSENT
 }
 
 /**
@@ -584,8 +578,6 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t* workBuffer,
 
         CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, 0, (uint8_t*)tmp, pos,
                                   NULL, 0));
-
-        cx_sha256_init(&tmpContent.sha2);
     } else if (p1 != P1_MORE) {
         THROW(SW_WRONG_P1_OR_P2);
     }
@@ -601,35 +593,19 @@ void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t* workBuffer,
     }
     CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, 0, workBuffer, dataLength,
                               NULL, 0));
-    CX_THROW(cx_hash_no_throw((cx_hash_t*)&tmpContent.sha2, 0, workBuffer,
-                              dataLength, NULL, 0));
     tmpCtx.messageSigningContext.remainingLength -= dataLength;
     if (tmpCtx.messageSigningContext.remainingLength == 0) {
-        uint8_t hashMessage[32];
-
         CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, CX_LAST, workBuffer, 0,
-                                  tmpCtx.messageSigningContext.hash, 32));
-        CX_THROW(cx_hash_no_throw((cx_hash_t*)&tmpContent.sha2, CX_LAST,
-                                  workBuffer, 0, hashMessage, 32));
+                                  tmpCtx.messageSigningContext.hash,
+                                  MESSAGE_HASH_LEN));
 
-#ifdef HAVE_BAGL
-#define HASH_LENGTH 4
-        array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH / 2);
-        strings.common.fullAddress[HASH_LENGTH / 2 * 2] = '.';
-        strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 1] = '.';
-        strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 2] = '.';
-        array_hexstr(strings.common.fullAddress + HASH_LENGTH / 2 * 2 + 3,
-                     hashMessage + 32 - HASH_LENGTH / 2, HASH_LENGTH / 2);
-#else
-#define HASH_LENGTH 32
-        array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH);
-#endif
+        // Show the digest that is signed, in full: a shortened preview is not
+        // enough to tell two messages apart, and a separate hash of the message
+        // is not what the user's approval would be binding.
+        array_hexstr(strings.tmp.messageHash, tmpCtx.messageSigningContext.hash,
+                     MESSAGE_HASH_LEN);
 
-#ifdef NO_CONSENT
-        io_seproxyhal_touch_signMessage_ok(NULL);
-#else
         ui_display_sign_flow();
-#endif  // NO_CONSENT
 
         *flags |= IO_ASYNCH_REPLY;
 

@@ -20,7 +20,7 @@ static void sign_confirmation(bool confirm) {
 
 void ui_display_sign_flow(void) {
     tagValuePair[0].item = "Message hash";
-    tagValuePair[0].value = (char*)strings.common.fullAddress;
+    tagValuePair[0].value = strings.tmp.messageHash;
 
     tagValueList.nbPairs = 1;
     tagValueList.pairs = tagValuePair;

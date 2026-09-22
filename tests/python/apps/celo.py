@@ -84,9 +84,13 @@ class CeloClient:
 
     @contextmanager
     def sign_data_async(self, derivation_path: bytes, data: str) -> Generator[None, None, None]:
+        # The APDU length field counts message bytes, so it has to be taken from the
+        # encoded form: len() on a str counts code points and understates any
+        # multi-byte character, which the app then rejects as an oversized chunk.
+        message = data.encode("utf-8")
         payload: bytes = derivation_path
-        payload += len(data).to_bytes(4, byteorder='big')
-        payload += str.encode(data)
+        payload += len(message).to_bytes(4, byteorder='big')
+        payload += message
 
         with self.send_in_chunk_async(INS.INS_SIGN_PERSONAL_MESSAGE, payload):
             yield

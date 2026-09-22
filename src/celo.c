@@ -761,9 +761,6 @@ void finalizeParsing(bool direct) {
 }
 
 void ui_display_transaction() {
-#ifdef NO_CONSENT
-    io_seproxyhal_touch_tx_ok();
-#else   // NO_CONSENT
     switch (provisionType) {
         case PROVISION_LOCK:
         case PROVISION_UNLOCK:
@@ -817,5 +814,4 @@ void ui_display_transaction() {
             }
         }
     }
-#endif  // NO_CONSENT
 }

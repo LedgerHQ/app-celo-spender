@@ -366,7 +366,7 @@ UX_STEP_NOCB(ux_sign_flow_1_step, pnn,
 UX_STEP_NOCB(ux_sign_flow_2_step, bnnn_paging,
              {
                  .title = "Message hash",
-                 .text = strings.common.fullAddress,
+                 .text = strings.tmp.messageHash,
              });
 
 UX_STEP_CB(ux_sign_flow_3_step, pbb, io_seproxyhal_touch_signMessage_ok(),

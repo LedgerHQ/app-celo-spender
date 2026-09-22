@@ -109,9 +109,17 @@ typedef struct strData_t {
     char stakingType[MAX_STAKING_TYPE_LEN];
 } strData_t;
 
+// A personal-message review shows the whole signed digest as hex, so it needs its own
+// buffer: the address buffers are sized for an address and cannot hold 64 hex chars.
+#define MESSAGE_HASH_LEN     32
+#define MESSAGE_HASH_HEX_LEN (MESSAGE_HASH_LEN * 2 + 1)
+_Static_assert(sizeof(((messageSigningContext_t *) 0)->hash) == MESSAGE_HASH_LEN,
+               "the displayed hash must be the whole signed digest");
+
 typedef struct strDataTmp_t {
     char tmp[100];
     char tmp2[40];
+    char messageHash[MESSAGE_HASH_HEX_LEN];
 } strDataTmp_t;
 
 typedef union {
