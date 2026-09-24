@@ -19,53 +19,52 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "os.h"
+#include "celo.h"
 #include "cx.h"
 #include "ethUstream.h"
 #include "ethUtils.h"
-#include "uint256.h"
-#include "tokens.h"
-#include "celo.h"
-
-#include "os_io_seproxyhal.h"
-
 #include "globals.h"
-#include "utils.h"
-#include "ui_common.h"
+#include "handle_copy_transaction_parameters.h"
+#include "os.h"
+#include "os_io_seproxyhal.h"
 #include "swap_utils.h"
+#include "tokens.h"
+#include "ui_common.h"
+#include "uint256.h"
+#include "utils.h"
 
 // App flags
-#define APP_FLAG_DATA_ALLOWED          0x01
+#define APP_FLAG_DATA_ALLOWED 0x01
 #define APP_FLAG_EXTERNAL_TOKEN_NEEDED 0x02
 
 // App type
 #define APP_TYPE 0x02
 
 // APDU instructions
-#define CLA                                 0xE0
-#define INS_GET_PUBLIC_KEY                  0x02
-#define INS_SIGN                            0x04
-#define INS_GET_APP_CONFIGURATION           0x06
-#define INS_SIGN_PERSONAL_MESSAGE           0x08
+#define CLA 0xE0
+#define INS_GET_PUBLIC_KEY 0x02
+#define INS_SIGN 0x04
+#define INS_GET_APP_CONFIGURATION 0x06
+#define INS_SIGN_PERSONAL_MESSAGE 0x08
 #define INS_PROVIDE_ERC20_TOKEN_INFORMATION 0x0A
-#define INS_GET_APP_TYPE                    0x0C
-#define P1_CONFIRM                          0x01
-#define P1_NON_CONFIRM                      0x00
-#define P2_NO_CHAINCODE                     0x00
-#define P2_CHAINCODE                        0x01
-#define P1_FIRST                            0x00
-#define P1_MORE                             0x80
+#define INS_GET_APP_TYPE 0x0C
+#define P1_CONFIRM 0x01
+#define P1_NON_CONFIRM 0x00
+#define P2_NO_CHAINCODE 0x00
+#define P2_CHAINCODE 0x01
+#define P1_FIRST 0x00
+#define P1_MORE 0x80
 
 // Common instructions
-#define COMMON_CLA               0xB0
+#define COMMON_CLA 0xB0
 #define COMMON_INS_GET_WALLET_ID 0x04
 
 // APDU offsets
-#define OFFSET_CLA   0
-#define OFFSET_INS   1
-#define OFFSET_P1    2
-#define OFFSET_P2    3
-#define OFFSET_LC    4
+#define OFFSET_CLA 0
+#define OFFSET_INS 1
+#define OFFSET_P1 2
+#define OFFSET_P2 3
+#define OFFSET_LC 4
 #define OFFSET_CDATA 5
 
 // Token signature public key
@@ -78,33 +77,38 @@ static const uint8_t CLABS_SIGNATURE_PUBLIC_KEY[] = {
     // should output the same hex pub key
     0x04,
 
-    0x59, 0xd5, 0x59, 0xee, 0x21, 0xa7, 0x76, 0xfe, 0x43, 0xe4, 0xba, 0xac, 0x14, 0x18, 0x1c, 0x1e,
-    0x5f, 0xb5, 0x1b, 0x5b, 0x22, 0xbc, 0x1,  0xdd, 0x46, 0xe0, 0x60, 0xe,  0x8d, 0xc,  0xd7, 0xc8,
+    0x59, 0xd5, 0x59, 0xee, 0x21, 0xa7, 0x76, 0xfe, 0x43, 0xe4, 0xba,
+    0xac, 0x14, 0x18, 0x1c, 0x1e, 0x5f, 0xb5, 0x1b, 0x5b, 0x22, 0xbc,
+    0x1,  0xdd, 0x46, 0xe0, 0x60, 0xe,  0x8d, 0xc,  0xd7, 0xc8,
 
-    0x6d, 0xc,  0xf2, 0x3e, 0xe0, 0xa3, 0x8d, 0xc8, 0x3d, 0xa6, 0x4b, 0xd0, 0x2a, 0x6d, 0x43, 0x2c,
-    0x86, 0x10, 0x4a, 0x47, 0xaf, 0xef, 0x83, 0x83, 0xc2, 0x2b, 0xe3, 0xd4, 0xd1, 0xa5, 0x32, 0x2d};
+    0x6d, 0xc,  0xf2, 0x3e, 0xe0, 0xa3, 0x8d, 0xc8, 0x3d, 0xa6, 0x4b,
+    0xd0, 0x2a, 0x6d, 0x43, 0x2c, 0x86, 0x10, 0x4a, 0x47, 0xaf, 0xef,
+    0x83, 0x83, 0xc2, 0x2b, 0xe3, 0xd4, 0xd1, 0xa5, 0x32, 0x2d};
 
 static const uint8_t LEDGER_SIGNATURE_PUBLIC_KEY[] = {
 #if defined(HAVE_CAL_TEST_KEY)
-    0x04, 0x4c, 0xca, 0x8f, 0xad, 0x49, 0x6a, 0xa5, 0x04, 0x0a, 0x00, 0xa7, 0xeb, 0x2f,
-    0x5c, 0xc3, 0xb8, 0x53, 0x76, 0xd8, 0x8b, 0xa1, 0x47, 0xa7, 0xd7, 0x05, 0x4a, 0x99,
-    0xc6, 0x40, 0x56, 0x18, 0x87, 0xfe, 0x17, 0xa0, 0x96, 0xe3, 0x6c, 0x3b, 0x52, 0x3b,
-    0x24, 0x4f, 0x3e, 0x2f, 0xf7, 0xf8, 0x40, 0xae, 0x26, 0xc4, 0xe7, 0x7a, 0xd3, 0xbc,
-    0x73, 0x9a, 0xf5, 0xde, 0x6f, 0x2d, 0x77, 0xa7, 0xb6
+    0x04, 0x4c, 0xca, 0x8f, 0xad, 0x49, 0x6a, 0xa5, 0x04, 0x0a, 0x00,
+    0xa7, 0xeb, 0x2f, 0x5c, 0xc3, 0xb8, 0x53, 0x76, 0xd8, 0x8b, 0xa1,
+    0x47, 0xa7, 0xd7, 0x05, 0x4a, 0x99, 0xc6, 0x40, 0x56, 0x18, 0x87,
+    0xfe, 0x17, 0xa0, 0x96, 0xe3, 0x6c, 0x3b, 0x52, 0x3b, 0x24, 0x4f,
+    0x3e, 0x2f, 0xf7, 0xf8, 0x40, 0xae, 0x26, 0xc4, 0xe7, 0x7a, 0xd3,
+    0xbc, 0x73, 0x9a, 0xf5, 0xde, 0x6f, 0x2d, 0x77, 0xa7, 0xb6
 #elif defined(HAVE_CAL_STAGING_KEY)
     // staging key 2019-01-11 03:07PM (erc20signer)
-    0x04, 0x20, 0xda, 0x62, 0x00, 0x3c, 0x0c, 0xe0, 0x97, 0xe3, 0x36, 0x44, 0xa1, 0x0f,
-    0xe4, 0xc3, 0x04, 0x54, 0x06, 0x9a, 0x44, 0x54, 0xf0, 0xfa, 0x9d, 0x4e, 0x84, 0xf4,
-    0x50, 0x91, 0x42, 0x9b, 0x52, 0x20, 0xaf, 0x9e, 0x35, 0xc0, 0xb2, 0xd9, 0x28, 0x93,
-    0x80, 0x13, 0x73, 0x07, 0xde, 0x4d, 0xd1, 0xd4, 0x18, 0x42, 0x8c, 0xf2, 0x1a, 0x93,
-    0xb3, 0x35, 0x61, 0xbb, 0x09, 0xd8, 0x8f, 0xe5, 0x79
+    0x04, 0x20, 0xda, 0x62, 0x00, 0x3c, 0x0c, 0xe0, 0x97, 0xe3, 0x36,
+    0x44, 0xa1, 0x0f, 0xe4, 0xc3, 0x04, 0x54, 0x06, 0x9a, 0x44, 0x54,
+    0xf0, 0xfa, 0x9d, 0x4e, 0x84, 0xf4, 0x50, 0x91, 0x42, 0x9b, 0x52,
+    0x20, 0xaf, 0x9e, 0x35, 0xc0, 0xb2, 0xd9, 0x28, 0x93, 0x80, 0x13,
+    0x73, 0x07, 0xde, 0x4d, 0xd1, 0xd4, 0x18, 0x42, 0x8c, 0xf2, 0x1a,
+    0x93, 0xb3, 0x35, 0x61, 0xbb, 0x09, 0xd8, 0x8f, 0xe5, 0x79
 #else
     // production key 2019-01-11 03:07PM (erc20signer)
-    0x04, 0x5e, 0x6c, 0x10, 0x20, 0xc1, 0x4d, 0xc4, 0x64, 0x42, 0xfe, 0x89, 0xf9, 0x7c,
-    0x0b, 0x68, 0xcd, 0xb1, 0x59, 0x76, 0xdc, 0x24, 0xf2, 0x4c, 0x31, 0x6e, 0x7b, 0x30,
-    0xfe, 0x4e, 0x8c, 0xc7, 0x6b, 0x14, 0x89, 0x15, 0x0c, 0x21, 0x51, 0x4e, 0xbf, 0x44,
-    0x0f, 0xf5, 0xde, 0xa5, 0x39, 0x3d, 0x83, 0xde, 0x53, 0x58, 0xcd, 0x09, 0x8f, 0xce,
-    0x8f, 0xd0, 0xf8, 0x1d, 0xaa, 0x94, 0x97, 0x91, 0x83
+    0x04, 0x5e, 0x6c, 0x10, 0x20, 0xc1, 0x4d, 0xc4, 0x64, 0x42, 0xfe,
+    0x89, 0xf9, 0x7c, 0x0b, 0x68, 0xcd, 0xb1, 0x59, 0x76, 0xdc, 0x24,
+    0xf2, 0x4c, 0x31, 0x6e, 0x7b, 0x30, 0xfe, 0x4e, 0x8c, 0xc7, 0x6b,
+    0x14, 0x89, 0x15, 0x0c, 0x21, 0x51, 0x4e, 0xbf, 0x44, 0x0f, 0xf5,
+    0xde, 0xa5, 0x39, 0x3d, 0x83, 0xde, 0x53, 0x58, 0xcd, 0x09, 0x8f,
+    0xce, 0x8f, 0xd0, 0xf8, 0x1d, 0xaa, 0x94, 0x97, 0x91, 0x83
 #endif
 };
 
@@ -141,7 +145,8 @@ static const char SIGN_MAGIC[] =
  * @param len The length of the input data buffer
  * @return 0 if successful, -1 if failed
  */
-static int parse_bip32_path(bip32Path_t *derivationPath, const uint8_t *input, size_t len) {
+static int parse_bip32_path(bip32Path_t* derivationPath, const uint8_t* input,
+                            size_t len) {
     uint8_t path_length;
 
     if (len == 0 || input == NULL) {
@@ -177,20 +182,34 @@ unsigned int const U_os_perso_seed_cookie[] = {
  *
  * @param tx The transaction buffer
  */
-void handleGetWalletId(volatile unsigned int *tx) {
+void handleGetWalletId(volatile unsigned int* tx) {
     unsigned char t[64];
     cx_ecfp_256_private_key_t priv;
     cx_ecfp_256_public_key_t pub;
-    // seed => priv key
-    CX_THROW(os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2, t, NULL));
-    // priv key => pubkey
-    CX_THROW(cx_ecdsa_init_private_key(CX_CURVE_256K1, t, 32, &priv));
-    CX_THROW(cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &pub, &priv, 1));
-    // pubkey -> sha512
+    cx_err_t error;
+
+    // The wallet ID is derived from the seed, so no exit from here may leave
+    // derived key material on the stack. Failures are collected rather than
+    // thrown, because a throw would jump past the wipe below.
+    error = os_derive_bip32_no_throw(CX_CURVE_256K1, U_os_perso_seed_cookie, 2,
+                                     t, NULL);
+    if (error == CX_OK) {
+        error = cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, t, 32, &priv);
+    }
+    if (error == CX_OK) {
+        error = cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &pub, &priv, 1);
+    }
+    explicit_bzero(&priv, sizeof(priv));
+    explicit_bzero(t, sizeof(t));
+    if (error != CX_OK) {
+        THROW(error);
+    }
+
+    // The wallet ID itself is public, so t may be reused to hold it.
     cx_hash_sha512(pub.W, sizeof(pub.W), t, sizeof(t));
     // ! cookie !
-    memcpy(G_io_apdu_buffer, t, 64);
-    *tx = 64;
+    memcpy(G_io_apdu_buffer, t, sizeof(t));
+    *tx = sizeof(t);
     THROW(SW_OK);
 }
 
@@ -206,12 +225,9 @@ void handleGetWalletId(volatile unsigned int *tx) {
  * @param flags The flags
  * @param tx The transaction buffer
  */
-void handleGetPublicKey(uint8_t p1,
-                        uint8_t p2,
-                        uint8_t *dataBuffer,
-                        uint16_t dataLength,
-                        volatile unsigned int *flags,
-                        volatile unsigned int *tx) {
+void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t* dataBuffer,
+                        uint16_t dataLength, volatile unsigned int* flags,
+                        volatile unsigned int* tx) {
     UNUSED(dataLength);
     uint8_t privateKeyData[64];
     bip32Path_t derivationPath;
@@ -232,41 +248,38 @@ void handleGetPublicKey(uint8_t p1,
 
     tmpCtx.publicKeyContext.getChaincode = (p2 == P2_CHAINCODE);
     io_seproxyhal_io_heartbeat();
-    CX_THROW(os_derive_bip32_no_throw(
-        CX_CURVE_256K1,
-        derivationPath.path,
-        derivationPath.len,
-        privateKeyData,
-        (tmpCtx.publicKeyContext.getChaincode ? tmpCtx.publicKeyContext.chainCode : NULL)));
-
-    CX_THROW(cx_ecfp_init_private_key_no_throw(CX_CURVE_256K1, privateKeyData, 32, &privateKey));
-    io_seproxyhal_io_heartbeat();
-    CX_THROW(cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1,
-                                            &tmpCtx.publicKeyContext.publicKey,
-                                            &privateKey,
-                                            1));
+    // Failures are collected rather than thrown: a throw here would jump past
+    // the wipes below and leave the derived key on the stack.
+    cx_err_t error = os_derive_bip32_no_throw(
+        CX_CURVE_256K1, derivationPath.path, derivationPath.len, privateKeyData,
+        (tmpCtx.publicKeyContext.getChaincode
+             ? tmpCtx.publicKeyContext.chainCode
+             : NULL));
+    if (error == CX_OK) {
+        error = cx_ecfp_init_private_key_no_throw(
+            CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+    }
+    if (error == CX_OK) {
+        io_seproxyhal_io_heartbeat();
+        error = cx_ecfp_generate_pair_no_throw(
+            CX_CURVE_256K1, &tmpCtx.publicKeyContext.publicKey, &privateKey, 1);
+    }
     explicit_bzero(&privateKey, sizeof(privateKey));
     explicit_bzero(privateKeyData, sizeof(privateKeyData));
+    if (error != CX_OK) {
+        THROW(error);
+    }
     io_seproxyhal_io_heartbeat();
     getEthAddressStringFromKey(&tmpCtx.publicKeyContext.publicKey,
-                               tmpCtx.publicKeyContext.address,
-                               CHAIN_ID,
+                               tmpCtx.publicKeyContext.address, CHAIN_ID,
                                &sha3);
-#ifndef NO_CONSENT
-    if (p1 == P1_NON_CONFIRM)
-#endif  // NO_CONSENT
-    {
+    if (p1 == P1_NON_CONFIRM) {
         *tx = set_result_get_publicKey();
         THROW(SW_OK);
-    }
-#ifndef NO_CONSENT
-    else {
+    } else {
         // prepare for a UI based reply
-        snprintf(strings.common.fullAddress,
-                 sizeof(strings.common.fullAddress),
-                 "0x%.*s",
-                 40,
-                 tmpCtx.publicKeyContext.address);
+        snprintf(strings.common.fullAddress, sizeof(strings.common.fullAddress),
+                 "0x%.*s", 40, tmpCtx.publicKeyContext.address);
 
 #ifdef HAVE_SWAP
         if (!G_called_from_swap) {
@@ -278,7 +291,6 @@ void handleGetPublicKey(uint8_t p1,
 
         *flags |= IO_ASYNCH_REPLY;
     }
-#endif  // NO_CONSENT
 }
 
 /**
@@ -291,12 +303,11 @@ void handleGetPublicKey(uint8_t p1,
  * @param flags The flags
  * @param tx The transaction buffer
  */
-void handleProvideErc20TokenInformation(uint8_t p1,
-                                        uint8_t p2,
-                                        uint8_t *workBuffer,
+void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2,
+                                        uint8_t* workBuffer,
                                         uint16_t dataLength,
-                                        volatile unsigned int *flags,
-                                        volatile unsigned int *tx) {
+                                        volatile unsigned int* flags,
+                                        volatile unsigned int* tx) {
     UNUSED(flags);
     uint32_t offset = 0;
     uint8_t tickerLength;
@@ -313,10 +324,12 @@ void handleProvideErc20TokenInformation(uint8_t p1,
 
     tmpCtx.transactionContext.currentTokenIndex =
         (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKEN;
-    tokenDefinition_t *token =
-        &tmpCtx.transactionContext.tokens[tmpCtx.transactionContext.currentTokenIndex];
+    tokenDefinition_t* token =
+        &tmpCtx.transactionContext
+             .tokens[tmpCtx.transactionContext.currentTokenIndex];
 
-    PRINTF("Provisioning currentTokenIndex %d\n", tmpCtx.transactionContext.currentTokenIndex);
+    PRINTF("Provisioning currentTokenIndex %d\n",
+           tmpCtx.transactionContext.currentTokenIndex);
 
     if (dataLength < 1) {
         THROW(SW_ERROR_IN_DATA);
@@ -330,7 +343,8 @@ void handleProvideErc20TokenInformation(uint8_t p1,
     if (dataLength < tickerLength + EVM_ADDRESS_LEN + 4 + 4) {
         THROW(SW_ERROR_IN_DATA);
     }
-    cx_hash_sha256(workBuffer + offset, tickerLength + EVM_ADDRESS_LEN + 4 + 4, hash, 32);
+    cx_hash_sha256(workBuffer + offset, tickerLength + EVM_ADDRESS_LEN + 4 + 4,
+                   hash, 32);
     memcpy(token->ticker, workBuffer + offset, tickerLength);
     token->ticker[tickerLength] = '\0';
     offset += tickerLength;
@@ -342,7 +356,7 @@ void handleProvideErc20TokenInformation(uint8_t p1,
     if (decimals > UINT8_MAX) {
         THROW(SW_ERROR_IN_DATA);
     }
-    token->decimals = (uint8_t) decimals;
+    token->decimals = (uint8_t)decimals;
     offset += 4;
     dataLength -= 4;
 
@@ -350,23 +364,24 @@ void handleProvideErc20TokenInformation(uint8_t p1,
     offset += 4;
     dataLength -= 4;
 
-    CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1,
-                                              CLABS_SIGNATURE_PUBLIC_KEY,
-                                              sizeof(CLABS_SIGNATURE_PUBLIC_KEY),
-                                              &tokenKey));
+    CX_THROW(cx_ecfp_init_public_key_no_throw(
+        CX_CURVE_256K1, CLABS_SIGNATURE_PUBLIC_KEY,
+        sizeof(CLABS_SIGNATURE_PUBLIC_KEY), &tokenKey));
 
-    if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset, dataLength)) {
-        CX_THROW(cx_ecfp_init_public_key_no_throw(CX_CURVE_256K1,
-                                                  LEDGER_SIGNATURE_PUBLIC_KEY,
-                                                  sizeof(LEDGER_SIGNATURE_PUBLIC_KEY),
-                                                  &tokenKey));
+    if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset,
+                                  dataLength)) {
+        CX_THROW(cx_ecfp_init_public_key_no_throw(
+            CX_CURVE_256K1, LEDGER_SIGNATURE_PUBLIC_KEY,
+            sizeof(LEDGER_SIGNATURE_PUBLIC_KEY), &tokenKey));
 
-        if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset, dataLength)) {
+        if (!cx_ecdsa_verify_no_throw(&tokenKey, hash, 32, workBuffer + offset,
+                                      dataLength)) {
             PRINTF("Invalid token signature\n");
             THROW(SW_ERROR_IN_DATA);
         }
     }
-    tmpCtx.transactionContext.tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
+    tmpCtx.transactionContext
+        .tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
 
     if (*tx >= sizeof(G_io_apdu_buffer)) {
         THROW(SW_INITIALIZATION_ERROR);
@@ -385,12 +400,9 @@ void handleProvideErc20TokenInformation(uint8_t p1,
  * @param flags The flags variable.
  * @param tx The transaction variable.
  */
-void handleSign(uint8_t p1,
-                uint8_t p2,
-                const uint8_t *workBuffer,
-                uint16_t dataLength,
-                volatile unsigned int *flags,
-                volatile unsigned int *tx) {
+void handleSign(uint8_t p1, uint8_t p2, const uint8_t* workBuffer,
+                uint16_t dataLength, volatile unsigned int* flags,
+                volatile unsigned int* tx) {
     UNUSED(tx);
     parserStatus_e txResult;
     if (p1 == P1_FIRST) {
@@ -398,12 +410,22 @@ void handleSign(uint8_t p1,
             reset_app_context();
         }
 
-        if (parse_bip32_path(&tmpCtx.transactionContext.derivationPath, workBuffer, dataLength)) {
+        if (parse_bip32_path(&tmpCtx.transactionContext.derivationPath,
+                             workBuffer, dataLength)) {
             PRINTF("Invalid path\n");
             THROW(SW_ERROR_IN_DATA);
         }
-        workBuffer += 1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
-        dataLength -= 1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
+        size_t pathLength =
+            1 + tmpCtx.transactionContext.derivationPath.len * sizeof(uint32_t);
+        // The transaction type byte must be present in this same APDU: reading
+        // it from beyond the received data would hash a stale G_io_apdu_buffer
+        // byte and wrap dataLength below zero.
+        if (dataLength < pathLength + 1) {
+            PRINTF("Missing transaction type\n");
+            THROW(SW_ERROR_IN_DATA);
+        }
+        workBuffer += pathLength;
+        dataLength -= pathLength;
 
         appState = APP_STATE_SIGNING_TX;
         dataPresent = false;
@@ -413,7 +435,8 @@ void handleSign(uint8_t p1,
         uint8_t txType = *workBuffer;
         if (txType == EIP1559 || txType == CIP64) {
             // Initialize the SHA3 hashing with the transaction type
-            CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, workBuffer, 1, NULL, 0));
+            CX_THROW(
+                cx_hash_no_throw((cx_hash_t*)&sha3, 0, workBuffer, 1, NULL, 0));
             // Save the transaction type
             txContext.txType = txType;
             workBuffer++;
@@ -470,18 +493,17 @@ void handleSign(uint8_t p1,
  * @param flags The flags variable.
  * @param tx The transaction variable.
  */
-void handleGetAppConfiguration(uint8_t p1,
-                               uint8_t p2,
-                               uint8_t *workBuffer,
+void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t* workBuffer,
                                uint16_t dataLength,
-                               volatile unsigned int *flags,
-                               volatile unsigned int *tx) {
+                               volatile unsigned int* flags,
+                               volatile unsigned int* tx) {
     UNUSED(p1);
     UNUSED(p2);
     UNUSED(workBuffer);
     UNUSED(dataLength);
     UNUSED(flags);
-    G_io_apdu_buffer[0] = (N_storage.dataAllowed ? APP_FLAG_DATA_ALLOWED : 0x00);
+    G_io_apdu_buffer[0] =
+        (N_storage.dataAllowed ? APP_FLAG_DATA_ALLOWED : 0x00);
 #ifndef HAVE_TOKENS_LIST
     G_io_apdu_buffer[0] |= APP_FLAG_EXTERNAL_TOKEN_NEEDED;
 #endif
@@ -502,12 +524,9 @@ void handleGetAppConfiguration(uint8_t p1,
  * @param flags The flags variable.
  * @param tx The transaction variable.
  */
-void handleGetAppType(uint8_t p1,
-                      uint8_t p2,
-                      uint8_t *workBuffer,
-                      uint16_t dataLength,
-                      volatile unsigned int *flags,
-                      volatile unsigned int *tx) {
+void handleGetAppType(uint8_t p1, uint8_t p2, uint8_t* workBuffer,
+                      uint16_t dataLength, volatile unsigned int* flags,
+                      volatile unsigned int* tx) {
     UNUSED(p1);
     UNUSED(p2);
     UNUSED(workBuffer);
@@ -528,12 +547,10 @@ void handleGetAppType(uint8_t p1,
  * @param flags The flags variable.
  * @param tx The transaction variable.
  */
-void handleSignPersonalMessage(uint8_t p1,
-                               uint8_t p2,
-                               uint8_t *workBuffer,
+void handleSignPersonalMessage(uint8_t p1, uint8_t p2, uint8_t* workBuffer,
                                uint16_t dataLength,
-                               volatile unsigned int *flags,
-                               volatile unsigned int *tx) {
+                               volatile unsigned int* flags,
+                               volatile unsigned int* tx) {
     UNUSED(tx);
 
     if (p1 == P1_FIRST) {
@@ -547,13 +564,14 @@ void handleSignPersonalMessage(uint8_t p1,
         }
 
         if (parse_bip32_path(&tmpCtx.messageSigningContext.derivationPath,
-                             workBuffer,
-                             dataLength)) {
+                             workBuffer, dataLength)) {
             PRINTF("Invalid path\n");
             THROW(SW_ERROR_IN_DATA);
         }
-        workBuffer += 1 + tmpCtx.messageSigningContext.derivationPath.len * sizeof(uint32_t);
-        dataLength -= 1 + tmpCtx.messageSigningContext.derivationPath.len * sizeof(uint32_t);
+        workBuffer += 1 + tmpCtx.messageSigningContext.derivationPath.len *
+                              sizeof(uint32_t);
+        dataLength -= 1 + tmpCtx.messageSigningContext.derivationPath.len *
+                              sizeof(uint32_t);
 
         appState = APP_STATE_SIGNING_MESSAGE;
 
@@ -566,25 +584,22 @@ void handleSignPersonalMessage(uint8_t p1,
         dataLength -= 4;
         // Initialize message header + length
         CX_THROW(cx_keccak_init_no_throw(&sha3, 256));
-        CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
-                                  0,
-                                  (uint8_t *) SIGN_MAGIC,
-                                  sizeof(SIGN_MAGIC) - 1,
-                                  NULL,
-                                  0));
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, 0, (uint8_t*)SIGN_MAGIC,
+                                  sizeof(SIGN_MAGIC) - 1, NULL, 0));
 
-        for (i = 1; (((i * base) <= tmpCtx.messageSigningContext.remainingLength) &&
-                     (((i * base) / base) == i));
-             i *= base)
-            ;
+        for (i = 1;
+             (((i * base) <= tmpCtx.messageSigningContext.remainingLength) &&
+              (((i * base) / base) == i));
+             i *= base);
         for (; i; i /= base) {
-            tmp[pos++] = '0' + ((tmpCtx.messageSigningContext.remainingLength / i) % base);
+            tmp[pos++] =
+                '0' +
+                ((tmpCtx.messageSigningContext.remainingLength / i) % base);
         }
         tmp[pos] = '\0';
 
-        CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, (uint8_t *) tmp, pos, NULL, 0));
-
-        cx_sha256_init(&tmpContent.sha2);
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, 0, (uint8_t*)tmp, pos,
+                                  NULL, 0));
     } else if (p1 != P1_MORE) {
         THROW(SW_WRONG_P1_OR_P2);
     }
@@ -598,44 +613,21 @@ void handleSignPersonalMessage(uint8_t p1,
     if (dataLength > tmpCtx.messageSigningContext.remainingLength) {
         THROW(SW_ERROR_IN_DATA);
     }
-    CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3, 0, workBuffer, dataLength, NULL, 0));
-    CX_THROW(cx_hash_no_throw((cx_hash_t *) &tmpContent.sha2, 0, workBuffer, dataLength, NULL, 0));
+    CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, 0, workBuffer, dataLength,
+                              NULL, 0));
     tmpCtx.messageSigningContext.remainingLength -= dataLength;
     if (tmpCtx.messageSigningContext.remainingLength == 0) {
-        uint8_t hashMessage[32];
-
-        CX_THROW(cx_hash_no_throw((cx_hash_t *) &sha3,
-                                  CX_LAST,
-                                  workBuffer,
-                                  0,
+        CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3, CX_LAST, workBuffer, 0,
                                   tmpCtx.messageSigningContext.hash,
-                                  32));
-        CX_THROW(cx_hash_no_throw((cx_hash_t *) &tmpContent.sha2,
-                                  CX_LAST,
-                                  workBuffer,
-                                  0,
-                                  hashMessage,
-                                  32));
+                                  MESSAGE_HASH_LEN));
 
-#ifdef HAVE_BAGL
-#define HASH_LENGTH 4
-        array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH / 2);
-        strings.common.fullAddress[HASH_LENGTH / 2 * 2] = '.';
-        strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 1] = '.';
-        strings.common.fullAddress[HASH_LENGTH / 2 * 2 + 2] = '.';
-        array_hexstr(strings.common.fullAddress + HASH_LENGTH / 2 * 2 + 3,
-                     hashMessage + 32 - HASH_LENGTH / 2,
-                     HASH_LENGTH / 2);
-#else
-#define HASH_LENGTH 32
-        array_hexstr(strings.common.fullAddress, hashMessage, HASH_LENGTH);
-#endif
+        // Show the digest that is signed, in full: a shortened preview is not
+        // enough to tell two messages apart, and a separate hash of the message
+        // is not what the user's approval would be binding.
+        array_hexstr(strings.tmp.messageHash, tmpCtx.messageSigningContext.hash,
+                     MESSAGE_HASH_LEN);
 
-#ifdef NO_CONSENT
-        io_seproxyhal_touch_signMessage_ok(NULL);
-#else
         ui_display_sign_flow();
-#endif  // NO_CONSENT
 
         *flags |= IO_ASYNCH_REPLY;
 
@@ -649,7 +641,7 @@ void handleSignPersonalMessage(uint8_t p1,
  * @param flags The flags variable.
  * @param tx The tx variable.
  */
-void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
+void handleApdu(volatile unsigned int* flags, volatile unsigned int* tx) {
     unsigned short sw = 0;
 #ifdef HAVE_SWAP
     if (G_called_from_swap) {
@@ -682,27 +674,22 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
                     handleGetPublicKey(G_io_apdu_buffer[OFFSET_P1],
                                        G_io_apdu_buffer[OFFSET_P2],
                                        G_io_apdu_buffer + OFFSET_CDATA,
-                                       G_io_apdu_buffer[OFFSET_LC],
-                                       flags,
-                                       tx);
+                                       G_io_apdu_buffer[OFFSET_LC], flags, tx);
                     break;
 
                 case INS_PROVIDE_ERC20_TOKEN_INFORMATION:
-                    handleProvideErc20TokenInformation(G_io_apdu_buffer[OFFSET_P1],
-                                                       G_io_apdu_buffer[OFFSET_P2],
-                                                       G_io_apdu_buffer + OFFSET_CDATA,
-                                                       G_io_apdu_buffer[OFFSET_LC],
-                                                       flags,
-                                                       tx);
+                    handleProvideErc20TokenInformation(
+                        G_io_apdu_buffer[OFFSET_P1],
+                        G_io_apdu_buffer[OFFSET_P2],
+                        G_io_apdu_buffer + OFFSET_CDATA,
+                        G_io_apdu_buffer[OFFSET_LC], flags, tx);
                     break;
 
                 case INS_SIGN:
                     handleSign(G_io_apdu_buffer[OFFSET_P1],
                                G_io_apdu_buffer[OFFSET_P2],
                                G_io_apdu_buffer + OFFSET_CDATA,
-                               G_io_apdu_buffer[OFFSET_LC],
-                               flags,
-                               tx);
+                               G_io_apdu_buffer[OFFSET_LC], flags, tx);
                     break;
 
                 case INS_GET_APP_CONFIGURATION:
@@ -710,8 +697,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
                                               G_io_apdu_buffer[OFFSET_P2],
                                               G_io_apdu_buffer + OFFSET_CDATA,
                                               G_io_apdu_buffer[OFFSET_LC],
-                                              flags,
-                                              tx);
+                                              flags, tx);
                     break;
 
                 case INS_SIGN_PERSONAL_MESSAGE:
@@ -720,17 +706,14 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
                                               G_io_apdu_buffer[OFFSET_P2],
                                               G_io_apdu_buffer + OFFSET_CDATA,
                                               G_io_apdu_buffer[OFFSET_LC],
-                                              flags,
-                                              tx);
+                                              flags, tx);
                     break;
 
                 case INS_GET_APP_TYPE:
                     handleGetAppType(G_io_apdu_buffer[OFFSET_P1],
                                      G_io_apdu_buffer[OFFSET_P2],
                                      G_io_apdu_buffer + OFFSET_CDATA,
-                                     G_io_apdu_buffer[OFFSET_LC],
-                                     flags,
-                                     tx);
+                                     G_io_apdu_buffer[OFFSET_LC], flags, tx);
                     break;
 
 #if 0
@@ -742,9 +725,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
                     THROW(SW_INS_NOT_SUPPORTED);
             }
         }
-        CATCH(EXCEPTION_IO_RESET) {
-            THROW(EXCEPTION_IO_RESET);
-        }
+        CATCH(EXCEPTION_IO_RESET) { THROW(EXCEPTION_IO_RESET); }
         CATCH_OTHER(e) {
             switch (e & 0xF000) {
                 case 0x6000:
@@ -770,8 +751,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx) {
             G_io_apdu_buffer[*tx + 1] = sw;
             *tx += 2;
         }
-        FINALLY {
-        }
+        FINALLY {}
     }
     END_TRY;
 }
@@ -809,9 +789,7 @@ void sample_main(void) {
 
                 handleApdu(&flags, &tx);
             }
-            CATCH(EXCEPTION_IO_RESET) {
-                THROW(EXCEPTION_IO_RESET);
-            }
+            CATCH(EXCEPTION_IO_RESET) { THROW(EXCEPTION_IO_RESET); }
             CATCH_OTHER(e) {
                 switch (e & 0xF000) {
                     case 0x6000:
@@ -837,8 +815,7 @@ void sample_main(void) {
                 G_io_apdu_buffer[tx + 1] = sw;
                 tx += 2;
             }
-            FINALLY {
-            }
+            FINALLY {}
         }
         END_TRY;
     }
@@ -862,7 +839,8 @@ void app_main(void) {
 
 #ifdef HAVE_BLE
                 // grab the current plane mode setting
-                G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
+                G_io_app.plane_mode =
+                    os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
 #endif  // HAVE_BLE
 
                 if (N_storage.initialized != 0x01) {
@@ -870,7 +848,8 @@ void app_main(void) {
                     storage.dataAllowed = 0x00;
                     storage.contractDetails = 0x00;
                     storage.initialized = 0x01;
-                    nvm_write(&N_storage, (void *) &storage, sizeof(internalStorage_t));
+                    nvm_write(&N_storage, (void*)&storage,
+                              sizeof(internalStorage_t));
                 }
                 dataAllowed = N_storage.dataAllowed;
                 contractDetails = N_storage.contractDetails;
@@ -879,7 +858,8 @@ void app_main(void) {
                 USB_power(1);
 
 #ifdef HAVE_BLE
-                // BLE has to be powered on before ui_idle() call for Blue devices only
+                // BLE has to be powered on before ui_idle() call for Blue
+                // devices only
                 BLE_power(0, NULL);
                 BLE_power(1, NULL);
 #endif  // HAVE_BLE
@@ -897,14 +877,22 @@ void app_main(void) {
             CATCH(EXCEPTION_IO_RESET) {
                 // reset IO and UX before continuing
                 CLOSE_TRY;
+#ifdef HAVE_SWAP
+                if (G_called_from_swap) {
+                    // The approved parameters live in BSS and survive this
+                    // loop, so continuing would keep auto-signing against an
+                    // approval whose session is gone. Report failure to
+                    // Exchange instead; this does not return.
+                    swap_finalize_exchange_sign_transaction(false);
+                }
+#endif  // HAVE_SWAP
                 continue;
             }
             CATCH_ALL {
                 CLOSE_TRY;
                 break;
             }
-            FINALLY {
-            }
+            FINALLY {}
         }
         END_TRY;
     }

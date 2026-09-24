@@ -23,8 +23,10 @@
  * @date 8th of March 2016
  */
 
+#ifndef TESTING
 #include "os.h"
 #include "cx.h"
+#endif
 #include "ethUtils.h"
 
 #include <stdbool.h>
@@ -78,7 +80,7 @@ void getEthAddressStringFromBinary(const uint8_t *address, uint8_t *out,
     out[40] = '\0';
 }
 
-#else
+#elif !defined(TESTING)
 
 static const uint8_t HEXDIGITS[] = "0123456789abcdef";
 

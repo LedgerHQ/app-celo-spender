@@ -13,5 +13,6 @@ jobs:
   job_functional_tests:
     uses: LedgerHQ/app-exchange/.github/workflows/reusable_swap_functional_tests.yml@develop
     with:
+      repo_for_celo: ${{ github.repository }}
       branch_for_celo: ${{ github.ref }}
       test_filter: '"CELO or Celo or celo"'

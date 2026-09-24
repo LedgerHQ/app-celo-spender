@@ -25,7 +25,7 @@ APPNAME = "Celo"
 
 APPVERSION_M=1
 APPVERSION_N=8
-APPVERSION_P=1
+APPVERSION_P=3
 APPVERSION=$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
 # Application source files
@@ -63,12 +63,30 @@ ENABLE_BLUETOOTH = 1
 ENABLE_NBGL_QRCODE = 1
 
 ########################################
+#          Compiler hardening          #
+########################################
+# The SDK defaults this to 0, which drops -fstack-protector-strong and the
+# randomized canary entry point.
+ENABLE_STACK_PROTECTOR = 1
+
+########################################
 #            Swap features             #
 ########################################
 ENABLE_SWAP = 1
 
-ifneq ($(NOCONSENT),)
-DEFINES   += NO_CONSENT
-endif
-
 include $(BOLOS_SDK)/Makefile.standard_app
+
+########################################
+#           App size report            #
+########################################
+# Both budgets are tight on Nano devices, so report them at the end of every build.
+.PHONY: app-size-report
+app-size-report: $(BIN_TARGETS) $(DBG_TARGETS)
+	@echo ""
+	@echo "Finished Concordium Ledger app ($(TARGET_NAME)) → $(BIN_DIR)/app.elf"
+	@$(GCCPATH)arm-none-eabi-size $(BIN_DIR)/app.elf | \
+	  awk 'NR==2 { printf "  flash  %6d B\n", $$1 }'
+	@$(GCCPATH)arm-none-eabi-nm $(BIN_DIR)/app.elf 2>/dev/null | \
+	  python3 -c "import sys; s={p[2]:int(p[0],16) for l in sys.stdin for p in [l.split()] if len(p)==3}; bss=s.get('_bss'); ebss=s.get('_ebss'); stk=s.get('_stack'); estk=s.get('_estack'); print(f'  SRAM   {(ebss-bss)+(estk-stk):6d} B total: {ebss-bss} B BSS variables, {estk-stk} B stack headroom') if all(v is not None for v in [bss,ebss,stk,estk]) else print('  SRAM   (nm symbols _bss/_ebss/_stack/_estack not found; SDK linker script may have changed)')"
+
+default: app-size-report

@@ -6,6 +6,9 @@ from .settings import settings_toggle, SettingID
 
 import pytest
 import ragger
+import rlp
+
+from ragger.navigator import NavInsID
 
 TESTS_ROOT_DIR = Path(__file__).parent
 
@@ -137,10 +140,13 @@ def test_try_sign_tx_eip1559_no_token_desc_blind_disabled_go_settings(test_name,
     except ragger.error.ExceptionRAPDU as e:
         assert(e.status == StatusCode.STATUS_ERROR_IN_DATA)
 
+# "cUSD" descriptor for the same cUSD contract, signed for use as a fee currency.
+CUSD_FEE_CURRENCY_TOKEN_DATA = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1"
+
+
 def test_add_cUSD_as_fee_currency(test_name, backend, navigator):
     celo = CeloClient(backend)
-    data = "0463555344765de816845861e75a25fca122bb6898b8b1282a000000120000a4ec304402201f8217a6310b78bfe63f40e767b1413e7480403603486f8d3b2cfd4aaa8607470220577c04cc84d1e0ad9d344c73b624e0fc36c63d4a5f33654ab0bcd892b068e7a1"
-    encoded_data = bytes.fromhex(data)
+    encoded_data = bytes.fromhex(CUSD_FEE_CURRENCY_TOKEN_DATA)
     with celo.send_in_chunk_async(
             INS.INS_PROVIDE_ERC20_TOKEN_INFORMATION,
             encoded_data
@@ -324,3 +330,357 @@ def test_provide_erc20_rejects_nonzero_p2(test_name, backend, navigator):
         celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA), p2=0x01)
     assert exc.value.status == StatusCode.STATUS_WRONG_P1_OR_P2
 
+
+
+# transferWithComment(address to, uint256 value, string comment) — the Celo token method
+# that carries a payment memo alongside the transfer.
+TRANSFER_WITH_COMMENT_SELECTOR = bytes.fromhex("e1d6aceb")
+
+CELO_CHAIN_ID = 42220
+# Contract address inside USDT_TOKEN_DATA, i.e. the token the descriptor above provisions.
+USDT_CONTRACT = bytes.fromhex("48065fbbe25f71c9282ddf5e1cd6d6a887483d5e")
+TRANSFER_RECIPIENT = bytes.fromhex("abd5d4575341b5878a1e7cb75dc0d4da91dfafa3")
+
+ABI_WORD_LEN = 32
+# The comment is the third of three arguments, so the ABI fixes where its bytes start:
+# to (32) + value (32) + the offset word itself (32).
+ABI_STRING_OFFSET = 96
+# Longest comment the app displays in full; see TOKEN_COMMENT_MAX_LEN in src/globals.h.
+COMMENT_MAX_LEN = 64
+
+
+def encode_abi_word(value: int) -> bytes:
+    return value.to_bytes(ABI_WORD_LEN, byteorder="big")
+
+
+def build_transfer_with_comment_data(comment: bytes,
+                                     recipient: bytes = TRANSFER_RECIPIENT,
+                                     amount: int = 10000,
+                                     string_offset: int = ABI_STRING_OFFSET,
+                                     declared_length: int = None,
+                                     padding_len: int = None) -> bytes:
+    """Builds transferWithComment calldata.
+
+    string_offset, declared_length and padding_len are overridable so that tests can
+    produce the malformed encodings the signer is required to refuse.
+    """
+    if declared_length is None:
+        declared_length = len(comment)
+    if padding_len is None:
+        padding_len = (-len(comment)) % ABI_WORD_LEN
+    return (TRANSFER_WITH_COMMENT_SELECTOR
+            + encode_abi_word(int.from_bytes(recipient, byteorder="big"))
+            + encode_abi_word(amount)
+            + encode_abi_word(string_offset)
+            + encode_abi_word(declared_length)
+            + comment
+            + bytes(padding_len))
+
+
+def build_eip1559_tx(data: bytes, to: bytes = USDT_CONTRACT, value: int = 0) -> str:
+    nonce = 0x47
+    max_priority_fee_per_gas = 0x0f4240
+    max_fee_per_gas = 0x060db88400
+    gas_limit = 0x01cf08
+    access_list = []
+    fields = [CELO_CHAIN_ID, nonce, max_priority_fee_per_gas, max_fee_per_gas,
+              gas_limit, to, value, data, access_list]
+    return (bytes([TX_TYPE_EIP1559]) + rlp.encode(fields)).hex()
+
+
+def navigate_to_approval_and_compare(test_name, backend, navigator):
+    """Navigates a clear-signed review to its approval screen, looking for it by name.
+
+    The number of review screens depends on the comment length and on the device, so these
+    tests must not count clicks to the approval screen. This only drives the ordinary
+    review: the blind-signing flow opens on a choice page that no repeated navigation
+    instruction can get past.
+    """
+    if backend.device.is_nano:
+        navigate_instruction = NavInsID.RIGHT_CLICK
+        validation_instructions = [NavInsID.BOTH_CLICK]
+        approval_text = "Accept"
+    else:
+        navigate_instruction = NavInsID.SWIPE_CENTER_TO_LEFT
+        validation_instructions = [NavInsID.USE_CASE_REVIEW_CONFIRM,
+                                   NavInsID.USE_CASE_STATUS_DISMISS]
+        approval_text = "Sign Transaction?"
+
+    navigator.navigate_until_text_and_compare(navigate_instruction,
+                                              validation_instructions,
+                                              approval_text,
+                                              TESTS_ROOT_DIR,
+                                              test_name)
+
+
+def provision_usdt_and_sign(test_name, backend, navigator, comment_data):
+    """Signs a transferWithComment payload, navigating to the approval screen by name.
+
+    A comment changes how many review screens there are, and by how much per device, so
+    these tests look for the approval screen instead of counting clicks to it.
+    """
+    celo = CeloClient(backend)
+    response = celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA))
+    assert response.status == StatusCode.STATUS_OK
+
+    rawTx = build_eip1559_tx(comment_data)
+    with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+        navigate_to_approval_and_compare(test_name, backend, navigator)
+    return get_async_response(backend)
+
+
+def provision_usdt_and_expect_refusal(backend, comment_data):
+    celo = CeloClient(backend)
+    response = celo.provide_token_information(bytes.fromhex(USDT_TOKEN_DATA))
+    assert response.status == StatusCode.STATUS_OK
+
+    rawTx = build_eip1559_tx(comment_data)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+            pass
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_sign_transfer_with_comment_displays_comment(test_name, backend, navigator):
+    # The comment is signed, so the review must show it.
+    data = build_transfer_with_comment_data(b"Coffee money")
+    response = provision_usdt_and_sign(test_name, backend, navigator, data)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_sign_transfer_with_empty_comment(test_name, backend, navigator):
+    # An empty comment is well-formed and has nothing to show, so the review carries no
+    # Comment field at all.
+    data = build_transfer_with_comment_data(b"")
+    response = provision_usdt_and_sign(test_name, backend, navigator, data)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_sign_transfer_with_max_length_comment(test_name, backend, navigator):
+    # The longest comment the app accepts; it spans several pages on the small screens.
+    data = build_transfer_with_comment_data(b"C" * COMMENT_MAX_LEN)
+    response = provision_usdt_and_sign(test_name, backend, navigator, data)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_transfer_with_oversized_comment_is_refused(test_name, backend, navigator):
+    # Regression test for the unbounded copy into tokenContext.data: this payload used to
+    # write 200 bytes of attacker-controlled data into a 68-byte buffer.
+    provision_usdt_and_expect_refusal(backend, build_transfer_with_comment_data(b"A" * 200))
+
+
+def test_transfer_with_comment_one_byte_too_long_is_refused(test_name, backend, navigator):
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"B" * (COMMENT_MAX_LEN + 1)))
+
+
+def test_transfer_with_non_printable_comment_is_refused(test_name, backend, navigator):
+    # A comment that cannot be rendered as its own bytes cannot be clear-signed.
+    provision_usdt_and_expect_refusal(backend, build_transfer_with_comment_data(b"Pay\x1b[2Jme"))
+
+
+def test_transfer_with_embedded_nul_comment_is_refused(test_name, backend, navigator):
+    # A NUL would end the displayed string while the bytes after it stay in the preimage.
+    provision_usdt_and_expect_refusal(backend, build_transfer_with_comment_data(b"Pay\x00hidden"))
+
+
+def test_transfer_with_non_canonical_string_offset_is_refused(test_name, backend, navigator):
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"Coffee", string_offset=128))
+
+
+def test_transfer_with_understated_comment_length_is_refused(test_name, backend, navigator):
+    # Declared length shorter than the bytes actually present: the tail would be signed
+    # without being shown.
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"C" * 40, declared_length=8))
+
+
+def test_transfer_with_overstated_comment_length_is_refused(test_name, backend, navigator):
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"C" * 8, declared_length=40))
+
+
+def test_transfer_with_unpadded_comment_is_refused(test_name, backend, navigator):
+    # The ABI pads the string to a 32-byte multiple; a short field means undeclared bytes.
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"C" * 8, padding_len=0))
+
+
+def test_transfer_with_comment_length_beyond_field_is_refused(test_name, backend, navigator):
+    # Calldata that stops at the end of the ABI header while declaring a comment: the
+    # declared length has to be checked even though no comment bytes follow.
+    provision_usdt_and_expect_refusal(
+        backend, build_transfer_with_comment_data(b"", declared_length=1000))
+
+
+# Init code for a contract creation; its content is irrelevant, only that it is non-empty
+# data signed with an empty destination.
+CONTRACT_CREATION_BYTECODE = bytes.fromhex("60806040523480156100105760006000fd5b50")
+
+# selector + to + value: the part of the calldata the parser needs to recognise a token
+# transfer. See TOKEN_TRANSFER_DATA_LEN in src/globals.h.
+TRANSFER_PREFIX_LEN = 4 + 2 * ABI_WORD_LEN
+
+
+def test_transfer_refused_when_token_metadata_is_evicted(test_name, backend, navigator):
+    """Token metadata taken away after the calldata was classified must refuse.
+
+    Blind signing is enabled on purpose: it removes every other reason to refuse this
+    transaction, so a pass here can only come from the evicted-metadata check. Without it
+    the transaction is signed with no token amount ever having been resolved.
+    """
+    settings_toggle(backend.device, navigator, [SettingID.BLIND_SIGNING])
+
+    celo = CeloClient(backend)
+    assert celo.provide_token_information(
+        bytes.fromhex(USDT_TOKEN_DATA)).status == StatusCode.STATUS_OK
+
+    data = build_transfer_with_comment_data(b"Coffee money")
+    payload = CELO_PACKED_DERIVATION_PATH + bytes.fromhex(build_eip1559_tx(data))
+
+    # Split inside the data field, past the selector and the transfer prefix, so the parser
+    # has already latched PROVISION_TOKEN when the metadata disappears.
+    split = payload.index(TRANSFER_WITH_COMMENT_SELECTOR) + TRANSFER_PREFIX_LEN
+    assert celo.send_sign_chunk(payload[:split], first=True).status == StatusCode.STATUS_OK
+
+    # MAX_TOKEN is 2 and the slots are filled round-robin, so two more descriptors
+    # overwrite the USDT entry this transaction was classified against.
+    assert celo.provide_token_information(
+        bytes.fromhex(CELO_DOLLAR_TOKEN_DATA)).status == StatusCode.STATUS_OK
+    assert celo.provide_token_information(
+        bytes.fromhex(CUSD_FEE_CURRENCY_TOKEN_DATA)).status == StatusCode.STATUS_OK
+
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.send_sign_chunk(payload[split:], first=False)
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_contract_creation_warns_even_with_contract_details_enabled(test_name, backend,
+                                                                    navigator):
+    """Contract creation must show the blind-signing warning whatever the settings say.
+
+    Init code never reaches the per-field review, so the contract-details setting is not
+    evidence that it was seen. With both settings on, the review used to look like an
+    ordinary clear-signed transfer.
+    """
+    settings_toggle(backend.device, navigator,
+                    [SettingID.BLIND_SIGNING, SettingID.DEBUG_DATA])
+
+    # Same flow as test_sign_transaction_eip1559_no_token_desc_blind_enabled: on the
+    # touchscreens the blind-signing warning is a choice page whose second button
+    # ("Continue anyway") is USE_CASE_CHOICE_REJECT, so it takes these instructions rather
+    # than a repeated swipe.
+    if backend.device.is_nano:
+        instructions = get_nano_enable_blind_sign_and_review_instructions(4)
+    else:
+        instructions = get_enable_blind_sign_and_return_review_instructions(2)
+
+    rawTx = build_eip1559_tx(CONTRACT_CREATION_BYTECODE, to=b"")
+    response = sign_transaction_with_rawTx_celo(test_name, backend, navigator,
+                                                instructions, rawTx)
+
+    assert response.data[0] in (0, 1)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def test_sign_first_chunk_without_tx_type_is_refused(test_name, backend, navigator):
+    """A first chunk that stops at the end of the derivation path must be refused.
+
+    The transaction type byte was read from beyond the received data: a stale
+    G_io_apdu_buffer byte of 0x02 or 0x7b was accepted as the type, hashed into the
+    preimage, and left the remaining length wrapped to 65535 for the parser to read.
+    """
+    celo = CeloClient(backend)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.send_sign_chunk(CELO_PACKED_DERIVATION_PATH, first=True)
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_sign_first_chunk_with_unsupported_tx_type_is_refused(test_name, backend,
+                                                              navigator):
+    # One byte past the path is enough to reach the type check, so the length guard must
+    # not turn an unsupported type into a generic data error.
+    celo = CeloClient(backend)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.send_sign_chunk(CELO_PACKED_DERIVATION_PATH + bytes([0x01]), first=True)
+    assert exc.value.status == StatusCode.STATUS_DEPRECATED
+
+
+def test_sign_first_chunk_with_tx_type_only_is_accepted(test_name, backend, navigator):
+    # The smallest legitimate first chunk: path plus the type byte, nothing else. The
+    # parser has to be left waiting for the rest rather than refused.
+    celo = CeloClient(backend)
+    response = celo.send_sign_chunk(CELO_PACKED_DERIVATION_PATH + bytes([TX_TYPE_EIP1559]),
+                                    first=True)
+    assert response.status == StatusCode.STATUS_OK
+
+# Celo core contracts on mainnet; the staking decode is bound to these, so the
+# same calldata sent anywhere else must not be relabelled as an official action.
+# An address that is not a Celo core contract.
+ARBITRARY_DESTINATION = bytes.fromhex("da52c9ffebd4d54c94a072776126069d43e74f9e")
+LOCKED_GOLD_CONTRACT = bytes.fromhex("6cc083aed9e3ebe302a6336dbc7c921c9f03349e")
+ELECTION_CONTRACT = bytes.fromhex("8d6677192144292870907e3fa8a5527fe55a7ff6")
+
+WITHDRAW_SELECTOR = bytes.fromhex("2e1a7d4d")
+VOTE_SELECTOR = bytes.fromhex("580d747a")
+
+
+def expect_not_clear_signed(backend, data, to):
+    """Asserts a transaction is refused as unrecognised calldata.
+
+    Blind signing is off, so calldata the parser does not recognise is refused
+    outright. A transaction that still gets clear-signed would instead reach a
+    review and return OK, which is the regression these tests guard.
+    """
+    celo = CeloClient(backend)
+    rawTx = build_eip1559_tx(data, to=to)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+            pass
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+
+def test_withdraw_selector_on_other_contract_is_not_staking(test_name, backend,
+                                                            navigator):
+    # withdraw(uint256) is one of the most widely deployed signatures in DeFi --
+    # WETH unwraps and countless vaults use it -- so matching on the selector
+    # alone labelled any of them as a Celo withdrawal.
+    data = WITHDRAW_SELECTOR + encode_abi_word(0)
+    expect_not_clear_signed(backend, data, ARBITRARY_DESTINATION)
+
+
+def test_withdraw_selector_on_election_is_not_staking(test_name, backend,
+                                                      navigator):
+    # A real core contract, but not the one that implements withdraw.
+    data = WITHDRAW_SELECTOR + encode_abi_word(0)
+    expect_not_clear_signed(backend, data, ELECTION_CONTRACT)
+
+
+def test_vote_selector_on_other_contract_is_not_staking(test_name, backend,
+                                                        navigator):
+    # The payload layout of Election.vote on an attacker-chosen contract: this
+    # used to be presented as "Type: Vote" with an address taken from the
+    # calldata, and the contract really being called was never displayed.
+    data = (VOTE_SELECTOR
+            + encode_abi_word(int.from_bytes(TRANSFER_RECIPIENT, byteorder="big"))
+            + encode_abi_word(10 ** 18)
+            + encode_abi_word(0)
+            + encode_abi_word(0))
+    expect_not_clear_signed(backend, data, ARBITRARY_DESTINATION)
+
+
+def test_vote_selector_on_locked_gold_is_not_staking(test_name, backend,
+                                                     navigator):
+    data = (VOTE_SELECTOR
+            + encode_abi_word(int.from_bytes(TRANSFER_RECIPIENT, byteorder="big"))
+            + encode_abi_word(10 ** 18)
+            + encode_abi_word(0)
+            + encode_abi_word(0))
+    expect_not_clear_signed(backend, data, LOCKED_GOLD_CONTRACT)

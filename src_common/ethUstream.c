@@ -465,28 +465,49 @@ static bool processAndDiscard(txContext_t *context) {
     }
     return false;
 }
-#define NUM_CHAIN_IDS 3
-                                                        // Mainnet, Alfajores, Baklava,
-static const uint16_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 17323};
+#define NUM_CHAIN_IDS 4
+// Mainnet, Alfajores, Baklava, Celo Sepolia. The values are the network IDs
+// celo-blockchain's params/config.go defines, plus Celo Sepolia from the chain
+// registry; Alfajores and Baklava were retired in September 2025 and are kept
+// for tooling still pointed at them. Held as uint32_t because the comparison is
+// over the whole chain ID, which RLP may deliver in up to MAX_V bytes.
+static const uint32_t AUTHORIZED_CHAIN_IDS[NUM_CHAIN_IDS] = {42220, 44787, 62320, 11142220};
 
 /**
  * @brief Checks if the given chain ID is authorized.
  *
- * @param[in] chainID The chain ID to check.
+ * The chain ID is the only thing binding a typed-transaction signature to a
+ * network, and the app never displays it, so this is the sole network
+ * restriction. It must see the whole field: a prefix of a big-endian scalar says
+ * nothing about its value, so comparing part of one would authorize every chain
+ * ID sharing that prefix.
  *
- * @return 1 if authorized, 0 otherwise.
+ * @param[in] chainID The chain ID bytes, big-endian, as RLP delivered them.
+ * @param[in] length  How many bytes the field held.
+ *
+ * @return true if authorized, false otherwise.
  */
-static int isChainIDAuthorized(uint8_t chainID[4]) {
-    if(chainID == NULL) {
-        return 0;
+static bool isChainIDAuthorized(const uint8_t *chainID, uint32_t length) {
+    if ((chainID == NULL) || (length == 0) || (length > MAX_V)) {
+        // A missing chain ID authorizes nothing: an empty field is chain 0, not
+        // an absent restriction.
+        return false;
     }
-    uint16_t chainIDInt = (chainID[0] << 8) | chainID[1];
+    // RLP scalars carry no leading zeros, so one is a second encoding of some
+    // other value and must not be read as that value.
+    if (chainID[0] == 0) {
+        return false;
+    }
+    uint32_t chainIDInt = 0;
+    for (uint32_t i = 0; i < length; i++) {
+        chainIDInt = (chainIDInt << 8) | chainID[i];
+    }
     for (int i = 0; i < NUM_CHAIN_IDS; i++) {
         if (chainIDInt == AUTHORIZED_CHAIN_IDS[i]) {
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 /**
@@ -518,12 +539,15 @@ static bool processV(txContext_t *context) {
         if (copyTxData(context, context->content->v + context->currentFieldPos, copySize)) {
             return true;
         }
-        if (!isChainIDAuthorized(context->content->v)) {
+    }
+    if (context->currentFieldPos == context->currentFieldLength) {
+        // Judged here rather than per chunk: the field can be split across
+        // APDUs, and a partially received chain ID is neither authorized nor a
+        // reason to refuse yet.
+        if (!isChainIDAuthorized(context->content->v, context->currentFieldLength)) {
             PRINTF("ChainID not authorized\n");
             return true;
         }
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
         context->content->vLength = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;

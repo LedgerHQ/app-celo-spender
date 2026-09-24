@@ -23,9 +23,14 @@ MAX_CHUNK_SIZE = 255
 
 class StatusCode(IntEnum):
     STATUS_OK = 0x9000
+    # SW_TX_TYPE_NOT_SUPPORTED: also what a legacy (non-typed) transaction gets.
     STATUS_DEPRECATED = 0x6501
+    STATUS_INITIALIZATION_ERROR = 0x6985
     STATUS_ERROR_IN_DATA = 0x6A80
     STATUS_WRONG_P1_OR_P2 = 0x6B00
+
+    def __repr__(self) -> str:
+        return f"{self.name}(0x{self.value:04X})"
 
 class Param(IntEnum):
     P1_DirectlyFetchAddress     = 0x00 # Return address directly from the wallet
@@ -79,9 +84,13 @@ class CeloClient:
 
     @contextmanager
     def sign_data_async(self, derivation_path: bytes, data: str) -> Generator[None, None, None]:
+        # The APDU length field counts message bytes, so it has to be taken from the
+        # encoded form: len() on a str counts code points and understates any
+        # multi-byte character, which the app then rejects as an oversized chunk.
+        message = data.encode("utf-8")
         payload: bytes = derivation_path
-        payload += len(data).to_bytes(4, byteorder='big')
-        payload += str.encode(data)
+        payload += len(message).to_bytes(4, byteorder='big')
+        payload += message
 
         with self.send_in_chunk_async(INS.INS_SIGN_PERSONAL_MESSAGE, payload):
             yield
@@ -96,6 +105,16 @@ class CeloClient:
 
         with self.send_in_chunk_async(INS.INS_SIGN, payload):
             yield
+
+    def send_sign_chunk(self, payload: bytes, first: bool) -> RAPDU:
+        """Sends a single INS_SIGN APDU.
+
+        send_in_chunk_async yields once per chunk, so it cannot drive a multi-APDU
+        transaction from a single `with` block. This sends one chunk at a time instead,
+        which lets a test do something else between two chunks of the same transaction.
+        """
+        p1 = Param.P1_InitTransactionData if first else Param.P1_ContTransactionData
+        return self._client.exchange(CLA, INS.INS_SIGN, p1, Param.P2_UNUSED, payload)
 
     @contextmanager
     def sign_transaction_with_rawTx_async(self, derivation_path : bytes, rawTx: str) -> Generator[None, None, None]:

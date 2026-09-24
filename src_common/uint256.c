@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "uint256.h"
 
@@ -478,6 +479,10 @@ void divmod256(uint256_t *l, uint256_t *r, uint256_t *div,
 
 static void reverseString(char *str, uint32_t length) {
     uint32_t i, j;
+    if (length == 0) {
+        // j would underflow below and index the whole address space.
+        return;
+    }
     for (i = 0, j = length - 1; i < j; i++, j--) {
         uint8_t c;
         c = str[i];
@@ -500,7 +505,10 @@ bool tostring128(const uint128_t *number, uint32_t base, char *out,
         return false;
     }
     do {
-        if (offset > (outLength - 1)) {
+        // Room is needed for this digit and for the terminator that follows the
+        // last one. Written as an addition so that outLength 0 rejects instead
+        // of underflowing.
+        if (offset + 1 >= outLength) {
             return false;
         }
         divmod128(&rDiv, &outputBase, &rDiv, &rMod);
@@ -526,7 +534,10 @@ bool tostring256(const uint256_t *number, uint32_t base, char *out,
         return false;
     }
     do {
-        if (offset > (outLength - 1)) {
+        // Room is needed for this digit and for the terminator that follows the
+        // last one. Written as an addition so that outLength 0 rejects instead
+        // of underflowing.
+        if (offset + 1 >= outLength) {
             return false;
         }
         divmod256(&rDiv, &outputBase, &rDiv, &rMod);
@@ -535,4 +546,11 @@ bool tostring256(const uint256_t *number, uint32_t base, char *out,
     out[offset] = '\0';
     reverseString(out, offset);
     return true;
+}
+
+void convertUint256BE(const uint8_t *data, size_t length, uint256_t *target) {
+    uint8_t tmp[32];
+    memset(tmp, 0, sizeof(tmp));
+    memcpy(tmp + sizeof(tmp) - length, data, length);
+    readu256BE(tmp, target);
 }
