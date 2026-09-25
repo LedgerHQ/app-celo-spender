@@ -6,6 +6,7 @@
 #include "cx_errors.h"
 #include "ethUtils.h"
 #include "globals.h"
+#include "strcase.h"
 #include "swap_lib_calls.h"
 #include "utils.h"
 
@@ -22,24 +23,20 @@ void swap_handle_check_address(check_address_parameters_t* params) {
     bip32Path_t bip32;
     bip32.len = params->address_parameters[0];
     if (bip32_path_read(params->address_parameters + 1,
-                        params->address_parameters_length,
-                        bip32.path,
+                        params->address_parameters_length, bip32.path,
                         bip32.len) == false) {
         PRINTF("Invalid path\n");
         return;
     }
-    CX_THROW(bip32_derive_get_pubkey_256(CX_CURVE_256K1,
-                                         bip32.path,
-                                         bip32.len,
-                                         raw_pubkey,
-                                         NULL,
-                                         CX_SHA512));
+    CX_THROW(bip32_derive_get_pubkey_256(CX_CURVE_256K1, bip32.path, bip32.len,
+                                         raw_pubkey, NULL, CX_SHA512));
     uint8_t hashAddress[32];
     cx_sha3_t sha3Context;
     CX_THROW(cx_keccak_init_no_throw(&sha3Context, 256));
-    CX_THROW(
-        cx_hash_no_throw((cx_hash_t*) &sha3Context, CX_LAST, raw_pubkey + 1, 64, hashAddress, 32));
-    getEthAddressStringFromBinary(hashAddress + 12, address, CHAIN_ID, &sha3Context);
+    CX_THROW(cx_hash_no_throw((cx_hash_t*)&sha3Context, CX_LAST, raw_pubkey + 1,
+                              64, hashAddress, 32));
+    getEthAddressStringFromBinary(hashAddress + 12, address, CHAIN_ID,
+                                  &sha3Context);
     address[ADDRESS_LENGTH - 1] = '\0';
 
     // PRINTF("Addresses derived: %s\n", address);

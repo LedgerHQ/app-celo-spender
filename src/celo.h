@@ -7,7 +7,29 @@
 
 #include <stdint.h>
 #include "ethUstream.h"
+#include "token_methods.h"
 #include "tokens.h"
+
+/**
+ * @brief What the calldata of the transaction being parsed was recognised as.
+ *
+ * Declared here rather than in globals.h so that code deciding policy on it can
+ * be compiled without the SDK.
+ */
+typedef enum {
+    PROVISION_NONE,
+    PROVISION_TOKEN,
+    PROVISION_LOCK,
+    PROVISION_VOTE,
+    PROVISION_ACTIVATE,
+    PROVISION_REVOKE,
+    PROVISION_UNLOCK,
+    PROVISION_WITHDRAW,
+    PROVISION_RELOCK,
+    PROVISION_CREATE_ACCOUNT
+} provision_type_t;
+
+extern volatile provision_type_t provisionType;
 
 /**
  * @brief Sends the status code to the SE proxy hardware abstraction layer.

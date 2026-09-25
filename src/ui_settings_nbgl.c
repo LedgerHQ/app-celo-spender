@@ -1,14 +1,14 @@
 #include <stdint.h>
 #ifdef HAVE_NBGL
-#include "globals.h"
-#include "ui_common.h"
-#include "nbgl_use_case.h"
 #include "bolos_target.h"
+#include "globals.h"
+#include "nbgl_use_case.h"
+#include "ui_common.h"
 
-#define NB_INFO_FIELDS  2
-#define PAGE_START      0
+#define NB_INFO_FIELDS 2
+#define PAGE_START 0
 #define NB_PAGE_SETTING 2
-#define IS_TOUCHABLE    false
+#define IS_TOUCHABLE false
 
 // Forward declaration
 static uint8_t initSettingPage;
@@ -23,16 +23,15 @@ enum {
 static nbgl_contentSwitch_t switches[NB_SETTINGS_SWITCHES - FIRST_USER_TOKEN];
 
 static const char* const infoTypes[NB_INFO_FIELDS] = {"Version", "Celo App"};
-static const char* const infoContents[NB_INFO_FIELDS] = {APPVERSION, "(c) 2026 Ledger"};
+static const char* const infoContents[NB_INFO_FIELDS] = {APPVERSION,
+                                                         "(c) 2026 Ledger"};
 
-static void onQuitCallback(void) {
-    os_sched_exit(-1);
-}
+static void onQuitCallback(void) { os_sched_exit(-1); }
 
 static const nbgl_contentInfoList_t infoList = {
     .nbInfos = NB_INFO_FIELDS,
-    .infoTypes = (const char**) infoTypes,
-    .infoContents = (const char**) infoContents,
+    .infoTypes = (const char**)infoTypes,
+    .infoContents = (const char**)infoContents,
 };
 
 // settings menu definition
@@ -40,21 +39,22 @@ static const nbgl_contentInfoList_t infoList = {
 static const nbgl_content_t contents[SETTING_CONTENTS_NB] = {
     {.type = SWITCHES_LIST,
      .content.switchesList.nbSwitches = NB_SETTINGS_SWITCHES - FIRST_USER_TOKEN,
-     .content.switchesList.switches = (nbgl_layoutSwitch_t*) switches,
+     .content.switchesList.switches = (nbgl_layoutSwitch_t*)switches,
      .contentActionCallback = controls_callback}};
 
-static const nbgl_genericContents_t settingContents = {.callbackCallNeeded = false,
-                                                       .contentsList = contents,
-                                                       .nbContents = SETTING_CONTENTS_NB};
+static const nbgl_genericContents_t settingContents = {
+    .callbackCallNeeded = false,
+    .contentsList = contents,
+    .nbContents = SETTING_CONTENTS_NB};
 
 static void switch_settings_blind_signing() {
     uint8_t value = (N_storage.dataAllowed ? 0 : 1);
-    nvm_write(&N_storage.dataAllowed, (void*) &value, sizeof(uint8_t));
+    nvm_write(&N_storage.dataAllowed, (void*)&value, sizeof(uint8_t));
 }
 
 static void switch_settings_display_data() {
     uint8_t value = (N_storage.contractDetails ? 0 : 1);
-    nvm_write(&N_storage.contractDetails, (void*) &value, sizeof(uint8_t));
+    nvm_write(&N_storage.contractDetails, (void*)&value, sizeof(uint8_t));
 }
 
 static void controls_callback(int token, uint8_t index, int page) {
@@ -91,22 +91,13 @@ void ui_start_page(uint8_t page) {
     switches[1].token = SWITCH_DEBUG_DATA_SET_TOKEN;
     switches[1].tuneId = TUNE_TAP_CASUAL;
 
-    nbgl_useCaseHomeAndSettings("Celo",
-                                &ICON_APP_HOME,
-                                NULL,
-                                page,
-                                &settingContents,
-                                &infoList,
-                                NULL,
+    nbgl_useCaseHomeAndSettings("Celo", &ICON_APP_HOME, NULL, page,
+                                &settingContents, &infoList, NULL,
                                 onQuitCallback);
 }
 
-void ui_idle(void) {
-    ui_start_page(INIT_HOME_PAGE);
-}
+void ui_idle(void) { ui_start_page(INIT_HOME_PAGE); }
 
-void ui_settings(void) {
-    ui_start_page(0);
-}
+void ui_settings(void) { ui_start_page(0); }
 
 #endif  // HAVE_NBGL

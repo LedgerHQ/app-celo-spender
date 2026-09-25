@@ -20,8 +20,16 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
+#ifdef TESTING
+// The address helpers below need the SDK's crypto; they are compiled out of the host test
+// build, which only exercises the pure formatting helpers. Same arrangement as ethUstream.h.
+typedef void *cx_sha3_t;
+typedef void *cx_ecfp_public_key_t;
+#else
 #include "cx.h"
+#endif
 
 void getEthAddressStringFromKey(const cx_ecfp_public_key_t *publicKey, char *out, int chainId,
                                 cx_sha3_t *sha3Context);

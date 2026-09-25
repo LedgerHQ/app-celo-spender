@@ -8,7 +8,7 @@
 #ifdef HAVE_NBGL
 #include "nbgl_use_case.h"
 
-extern nbgl_layoutTagValue_t tagValuePair[5];
+extern nbgl_layoutTagValue_t tagValuePair[6];
 extern nbgl_layoutTagValueList_t tagValueList;
 extern nbgl_pageInfoLongPress_t infoLongPress;
 #endif  // HAVE_NBGL
@@ -38,8 +38,10 @@ void ui_approval_celo_relock_flow(void);
 void ui_approval_celo_create_account_flow(void);
 void ui_approval_celo_data_warning_gateway_tx_flow(void);
 void ui_approval_celo_gateway_tx_flow(void);
+void ui_approval_celo_gateway_tx_comment_flow(void);
 void ui_approval_celo_data_warning_tx_flow(void);
 void ui_approval_celo_tx_flow(void);
+void ui_approval_celo_tx_comment_flow(void);
 void ui_error_blind_signing(void);
 
 unsigned int io_seproxyhal_touch_data_ok(void);
