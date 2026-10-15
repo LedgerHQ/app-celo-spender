@@ -1,8 +1,23 @@
+import argparse
 import os
 import subprocess
 from pathlib import Path
 
 base = Path(__file__).parent.resolve() / ".test_dependencies"
+
+APPS = ("exchange", "ethereum")
+
+
+def selected_apps(description: str) -> list[str]:
+    """The applications named on the command line, all of them when none is."""
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("apps", nargs="*", metavar="app", help=f"one of {', '.join(APPS)}; every one by default")
+    apps = parser.parse_args().apps
+    unknown = sorted(set(apps) - set(APPS))
+    if unknown:
+        parser.error(f"unknown application: {', '.join(unknown)} (expected one of {', '.join(APPS)})")
+    return apps or list(APPS)
+
 
 APP_EXCHANGE_URL = "git@github.com:LedgerHQ/app-exchange-dev.git"
 APP_EXCHANGE_DIR = base / "main/app-exchange/"
@@ -10,7 +25,9 @@ APP_EXCHANGE_CLONE_DIR = base / "app-exchange/"
 
 APP_ETHEREUM_URL = "git@github.com:LedgerHQ/app-ethereum-dev.git"
 APP_ETHEREUM_DIR = base / "libraries/app-ethereum/"
-APP_ETHEREUM_CLONE_DIR = base / "app-ethereum/"
+# Kept apart from the clone the VS Code extension makes under .test_dependencies: that one
+# has no origin remote, which clone_or_pull cannot update.
+APP_ETHEREUM_CLONE_DIR = base / "app-ethereum-clone/"
 
 DEVICES_CONF = {
     "nanos+": {

@@ -37,8 +37,14 @@ configuration.OPTIONAL.BACKEND_SCOPE = "class"
 # Exchange, the application Speculos starts. See tests/swap/README.md for how
 # to populate these directories.
 configuration.OPTIONAL.MAIN_APP_DIR = "tests/swap/.test_dependencies/main"
-# Ethereum, sideloaded so Exchange can check the payout address.
-configuration.OPTIONAL.SIDELOADED_APPS_DIR = "tests/swap/.test_dependencies/libraries/"
+
+# Ethereum, sideloaded so Exchange can check the payout address: its variant, and its name
+# on the device. The Ledger VS Code extension reads these two declarations to build the
+# app with "Prepare Test Dependencies", as <directory>/<variant>_<device>.elf. They have
+# to stay plain literals for it to read them without running Python.
+SIDELOADED_APPS = {"ethereum": "Ethereum"}
+SIDELOADED_APPS_DIR = "tests/swap/.test_dependencies/libraries/"
+configuration.OPTIONAL.SIDELOADED_APPS_DIR = SIDELOADED_APPS_DIR
 
 #########################
 ### CONFIGURATION END ###
@@ -48,19 +54,39 @@ configuration.OPTIONAL.SIDELOADED_APPS_DIR = "tests/swap/.test_dependencies/libr
 pytest_plugins = ("ragger.conftest.base_conftest",)
 
 
+def pytest_configure(config):
+    """Tell Ragger how to find the sideloaded apps, according to what has been built.
+
+    Given a list of sideloaded apps, Ragger only looks for flat <variant>_<device>.elf
+    files, which is what the extension produces, and ignores the app-<name>/build
+    directories that the helper scripts and the CI produce. The list is therefore only
+    handed over when such files exist; otherwise Ragger scans the directory itself.
+    """
+    libraries = Path(__file__).resolve().parents[2] / SIDELOADED_APPS_DIR
+    if any(binary for variant in SIDELOADED_APPS for binary in libraries.glob(f"{variant}_*.elf")):
+        configuration.OPTIONAL.SIDELOADED_APPS = SIDELOADED_APPS
+
+
 @pytest.fixture(scope="session", autouse=True)
 def swap_dependencies():
-    """Stop with the setup steps when Exchange and Ethereum have not been built.
+    """Stop with the setup steps when Exchange or Ethereum have not been built.
 
     Without them Speculos has no application to start, and ragger reports it as a bare
     FileNotFoundError from deep inside its backend fixture.
     """
     dependencies_dir = Path(__file__).parent / ".test_dependencies"
-    missing = [directory for directory in ("main", "libraries") if not (dependencies_dir / directory).is_dir()]
+    how_to_build = {
+        "main": "Exchange: run helper_tool_clone_dependencies.py exchange, then helper_tool_build_dependencies.py exchange",
+        "libraries": "Ethereum: run 'Prepare Test Dependencies' in the Ledger VS Code extension, or the same two scripts with ethereum",
+    }
+    missing = [
+        f"{dependencies_dir / directory} ({hint})"
+        for directory, hint in how_to_build.items()
+        if not ((dependencies_dir / directory).is_dir() and any((dependencies_dir / directory).iterdir()))
+    ]
     if missing:
         pytest.exit(
-            f"Missing {', '.join(str(dependencies_dir / directory) for directory in missing)}: "
-            "clone and build Exchange and Ethereum first, see 'Setup' in tests/swap/README.md",
+            "Nothing built in " + "; ".join(missing) + ". See 'Setup' in tests/swap/README.md.",
             returncode=pytest.ExitCode.USAGE_ERROR,
         )
 
