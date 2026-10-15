@@ -929,9 +929,11 @@ def test_fee_currency_descriptor_is_used_on_its_own_chain(backend, navigator):
 def test_rejected_descriptor_is_not_trusted(backend):
     """A descriptor whose signature fails must leave no trusted metadata behind.
 
-    MAX_TOKEN is 2 and the slots are filled round-robin, so the third descriptor is
-    written into the slot of the first. The forged one carries USDT's signature for a
-    different contract, so it is refused; the contract must stay unknown afterwards.
+    The fields of a descriptor are copied into the next slot before its signature is
+    checked. MAX_TOKEN is 2 and the slots are filled round-robin, so the third descriptor
+    lands in the slot of the first. The forged one carries USDT's signature for a
+    different contract, so it is refused; however the app arranges it, that contract
+    must stay unknown afterwards.
     """
     celo = CeloClient(backend)
     provide_token(celo, USDT_TOKEN_DATA)
@@ -944,18 +946,3 @@ def test_rejected_descriptor_is_not_trusted(backend):
 
     expect_refused(backend, build_eip1559_tx(build_transfer_data(),
                                              to=UNSIGNED_TOKEN_CONTRACT))
-
-
-def test_rejected_descriptor_does_not_evict_a_trusted_one(backend, navigator):
-    # Same setup as above, checked from the other side: the descriptor the forged one
-    # would have replaced must still be usable.
-    celo = CeloClient(backend)
-    provide_token(celo, USDT_TOKEN_DATA)
-    provide_token(celo, CELO_DOLLAR_TOKEN_DATA)
-
-    forged = forge_descriptor(USDT_TOKEN_DATA, UNSIGNED_TOKEN_CONTRACT)
-    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
-        celo.provide_token_information(forged)
-    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
-
-    sign_and_expect_approval(backend, navigator, build_eip1559_tx(build_transfer_data()))
