@@ -4,6 +4,8 @@ from .apps.celo_utils import ETH_PACKED_DERIVATION_PATH, CELO_PACKED_DERIVATION_
 from .utils import get_async_response, get_nano_review_instructions, get_stax_review_instructions, get_enable_blind_sign_and_return_review_instructions, get_reject_disabled_blind_signing_screen_instructions, get_go_settings_disabled_blind_signing_screen_instructions, get_nano_enable_blind_sign_and_review_instructions, get_nano_go_settings_disabled_blind_signing_screen_instructions, get_nano_reject_disabled_blind_signing_screen_instructions
 from .settings import settings_toggle, SettingID
 
+import threading
+
 import pytest
 import ragger
 import rlp
@@ -377,15 +379,29 @@ def build_transfer_with_comment_data(comment: bytes,
             + bytes(padding_len))
 
 
-def build_eip1559_tx(data: bytes, to: bytes = USDT_CONTRACT, value: int = 0) -> str:
+def build_eip1559_tx(data: bytes, to: bytes = USDT_CONTRACT, value: int = 0,
+                     chain_id: int = CELO_CHAIN_ID) -> str:
     nonce = 0x47
     max_priority_fee_per_gas = 0x0f4240
     max_fee_per_gas = 0x060db88400
     gas_limit = 0x01cf08
     access_list = []
-    fields = [CELO_CHAIN_ID, nonce, max_priority_fee_per_gas, max_fee_per_gas,
+    fields = [chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas,
               gas_limit, to, value, data, access_list]
     return (bytes([TX_TYPE_EIP1559]) + rlp.encode(fields)).hex()
+
+
+def approval_navigation(backend):
+    """Returns what it takes to walk an ordinary clear-signed review to its approval.
+
+    That is the instruction that advances one page, the instructions that approve, and the
+    text that marks the approval screen.
+    """
+    if backend.device.is_nano:
+        return NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Accept"
+    return (NavInsID.SWIPE_CENTER_TO_LEFT,
+            [NavInsID.USE_CASE_REVIEW_CONFIRM, NavInsID.USE_CASE_STATUS_DISMISS],
+            "Sign Transaction?")
 
 
 def navigate_to_approval_and_compare(test_name, backend, navigator):
@@ -396,15 +412,7 @@ def navigate_to_approval_and_compare(test_name, backend, navigator):
     review: the blind-signing flow opens on a choice page that no repeated navigation
     instruction can get past.
     """
-    if backend.device.is_nano:
-        navigate_instruction = NavInsID.RIGHT_CLICK
-        validation_instructions = [NavInsID.BOTH_CLICK]
-        approval_text = "Accept"
-    else:
-        navigate_instruction = NavInsID.SWIPE_CENTER_TO_LEFT
-        validation_instructions = [NavInsID.USE_CASE_REVIEW_CONFIRM,
-                                   NavInsID.USE_CASE_STATUS_DISMISS]
-        approval_text = "Sign Transaction?"
+    navigate_instruction, validation_instructions, approval_text = approval_navigation(backend)
 
     navigator.navigate_until_text_and_compare(navigate_instruction,
                                               validation_instructions,
@@ -684,3 +692,270 @@ def test_vote_selector_on_locked_gold_is_not_staking(test_name, backend,
             + encode_abi_word(0)
             + encode_abi_word(0))
     expect_not_clear_signed(backend, data, LOCKED_GOLD_CONTRACT)
+
+
+# Native value and network binding of the clear-signed calls.
+#
+# A clear-signed review replaces the transaction's own value and recipient with the ones
+# decoded from calldata, so any native value attached to the transaction is signed without
+# being shown. Token metadata is also only meaningful on the network its descriptor was
+# signed for.
+
+ALFAJORES_CHAIN_ID = 44787
+BAKLAVA_CHAIN_ID = 62320
+CELO_SEPOLIA_CHAIN_ID = 11142220
+
+# Contract address inside CUSD_FEE_CURRENCY_TOKEN_DATA.
+CUSD_CONTRACT = bytes.fromhex("765de816845861e75a25fca122bb6898b8b1282a")
+
+# "b cUSD" descriptor signed for Baklava (chainId 62320), as published in
+# doc/provideERC20TokenInformation.txt.
+BAKLAVA_CUSD_TOKEN_DATA = "0662206355534462492a644a588fd904270bed06ad52b9abfea1ae000000120000f370304402200f64d7b8cdef156dc9b4af61df804b4fb0fdcc562f613e386894baa7c52879db02207998a030e8ed6ba4cb3f1796c3731016d605b507e8b1c8df3aa904d8fe7d2149"
+BAKLAVA_CUSD_CONTRACT = bytes.fromhex("62492a644a588fd904270bed06ad52b9abfea1ae")
+
+# A contract that no signed descriptor names.
+UNSIGNED_TOKEN_CONTRACT = bytes.fromhex("c0ffee254729296a45a3885639ac7e10f9d54979")
+
+ACCOUNTS_CONTRACT = bytes.fromhex("7d21685c17607338b313a7174bab6620bad0aab7")
+
+TRANSFER_SELECTOR = bytes.fromhex("a9059cbb")
+LOCK_SELECTOR = bytes.fromhex("f83d08ba")
+
+# Any address, as the group or validator argument of a staking call.
+STAKING_ADDRESS_WORD = int.from_bytes(TRANSFER_RECIPIENT, byteorder="big")
+STAKING_AMOUNT = 10 ** 18
+
+
+def build_transfer_data(recipient: bytes = TRANSFER_RECIPIENT, amount: int = 10000) -> bytes:
+    return (TRANSFER_SELECTOR
+            + encode_abi_word(int.from_bytes(recipient, byteorder="big"))
+            + encode_abi_word(amount))
+
+
+def build_cip64_tx(fee_currency: bytes, chain_id: int = CELO_CHAIN_ID) -> str:
+    nonce = 0
+    max_priority_fee_per_gas = 0x77359400
+    max_fee_per_gas = 0x03a11f9db5
+    gas_limit = 0x01688c
+    value = 0
+    data = b""
+    access_list = []
+    # yParity, r and s are present but unsigned.
+    fields = [chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit,
+              ARBITRARY_DESTINATION, value, data, access_list, fee_currency, 1, b"", b""]
+    return (bytes([TX_TYPE_CIP64]) + rlp.encode(fields)).hex()
+
+
+def staking_call(selector: str, *words: int) -> bytes:
+    return bytes.fromhex(selector) + b"".join(encode_abi_word(word) for word in words)
+
+
+# Every staking call the app clear-signs except lock(), each with the core contract that
+# implements it. None of them is payable on that contract.
+NONPAYABLE_STAKING_CALLS = {
+    "unlock": (LOCKED_GOLD_CONTRACT, staking_call("6198e339", STAKING_AMOUNT)),
+    "relock": (LOCKED_GOLD_CONTRACT, staking_call("b2fb30cb", 0, STAKING_AMOUNT)),
+    "withdraw": (LOCKED_GOLD_CONTRACT, staking_call("2e1a7d4d", 0)),
+    "vote": (ELECTION_CONTRACT,
+             staking_call("580d747a", STAKING_ADDRESS_WORD, STAKING_AMOUNT, 0, 0)),
+    "activate": (ELECTION_CONTRACT, staking_call("1c5a9d9c", STAKING_ADDRESS_WORD)),
+    "revoke_pending": (ELECTION_CONTRACT,
+                       staking_call("9dfb6081", STAKING_ADDRESS_WORD, STAKING_AMOUNT, 0, 0, 0)),
+    "revoke_active": (ELECTION_CONTRACT,
+                      staking_call("6e198475", STAKING_ADDRESS_WORD, STAKING_AMOUNT, 0, 0, 0)),
+    "create_account": (ACCOUNTS_CONTRACT, staking_call("9dca362f")),
+}
+
+TOKEN_CALLS = {
+    "transfer": build_transfer_data(),
+    "transferWithComment": build_transfer_with_comment_data(b"Coffee money"),
+}
+
+# Chain IDs the app signs for, other than the one the USDT and cUSD descriptors are for.
+OTHER_CHAIN_IDS = {
+    "alfajores": ALFAJORES_CHAIN_ID,
+    "baklava": BAKLAVA_CHAIN_ID,
+    "celo_sepolia": CELO_SEPOLIA_CHAIN_ID,
+}
+
+
+# A refusal is answered at once. An accepted transaction opens a review instead, and the
+# app does not answer until the user acts.
+REFUSAL_TIMEOUT_SECONDS = 10
+
+# Longest the approval screen may take to appear.
+APPROVAL_TIMEOUT_SECONDS = 30
+
+
+def expect_refused(backend, rawTx):
+    """Asserts a transaction is refused as soon as it is sent, before any review.
+
+    The exchange of an accepted transaction blocks until the user acts, so it runs in a
+    thread whose wait is bounded: that case then fails instead of hanging the run. The
+    thread is left blocked and dies with the emulator when the test tears down.
+    """
+    celo = CeloClient(backend)
+    outcome = {}
+
+    def send():
+        try:
+            with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+                pass
+        except ragger.error.ExceptionRAPDU as exc:
+            outcome["status"] = exc.status
+
+    sender = threading.Thread(target=send, daemon=True)
+    sender.start()
+    sender.join(REFUSAL_TIMEOUT_SECONDS)
+
+    assert not sender.is_alive(), "the app opened a review instead of refusing"
+    assert outcome.get("status") == StatusCode.STATUS_ERROR_IN_DATA, \
+        f"the app did not refuse with a data error: {outcome}"
+
+
+def sign_and_expect_approval(backend, navigator, rawTx):
+    """Signs a transaction whose review is an ordinary clear-signed one and approves it.
+
+    Blind signing is left off, so reaching the approval screen means the calldata was
+    recognised rather than merely tolerated.
+    """
+    navigate_instruction, validation_instructions, approval_text = approval_navigation(backend)
+
+    celo = CeloClient(backend)
+    with celo.sign_transaction_with_rawTx_async(CELO_PACKED_DERIVATION_PATH, rawTx):
+        navigator.navigate_until_text(navigate_instruction, validation_instructions,
+                                      approval_text, timeout=APPROVAL_TIMEOUT_SECONDS)
+    response = get_async_response(backend)
+    assert response.status == StatusCode.STATUS_OK
+
+
+def provide_token(celo, descriptor_hex):
+    response = celo.provide_token_information(bytes.fromhex(descriptor_hex))
+    assert response.status == StatusCode.STATUS_OK
+
+
+def forge_descriptor(descriptor_hex: str, contract: bytes) -> bytes:
+    """Swaps the contract address of a signed descriptor and keeps its signature.
+
+    The signature covers the address, so the result is well-formed but unsigned for it.
+    """
+    descriptor = bytes.fromhex(descriptor_hex)
+    address_start = 1 + descriptor[0]
+    return (descriptor[:address_start] + contract
+            + descriptor[address_start + len(contract):])
+
+
+@pytest.mark.parametrize("data", list(TOKEN_CALLS.values()), ids=list(TOKEN_CALLS))
+def test_token_transfer_with_native_value_is_refused(backend, navigator, data):
+    """A recognised token call must not carry native value.
+
+    The review would show the token amount and recipient while the transaction also sends
+    native CELO to the token contract. Blind signing is on, which takes the blind-signing
+    gate out of play: the refusal has to come from the value itself.
+    """
+    settings_toggle(backend.device, navigator, [SettingID.BLIND_SIGNING])
+    provide_token(CeloClient(backend), USDT_TOKEN_DATA)
+
+    expect_refused(backend, build_eip1559_tx(data, value=1))
+
+
+@pytest.mark.parametrize("contract, data", list(NONPAYABLE_STAKING_CALLS.values()),
+                         ids=list(NONPAYABLE_STAKING_CALLS))
+def test_staking_call_with_native_value_is_refused(backend, navigator, contract, data):
+    """A staking call that is not payable must not carry native value.
+
+    None of these reviews shows the transaction's own value: some replace it with a
+    calldata amount and the rest never display an amount at all. Blind signing is on for
+    the same reason as for token transfers.
+    """
+    settings_toggle(backend.device, navigator, [SettingID.BLIND_SIGNING])
+
+    expect_refused(backend, build_eip1559_tx(data, to=contract, value=1))
+
+
+@pytest.mark.parametrize("contract, data", list(NONPAYABLE_STAKING_CALLS.values()),
+                         ids=list(NONPAYABLE_STAKING_CALLS))
+def test_staking_call_without_native_value_is_clear_signed(backend, navigator, contract, data):
+    # The refusal tests above are only meaningful if these exact calls are recognised.
+    sign_and_expect_approval(backend, navigator, build_eip1559_tx(data, to=contract))
+
+
+def test_lock_keeps_its_native_value(backend, navigator):
+    # lock() is payable and its native value is the amount locked, which the review shows.
+    rawTx = build_eip1559_tx(LOCK_SELECTOR, to=LOCKED_GOLD_CONTRACT, value=STAKING_AMOUNT)
+    sign_and_expect_approval(backend, navigator, rawTx)
+
+
+@pytest.mark.parametrize("chain_id", list(OTHER_CHAIN_IDS.values()), ids=list(OTHER_CHAIN_IDS))
+def test_descriptor_is_not_used_on_another_chain(backend, chain_id):
+    """A descriptor signed for mainnet must not label a call on another network.
+
+    The same address can be a different contract, or no contract, on another chain. With
+    blind signing off, a call that is not recognised as a token transfer is refused.
+    """
+    provide_token(CeloClient(backend), USDT_TOKEN_DATA)
+
+    expect_refused(backend, build_eip1559_tx(build_transfer_data(), chain_id=chain_id))
+
+
+def test_baklava_descriptor_is_not_used_on_mainnet(backend):
+    provide_token(CeloClient(backend), BAKLAVA_CUSD_TOKEN_DATA)
+
+    expect_refused(backend, build_eip1559_tx(build_transfer_data(), to=BAKLAVA_CUSD_CONTRACT))
+
+
+def test_baklava_descriptor_is_used_on_baklava(backend, navigator):
+    # Control for the refusals above: a descriptor still works on the chain it names.
+    provide_token(CeloClient(backend), BAKLAVA_CUSD_TOKEN_DATA)
+
+    rawTx = build_eip1559_tx(build_transfer_data(), to=BAKLAVA_CUSD_CONTRACT,
+                             chain_id=BAKLAVA_CHAIN_ID)
+    sign_and_expect_approval(backend, navigator, rawTx)
+
+
+def test_fee_currency_descriptor_is_not_used_on_another_chain(backend):
+    # The fee currency decides how the fee is shown, so it is bound to the network too.
+    provide_token(CeloClient(backend), CUSD_FEE_CURRENCY_TOKEN_DATA)
+
+    expect_refused(backend, build_cip64_tx(CUSD_CONTRACT, chain_id=BAKLAVA_CHAIN_ID))
+
+
+def test_fee_currency_descriptor_is_used_on_its_own_chain(backend, navigator):
+    provide_token(CeloClient(backend), CUSD_FEE_CURRENCY_TOKEN_DATA)
+
+    sign_and_expect_approval(backend, navigator, build_cip64_tx(CUSD_CONTRACT))
+
+
+def test_rejected_descriptor_is_not_trusted(backend):
+    """A descriptor whose signature fails must leave no trusted metadata behind.
+
+    MAX_TOKEN is 2 and the slots are filled round-robin, so the third descriptor is
+    written into the slot of the first. The forged one carries USDT's signature for a
+    different contract, so it is refused; the contract must stay unknown afterwards.
+    """
+    celo = CeloClient(backend)
+    provide_token(celo, USDT_TOKEN_DATA)
+    provide_token(celo, CELO_DOLLAR_TOKEN_DATA)
+
+    forged = forge_descriptor(USDT_TOKEN_DATA, UNSIGNED_TOKEN_CONTRACT)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.provide_token_information(forged)
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+    expect_refused(backend, build_eip1559_tx(build_transfer_data(),
+                                             to=UNSIGNED_TOKEN_CONTRACT))
+
+
+def test_rejected_descriptor_does_not_evict_a_trusted_one(backend, navigator):
+    # Same setup as above, checked from the other side: the descriptor the forged one
+    # would have replaced must still be usable.
+    celo = CeloClient(backend)
+    provide_token(celo, USDT_TOKEN_DATA)
+    provide_token(celo, CELO_DOLLAR_TOKEN_DATA)
+
+    forged = forge_descriptor(USDT_TOKEN_DATA, UNSIGNED_TOKEN_CONTRACT)
+    with pytest.raises(ragger.error.ExceptionRAPDU) as exc:
+        celo.provide_token_information(forged)
+    assert exc.value.status == StatusCode.STATUS_ERROR_IN_DATA
+
+    sign_and_expect_approval(backend, navigator, build_eip1559_tx(build_transfer_data()))
