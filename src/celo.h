@@ -58,10 +58,12 @@ uint32_t set_result_get_publicKey();
 void reset_app_context();
 
 /**
- * @brief Retrieves the known token based on the token address.
+ * @brief Retrieves the known token based on the token address, on the network
+ * of the transaction being parsed.
  *
  * @param tokenAddr The address of the token.
- * @return A pointer to the token definition.
+ * @return A pointer to the token definition, or NULL when no provisioned
+ * descriptor names this address for the network of the transaction.
  */
 tokenDefinition_t *getKnownToken(uint8_t *tokenAddr);
 

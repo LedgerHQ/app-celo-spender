@@ -27,10 +27,18 @@
 // (enforced by a _Static_assert there).
 #define TOKEN_TICKER_BUF_LEN 51
 
+// Size in a token descriptor of the number of decimals and of the chain ID, both
+// unsigned and big endian.
+#define TOKEN_DECIMALS_LEN 4
+#define TOKEN_CHAIN_ID_LEN 4
+
 typedef struct tokenDefinition_t {
     uint8_t address[EVM_ADDRESS_LEN];
     char ticker[TOKEN_TICKER_BUF_LEN];
     uint8_t decimals;
+    // The network the descriptor is signed for: it says nothing about the same
+    // address on another network.
+    uint32_t chainId;
 } tokenDefinition_t;
 
 #endif /* _TOKENS_H_ */

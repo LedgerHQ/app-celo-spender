@@ -69,12 +69,34 @@ void reset_app_context() {
 
 #define WEI_TO_ETHER 18
 
+// The chain ID of the transaction being parsed. The parser has judged it
+// against the authorized networks once its field is complete, which comes
+// before any field a caller of this reads. False when it is not known, so that
+// nothing is ever matched against a chain that cannot be named.
+static bool currentChainId(uint32_t* chainId) {
+    if ((tmpContent.txContent.vLength == 0) ||
+        (tmpContent.txContent.vLength > sizeof(*chainId))) {
+        return false;
+    }
+    *chainId = 0;
+    for (uint8_t i = 0; i < tmpContent.txContent.vLength; i++) {
+        *chainId = (*chainId << 8) | tmpContent.txContent.v[i];
+    }
+    return true;
+}
+
+// A descriptor is signed for one network, so it identifies a token only on that
+// network: the same address can be another contract, or none, on another.
 tokenDefinition_t* getKnownToken(uint8_t* tokenAddr) {
-    tokenDefinition_t* currentToken = NULL;
+    uint32_t chainId;
+    if (!currentChainId(&chainId)) {
+        return NULL;
+    }
 
     for (int i = 0; i < MAX_TOKEN; i++) {
-        currentToken = &tmpCtx.transactionContext.tokens[i];
+        tokenDefinition_t* currentToken = &tmpCtx.transactionContext.tokens[i];
         if (tmpCtx.transactionContext.tokenSet[i] &&
+            (currentToken->chainId == chainId) &&
             (memcmp(currentToken->address, tokenAddr, EVM_ADDRESS_LEN) == 0)) {
             PRINTF("Token found at index %d\n", i);
             return currentToken;
@@ -320,13 +342,9 @@ static const stakingMethod_t STAKING_METHODS[] = {
 // The chain ID was parsed before the data field, so the network is known by the
 // time the calldata is classified.
 static const celoNetwork_t* currentCeloNetwork(void) {
-    uint32_t chainId = 0;
-    if ((tmpContent.txContent.vLength == 0) ||
-        (tmpContent.txContent.vLength > sizeof(chainId))) {
+    uint32_t chainId;
+    if (!currentChainId(&chainId)) {
         return NULL;
-    }
-    for (uint8_t i = 0; i < tmpContent.txContent.vLength; i++) {
-        chainId = (chainId << 8) | tmpContent.txContent.v[i];
     }
     for (size_t i = 0; i < sizeof(CELO_NETWORKS) / sizeof(CELO_NETWORKS[0]);
          i++) {
