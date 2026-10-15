@@ -361,6 +361,25 @@ static provision_type_t classifyStakingCall(const txContext_t* context) {
     return PROVISION_NONE;
 }
 
+// Only lock() is payable on the core contracts, and the amount it locks is the
+// transaction's own value, which its review shows. The review of every other
+// clear-signed call shows an amount from the calldata or none, never the
+// transaction's own value, so such a call must not carry one.
+static bool provisionAcceptsNativeValue(provision_type_t provision) {
+    return provision == PROVISION_LOCK;
+}
+
+// RLP integers carry no leading zeros but the parser does not insist on it, so
+// the bytes are judged and not the length.
+static bool nativeValueIsZero(void) {
+    for (uint8_t i = 0; i < tmpContent.txContent.value.length; i++) {
+        if (tmpContent.txContent.value.value[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 customStatus_e customProcessor(txContext_t* context) {
     if (((context->txType == CELO_LEGACY &&
           context->currentField == CELO_LEGACY_RLP_DATA) ||
@@ -405,6 +424,13 @@ customStatus_e customProcessor(txContext_t* context) {
             provision_type_t staking = classifyStakingCall(context);
             if (staking != PROVISION_NONE) {
                 provisionType = staking;
+            }
+            // The value field precedes the data, so it is complete here.
+            if ((provisionType != PROVISION_NONE) &&
+                !provisionAcceptsNativeValue(provisionType) &&
+                !nativeValueIsZero()) {
+                PRINTF("Native value forbidden for this call\n");
+                return CUSTOM_FAULT;
             }
         }
         if (provisionType != PROVISION_NONE) {
@@ -627,6 +653,16 @@ void finalizeParsing(bool direct) {
         }
         feeTicker = feeCurrencyToken->ticker;
         feeDecimals = feeCurrencyToken->decimals;
+    }
+
+    // The value is replaced by the calldata amount, or left off the screen,
+    // further down: where that happens it is checked again, so the review can
+    // never stand in for a value it does not show.
+    if ((provisionType != PROVISION_NONE) &&
+        !provisionAcceptsNativeValue(provisionType) && !nativeValueIsZero()) {
+        PRINTF("Native value forbidden for this call\n");
+        refuseTransaction(direct);
+        return;
     }
 
     // Store the hash
