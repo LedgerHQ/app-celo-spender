@@ -69,12 +69,34 @@ void reset_app_context() {
 
 #define WEI_TO_ETHER 18
 
+// The chain ID of the transaction being parsed. The parser has judged it
+// against the authorized networks once its field is complete, which comes
+// before any field a caller of this reads. False when it is not known, so that
+// nothing is ever matched against a chain that cannot be named.
+static bool currentChainId(uint32_t* chainId) {
+    if ((tmpContent.txContent.vLength == 0) ||
+        (tmpContent.txContent.vLength > sizeof(*chainId))) {
+        return false;
+    }
+    *chainId = 0;
+    for (uint8_t i = 0; i < tmpContent.txContent.vLength; i++) {
+        *chainId = (*chainId << 8) | tmpContent.txContent.v[i];
+    }
+    return true;
+}
+
+// A descriptor is signed for one network, so it identifies a token only on that
+// network: the same address can be another contract, or none, on another.
 tokenDefinition_t* getKnownToken(uint8_t* tokenAddr) {
-    tokenDefinition_t* currentToken = NULL;
+    uint32_t chainId;
+    if (!currentChainId(&chainId)) {
+        return NULL;
+    }
 
     for (int i = 0; i < MAX_TOKEN; i++) {
-        currentToken = &tmpCtx.transactionContext.tokens[i];
+        tokenDefinition_t* currentToken = &tmpCtx.transactionContext.tokens[i];
         if (tmpCtx.transactionContext.tokenSet[i] &&
+            (currentToken->chainId == chainId) &&
             (memcmp(currentToken->address, tokenAddr, EVM_ADDRESS_LEN) == 0)) {
             PRINTF("Token found at index %d\n", i);
             return currentToken;
@@ -320,13 +342,9 @@ static const stakingMethod_t STAKING_METHODS[] = {
 // The chain ID was parsed before the data field, so the network is known by the
 // time the calldata is classified.
 static const celoNetwork_t* currentCeloNetwork(void) {
-    uint32_t chainId = 0;
-    if ((tmpContent.txContent.vLength == 0) ||
-        (tmpContent.txContent.vLength > sizeof(chainId))) {
+    uint32_t chainId;
+    if (!currentChainId(&chainId)) {
         return NULL;
-    }
-    for (uint8_t i = 0; i < tmpContent.txContent.vLength; i++) {
-        chainId = (chainId << 8) | tmpContent.txContent.v[i];
     }
     for (size_t i = 0; i < sizeof(CELO_NETWORKS) / sizeof(CELO_NETWORKS[0]);
          i++) {
@@ -359,6 +377,25 @@ static provision_type_t classifyStakingCall(const txContext_t* context) {
         }
     }
     return PROVISION_NONE;
+}
+
+// Only lock() is payable on the core contracts, and the amount it locks is the
+// transaction's own value, which its review shows. The review of every other
+// clear-signed call shows an amount from the calldata or none, never the
+// transaction's own value, so such a call must not carry one.
+static bool provisionAcceptsNativeValue(provision_type_t provision) {
+    return provision == PROVISION_LOCK;
+}
+
+// RLP integers carry no leading zeros but the parser does not insist on it, so
+// the bytes are judged and not the length.
+static bool nativeValueIsZero(void) {
+    for (uint8_t i = 0; i < tmpContent.txContent.value.length; i++) {
+        if (tmpContent.txContent.value.value[i] != 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 customStatus_e customProcessor(txContext_t* context) {
@@ -405,6 +442,13 @@ customStatus_e customProcessor(txContext_t* context) {
             provision_type_t staking = classifyStakingCall(context);
             if (staking != PROVISION_NONE) {
                 provisionType = staking;
+            }
+            // The value field precedes the data, so it is complete here.
+            if ((provisionType != PROVISION_NONE) &&
+                !provisionAcceptsNativeValue(provisionType) &&
+                !nativeValueIsZero()) {
+                PRINTF("Native value forbidden for this call\n");
+                return CUSTOM_FAULT;
             }
         }
         if (provisionType != PROVISION_NONE) {
@@ -627,6 +671,16 @@ void finalizeParsing(bool direct) {
         }
         feeTicker = feeCurrencyToken->ticker;
         feeDecimals = feeCurrencyToken->decimals;
+    }
+
+    // The value is replaced by the calldata amount, or left off the screen,
+    // further down: where that happens it is checked again, so the review can
+    // never stand in for a value it does not show.
+    if ((provisionType != PROVISION_NONE) &&
+        !provisionAcceptsNativeValue(provisionType) && !nativeValueIsZero()) {
+        PRINTF("Native value forbidden for this call\n");
+        refuseTransaction(direct);
+        return;
     }
 
     // Store the hash
