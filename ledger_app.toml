@@ -3,6 +3,20 @@ build_directory = "./"
 sdk = "C"
 devices = ["nanox", "nanos+", "stax", "flex", "apex_p"]
 
-[tests]
-unit_directory = "./tests/unit"
-pytest_directory = "./tests/python"
+[unit_tests]
+directory = "./tests/unit"
+
+[pytest.standalone]
+directory = "./tests/standalone/"
+
+[pytest.swap]
+directory = "./tests/swap/"
+[pytest.swap.dependencies]
+# `develop` is deliberate, and matches every other app declaring this block.
+# The CI (ledger-app-workflows reusable_swap_tests.yml) does not read this
+# section: it always builds app-exchange and app-ethereum from `develop`.
+# Pinning here would only make local runs diverge from what CI actually tests.
+testing_with_latest = [
+    { url = "https://github.com/LedgerHQ/app-exchange-dev", ref = "develop", use_case = "dbg_use_test_keys" },
+    { url = "https://github.com/LedgerHQ/app-ethereum-dev", ref = "develop", use_case = "use_test_keys" },
+]

@@ -3,7 +3,10 @@ debug
 src/glyphs.c
 src/glyphs.h
 
-tests/python/snapshots-tmp/
+tests/standalone/snapshots-tmp/
+tests/standalone/.parallel-runs/
+tests/swap/snapshots-tmp/
+tests/swap/.test_dependencies/
 __pycache__
 build/
 /.vscode/

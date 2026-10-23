@@ -1,0 +1,5 @@
+base58
+bip32
+pytest-xdist
+ragger[tests,speculos]
+rlp

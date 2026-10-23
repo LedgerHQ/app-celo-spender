@@ -312,6 +312,9 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2,
     uint32_t offset = 0;
     uint8_t tickerLength;
     uint32_t decimals;
+    uint32_t chainId;
+    const uint8_t* ticker;
+    const uint8_t* address;
     uint8_t hash[32];
     cx_ecfp_public_key_t tokenKey;
 
@@ -322,47 +325,38 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2,
         THROW(SW_WRONG_P1_OR_P2);
     }
 
-    tmpCtx.transactionContext.currentTokenIndex =
-        (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKEN;
-    tokenDefinition_t* token =
-        &tmpCtx.transactionContext
-             .tokens[tmpCtx.transactionContext.currentTokenIndex];
-
-    PRINTF("Provisioning currentTokenIndex %d\n",
-           tmpCtx.transactionContext.currentTokenIndex);
-
     if (dataLength < 1) {
         THROW(SW_ERROR_IN_DATA);
     }
     tickerLength = workBuffer[offset++];
     dataLength--;
     // ticker + null must fit in ticker[]
-    if ((tickerLength + 1) > sizeof(token->ticker)) {
+    if ((tickerLength + 1) > TOKEN_TICKER_BUF_LEN) {
         THROW(SW_ERROR_IN_DATA);
     }
-    if (dataLength < tickerLength + EVM_ADDRESS_LEN + 4 + 4) {
+    if (dataLength < tickerLength + EVM_ADDRESS_LEN + TOKEN_DECIMALS_LEN +
+                         TOKEN_CHAIN_ID_LEN) {
         THROW(SW_ERROR_IN_DATA);
     }
-    cx_hash_sha256(workBuffer + offset, tickerLength + EVM_ADDRESS_LEN + 4 + 4,
+    cx_hash_sha256(workBuffer + offset,
+                   tickerLength + EVM_ADDRESS_LEN + TOKEN_DECIMALS_LEN +
+                       TOKEN_CHAIN_ID_LEN,
                    hash, 32);
-    memcpy(token->ticker, workBuffer + offset, tickerLength);
-    token->ticker[tickerLength] = '\0';
+    ticker = workBuffer + offset;
     offset += tickerLength;
     dataLength -= tickerLength;
-    memcpy(token->address, workBuffer + offset, EVM_ADDRESS_LEN);
+    address = workBuffer + offset;
     offset += EVM_ADDRESS_LEN;
     dataLength -= EVM_ADDRESS_LEN;
     decimals = U4BE(workBuffer, offset);
     if (decimals > UINT8_MAX) {
         THROW(SW_ERROR_IN_DATA);
     }
-    token->decimals = (uint8_t)decimals;
-    offset += 4;
-    dataLength -= 4;
-
-    // Skip chainId
-    offset += 4;
-    dataLength -= 4;
+    offset += TOKEN_DECIMALS_LEN;
+    dataLength -= TOKEN_DECIMALS_LEN;
+    chainId = U4BE(workBuffer, offset);
+    offset += TOKEN_CHAIN_ID_LEN;
+    dataLength -= TOKEN_CHAIN_ID_LEN;
 
     CX_THROW(cx_ecfp_init_public_key_no_throw(
         CX_CURVE_256K1, CLABS_SIGNATURE_PUBLIC_KEY,
@@ -380,6 +374,21 @@ void handleProvideErc20TokenInformation(uint8_t p1, uint8_t p2,
             THROW(SW_ERROR_IN_DATA);
         }
     }
+
+    // A slot is only written once the descriptor is authentic, so a refused one
+    // changes nothing.
+    tmpCtx.transactionContext.currentTokenIndex =
+        (tmpCtx.transactionContext.currentTokenIndex + 1) % MAX_TOKEN;
+    tokenDefinition_t* token =
+        &tmpCtx.transactionContext
+             .tokens[tmpCtx.transactionContext.currentTokenIndex];
+    PRINTF("Provisioning currentTokenIndex %d\n",
+           tmpCtx.transactionContext.currentTokenIndex);
+    memcpy(token->ticker, ticker, tickerLength);
+    token->ticker[tickerLength] = '\0';
+    memcpy(token->address, address, EVM_ADDRESS_LEN);
+    token->decimals = (uint8_t)decimals;
+    token->chainId = chainId;
     tmpCtx.transactionContext
         .tokenSet[tmpCtx.transactionContext.currentTokenIndex] = 1;
 
